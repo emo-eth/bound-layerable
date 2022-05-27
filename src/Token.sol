@@ -8,6 +8,7 @@ import {BoundLayerable} from "./utils/BoundLayerable.sol";
 import {OnChainLayerable} from "./utils/OnChainLayerable.sol";
 import {RandomTraits} from "./utils/RandomTraits.sol";
 import {json} from "./utils/JSON.sol";
+import "./utils/Errors.sol";
 
 contract Token is
     ERC721A,
@@ -28,11 +29,7 @@ contract Token is
         address indexed toAddress
     );
 
-    error TradingAlreadyDisabled();
-    error IncorrectPayment();
-
     // TODO: disable transferring to someone who does not own a base layer?
-
     constructor(string memory _name, string memory _symbol)
         ERC721A(_name, _symbol)
         RandomTraits(7)
@@ -58,13 +55,6 @@ contract Token is
     function _burnLayers() private {
         // iterate over all token ids
         for (uint256 i; i < MAX_SUPPLY; ) {
-            // skip primary pieces
-            // emit ConsecutiveTransfer(
-            //     i + 1,
-            //     i + 6,
-            //     super.ownerOf(i),
-            //     address(0)
-            // );
             if (i % 7 != 0) {
                 // get owner of layer
                 address owner_ = super.ownerOf(i);

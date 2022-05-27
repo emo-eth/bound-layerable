@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {PackedByteUtility} from './PackedByteUtility.sol';
-import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {PackedByteUtility} from "./PackedByteUtility.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {LayerType} from "./Enums.sol";
+import {BadDistributions} from "./Errors.sol";
 
 contract RandomTraits is Ownable {
     using Strings for uint256;
-
-    enum LayerType {
-        PORTRAIT,
-        BACKGROUND,
-        TEXTURE,
-        OBJECT,
-        BORDER
-    }
 
     bytes32 public traitGenerationSeed;
 
@@ -31,8 +25,6 @@ contract RandomTraits is Ownable {
     constructor(uint256 _numTraitTypes) {
         NUM_TOKENS_PER_SET = _numTraitTypes;
     }
-
-    error BadDistributions();
 
     /////////////
     // SETTERS //
@@ -110,8 +102,6 @@ contract RandomTraits is Ownable {
         }
         // in the case that there are 32 distributions, default to the last id
         return (i) + 32 * uint256(layerType);
-
-        // revert("Something went wrong getting Trait ID");
     }
 
     // function getLayerId2(uint256 _tokenId) public view returns (uint256) {
@@ -156,12 +146,4 @@ contract RandomTraits is Ownable {
 
     //     // revert("Something went wrong getting Trait ID");
     // }
-
-    /////////////
-    // GETTERS //
-    /////////////
-
-    /////////////
-    // HELPERS //
-    /////////////
 }

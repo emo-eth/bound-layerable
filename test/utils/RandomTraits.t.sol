@@ -4,6 +4,7 @@ pragma solidity >=0.8.4;
 import {Test} from "forge-std/Test.sol";
 import {RandomTraits} from "../../src/utils/RandomTraits.sol";
 import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
+import {LayerType} from "../../src/utils/Enums.sol";
 
 contract RandomTraitsTest is Test {
     RandomTraits test;
@@ -18,7 +19,7 @@ contract RandomTraitsTest is Test {
         test.setTraitGenerationSeed(traitGenerationSeed);
         distributions.push(0x80);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.PORTRAIT,
+            LayerType.PORTRAIT,
             PackedByteUtility.packBytearray(distributions)[0]
         );
         uint256 layerId = test.getLayerId(0);
@@ -66,7 +67,7 @@ contract RandomTraitsTest is Test {
                 abi.encode(
                     test.traitGenerationSeed(),
                     uint256(1),
-                    RandomTraits.LayerType.BACKGROUND
+                    LayerType.BACKGROUND
                 )
             )
         );
@@ -75,7 +76,7 @@ contract RandomTraitsTest is Test {
         distributions.push(0x80);
         distributions.push(0xc0);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.PORTRAIT,
+            LayerType.PORTRAIT,
             PackedByteUtility.packBytearray(distributions)[0]
         );
         uint256 layerId = test.getLayerId(0);
@@ -92,7 +93,7 @@ contract RandomTraitsTest is Test {
         );
         emit log_named_uint("packedDistribution", packedDistribution[0]);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.PORTRAIT,
+            LayerType.PORTRAIT,
             packedDistribution[0]
         );
         layerId = test.getLayerId(0);
@@ -102,7 +103,7 @@ contract RandomTraitsTest is Test {
         distributions[1] = 0x60; // 0b01100000
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.PORTRAIT,
+            LayerType.PORTRAIT,
             packedDistribution[0]
         );
         layerId = test.getLayerId(0);
@@ -114,7 +115,7 @@ contract RandomTraitsTest is Test {
         }
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.PORTRAIT,
+            LayerType.PORTRAIT,
             packedDistribution[0]
         );
         layerId = test.getLayerId(0);
@@ -127,7 +128,7 @@ contract RandomTraitsTest is Test {
         distributions.push(0x20);
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.BACKGROUND,
+            LayerType.BACKGROUND,
             packedDistribution[0]
         );
         layerId = test.getLayerId(1);
@@ -137,7 +138,7 @@ contract RandomTraitsTest is Test {
         distributions[0] = 0x17;
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.BACKGROUND,
+            LayerType.BACKGROUND,
             packedDistribution[0]
         );
         layerId = test.getLayerId(1);
@@ -148,7 +149,7 @@ contract RandomTraitsTest is Test {
         distributions[1] = 0x17;
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            RandomTraits.LayerType.BACKGROUND,
+            LayerType.BACKGROUND,
             packedDistribution[0]
         );
         layerId = test.getLayerId(1);

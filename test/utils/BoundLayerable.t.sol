@@ -4,6 +4,8 @@ pragma solidity >=0.8.4;
 import {Test} from "forge-std/Test.sol";
 import {BoundLayerable} from "../../src/utils/BoundLayerable.sol";
 import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
+import {LayerVariation} from "../../src/utils/Structs.sol";
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from "../../src/utils/Errors.sol";
 
 contract BoundLayerableTestImpl is BoundLayerable {
     constructor() {
@@ -70,7 +72,7 @@ contract BoundLayerableTestImpl is BoundLayerable {
 library Helpers {
     function generateVariationMask(
         uint256 _layers,
-        BoundLayerable.LayerVariation memory variation
+        LayerVariation memory variation
     ) internal pure returns (uint256) {
         for (
             uint256 i = variation.layerId;
@@ -146,7 +148,7 @@ contract BoundLayerableTest is Test {
 
         vm.expectRevert(
             abi.encodePacked(
-                BoundLayerable.ArrayLengthMismatch.selector,
+                ArrayLengthMismatch.selector,
                 uint256(4),
                 uint256(3)
             )
@@ -168,20 +170,19 @@ contract BoundLayerableTest is Test {
         // revert: bound is subset of unpacked
         boundLayers = unpackedLayers;
         unpackedLayers |= 2;
-        vm.expectRevert(BoundLayerable.LayerNotBoundToTokenId.selector);
+        vm.expectRevert(LayerNotBoundToTokenId.selector);
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // revert: unpacked and bound are disjoint
         boundLayers = 2;
         unpackedLayers = 0xFF << 248;
-        vm.expectRevert(BoundLayerable.LayerNotBoundToTokenId.selector);
+        vm.expectRevert(LayerNotBoundToTokenId.selector);
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
     }
 
     function testCheckForMultipleVariations() public {
         uint256 boundLayers = 0;
-        BoundLayerable.LayerVariation[] memory variations = test
-            .getVariations();
+        LayerVariation[] memory variations = test.getVariations();
         // pass: no variations
         boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
         boundLayers = Helpers.generateVariationMask(0, variations[1]);
@@ -205,7 +206,7 @@ contract BoundLayerableTest is Test {
 
         // revert: multiple variations
         unpackedLayers = (1 << 200) | (1 << 201) | (1 << 42) | (1 << 255);
-        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // revert: multiple multiple variations (same variation)
@@ -215,7 +216,7 @@ contract BoundLayerableTest is Test {
             (1 << 202) |
             (1 << 42) |
             (1 << 255);
-        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // revert: multiple multiple variations (different variations)
@@ -228,7 +229,7 @@ contract BoundLayerableTest is Test {
             (1 << 12) |
             (1 << 42) |
             (1 << 255);
-        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
     }
 
@@ -260,7 +261,7 @@ contract BoundLayerableTest is Test {
         layers[31] = layers[30];
         packedLayers = PackedByteUtility.packBytearray(layers);
 
-        vm.expectRevert(BoundLayerable.DuplicateActiveLayers.selector);
+        vm.expectRevert(DuplicateActiveLayers.selector);
         test.unpackLayersAndCheckForDuplicates(packedLayers);
 
         // // fail: 33 length; duplicate on uint in array
@@ -270,14 +271,13 @@ contract BoundLayerableTest is Test {
         }
         layers[32] = layers[31];
         packedLayers = PackedByteUtility.packBytearray(layers);
-        vm.expectRevert(BoundLayerable.DuplicateActiveLayers.selector);
+        vm.expectRevert(DuplicateActiveLayers.selector);
         test.unpackLayersAndCheckForDuplicates(packedLayers);
     }
 
     function testSetActiveLayers() public {
         uint256 boundLayers = 0;
-        BoundLayerable.LayerVariation[] memory variations = test
-            .getVariations();
+        LayerVariation[] memory variations = test.getVariations();
         boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
         boundLayers = Helpers.generateVariationMask(boundLayers, variations[1]);
         boundLayers |= 1 << 255;
@@ -290,7 +290,6 @@ contract BoundLayerableTest is Test {
         layers[3] = 200;
         uint256[] memory activeLayers = PackedByteUtility.packBytearray(layers);
         test.setActiveLayers(0, activeLayers);
-        uint256[] memory result = test.getActiveLayersRaw(0);
 
         assertEq(test.getActiveLayersRaw(0)[0], activeLayers[0]);
     }

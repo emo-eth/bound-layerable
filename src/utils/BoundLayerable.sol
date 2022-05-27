@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {PackedByteUtility} from './PackedByteUtility.sol';
-import {BitFieldUtility} from './BitFieldUtility.sol';
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {PackedByteUtility} from "./PackedByteUtility.sol";
+import {BitFieldUtility} from "./BitFieldUtility.sol";
+import {LayerVariation} from "./Structs.sol";
+import "./Errors.sol";
 
 contract BoundLayerable is Ownable {
     string baseLayerURI;
-
-    struct LayerVariation {
-        uint8 layerId;
-        uint8 numVariations;
-    }
 
     // TODO: potentially initialize at mint by setting leftmost bit; will quarter gas cost of binding layers
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
     LayerVariation[] public layerVariations;
-
-    error ArrayLengthMismatch(uint256 length1, uint256 length2);
-    error LayerNotBoundToTokenId();
-    error DuplicateActiveLayers();
-    error MultipleVariationsEnabled();
-    error InvalidLayer(uint256 layer);
 
     /////////////
     // SETTERS //
