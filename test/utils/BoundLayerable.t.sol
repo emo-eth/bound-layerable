@@ -1,0 +1,317 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.8.4;
+
+import {Test} from "forge-std/Test.sol";
+import {BoundLayerable} from "../../src/utils/BoundLayerable.sol";
+import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
+
+contract BoundLayerableTestImpl is BoundLayerable {
+    constructor() {
+        layerVariations.push(LayerVariation(4, 4));
+        layerVariations.push(LayerVariation(200, 8));
+    }
+
+    function removeVariations() public {
+        delete layerVariations;
+    }
+
+    function getVariations() public view returns (LayerVariation[] memory) {
+        return layerVariations;
+    }
+
+    function layerIsBoundToTokenId(uint256 _boundLayers, uint256 _layer)
+        public
+        pure
+        virtual
+        returns (bool)
+    {
+        return _layerIsBoundToTokenId(_boundLayers, _layer);
+    }
+
+    function checkUnpackedIsSubsetOfBound(
+        uint256 _unpackedLayers,
+        uint256 _boundLayers
+    ) public pure virtual {
+        _checkUnpackedIsSubsetOfBound(_unpackedLayers, _boundLayers);
+    }
+
+    function checkForMultipleVariations(
+        uint256 _unpackedLayers,
+        uint256 _boundLayers
+    ) public view virtual {
+        _checkForMultipleVariations(_unpackedLayers, _boundLayers);
+    }
+
+    function unpackLayersAndCheckForDuplicates(uint256[] calldata _packedLayers)
+        public
+        virtual
+        returns (uint256)
+    {
+        return _unpackLayersAndCheckForDuplicates(_packedLayers);
+    }
+
+    function getActiveLayersRaw(uint256 _tokenId)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return _tokenIdToPackedActiveLayers[_tokenId];
+    }
+
+    function getBoundLayerBitField(uint256 _tokenId)
+        public
+        view
+        returns (uint256)
+    {
+        return _tokenIdToBoundLayers[_tokenId];
+    }
+}
+
+library Helpers {
+    function generateVariationMask(
+        uint256 _layers,
+        BoundLayerable.LayerVariation memory variation
+    ) internal pure returns (uint256) {
+        for (
+            uint256 i = variation.layerId;
+            i < variation.layerId + variation.numVariations;
+            i++
+        ) {
+            _layers |= (1 << i);
+        }
+        return _layers;
+    }
+}
+
+contract BoundLayerableTest is Test {
+    BoundLayerableTestImpl test;
+
+    function setUp() public {
+        test = new BoundLayerableTestImpl();
+    }
+
+    function testLayerIsBoundToTokenId() public {
+        assertFalse(test.layerIsBoundToTokenId(0, 0));
+        // technically true - should never happen
+        // TODO: SAFEGUARD
+        assertTrue(test.layerIsBoundToTokenId(0x1, 0));
+
+        assertTrue(test.layerIsBoundToTokenId(0x2, 1));
+        assertTrue(test.layerIsBoundToTokenId(0x4, 2));
+        assertTrue(test.layerIsBoundToTokenId(0xFF << 248, 255));
+        assertTrue(test.layerIsBoundToTokenId((0xFF << 248) | 2, 1));
+    }
+
+    function testBindLayer() public {
+        test.bindLayers(0, (0xFF << 248) | 2);
+        assertEq(test.getBoundLayerBitField(0), (0xFF << 248) | 2);
+        test.bindLayers(0, 14);
+        assertEq(test.getBoundLayerBitField(0), 14);
+        test.bindLayers(0, 1);
+        // test we do not set 0th bit
+        assertEq(test.getBoundLayerBitField(1), 0);
+    }
+
+    function testBindLayersBulk() public {
+        uint256[] memory tokenIds = new uint256[](4);
+        tokenIds[0] = 1;
+        tokenIds[1] = 2;
+        tokenIds[2] = 3;
+        tokenIds[3] = 4;
+        uint256[] memory layerBindingBitField = new uint256[](4);
+        layerBindingBitField[0] = 1 << 255;
+        layerBindingBitField[1] = 3 << 254;
+        // 0th bit shouldn't be set
+        layerBindingBitField[2] = (3 << 254) | 1;
+        layerBindingBitField[3] = (3 << 254) | 2;
+
+        test.bindLayersBulk(tokenIds, layerBindingBitField);
+        assertEq(test.getBoundLayerBitField(1), 1 << 255);
+        assertEq(test.getBoundLayerBitField(2), 3 << 254);
+        //0th bit shouldn't be set
+        assertEq(test.getBoundLayerBitField(3), (3 << 254));
+        assertEq(test.getBoundLayerBitField(4), (3 << 254) | 2);
+    }
+
+    function testBindLayersBulk_unequalLengths() public {
+        uint256[] memory tokenIds = new uint256[](4);
+        tokenIds[0] = 1;
+        tokenIds[1] = 2;
+        tokenIds[2] = 3;
+        tokenIds[3] = 4;
+        uint256[] memory layerBindingBitField = new uint256[](3);
+        layerBindingBitField[0] = 1 << 255;
+        layerBindingBitField[1] = 3 << 254;
+        layerBindingBitField[2] = (3 << 254) | 2;
+
+        vm.expectRevert(
+            abi.encodePacked(
+                BoundLayerable.ArrayLengthMismatch.selector,
+                uint256(4),
+                uint256(3)
+            )
+        );
+        test.bindLayersBulk(tokenIds, layerBindingBitField);
+    }
+
+    function testCheckUnpackedIsSubsetOfBound() public {
+        // pass: bound is superset of unpacked
+        uint256 boundLayers = ((0xFF << 248) | 2);
+        uint256 unpackedLayers = 0xFF << 248;
+        test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+
+        // pass: bound is identical to unpacked
+        boundLayers = 0xFF << 248;
+        unpackedLayers = 0xFF << 248;
+        test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+
+        // revert: bound is subset of unpacked
+        boundLayers = unpackedLayers;
+        unpackedLayers |= 2;
+        vm.expectRevert(BoundLayerable.LayerNotBoundToTokenId.selector);
+        test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+
+        // revert: unpacked and bound are disjoint
+        boundLayers = 2;
+        unpackedLayers = 0xFF << 248;
+        vm.expectRevert(BoundLayerable.LayerNotBoundToTokenId.selector);
+        test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+    }
+
+    function testCheckForMultipleVariations() public {
+        uint256 boundLayers = 0;
+        BoundLayerable.LayerVariation[] memory variations = test
+            .getVariations();
+        // pass: no variations
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
+        boundLayers = Helpers.generateVariationMask(0, variations[1]);
+        boundLayers |= 255;
+        boundLayers |= 42;
+
+        uint256 unpackedLayers = 0;
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: one of each variation
+        unpackedLayers = (1 << 200) | (1 << 4);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: different variations
+        unpackedLayers = (1 << 201) | (1 << 5);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: variations plus other layers
+        unpackedLayers = (1 << 208) | (1 << 12) | (1 << 42) | (1 << 255);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple variations
+        unpackedLayers = (1 << 200) | (1 << 201) | (1 << 42) | (1 << 255);
+        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple multiple variations (same variation)
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 42) |
+            (1 << 255);
+        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple multiple variations (different variations)
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 4) |
+            (1 << 5) |
+            (1 << 12) |
+            (1 << 42) |
+            (1 << 255);
+        vm.expectRevert(BoundLayerable.MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+    }
+
+    function testUnpackLayersAndCheckForDuplicates() public {
+        uint8[] memory layers = new uint8[](4);
+        layers[0] = 1;
+        layers[1] = 2;
+        layers[2] = 3;
+        layers[3] = 4;
+        uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
+
+        // // pass: < 32 length no duplicates
+        test.unpackLayersAndCheckForDuplicates(packedLayers);
+
+        layers = new uint8[](33);
+        for (uint256 i; i < layers.length; ++i) {
+            layers[i] = uint8(i + 1);
+        }
+        // // pass: > 32 length no duplicates
+        test.unpackLayersAndCheckForDuplicates(
+            PackedByteUtility.packBytearray(layers)
+        );
+
+        // fail: 32 length; last duplicate
+        layers = new uint8[](32);
+        for (uint256 i; i < layers.length; ++i) {
+            layers[i] = uint8(i + 1);
+        }
+        layers[31] = layers[30];
+        packedLayers = PackedByteUtility.packBytearray(layers);
+
+        vm.expectRevert(BoundLayerable.DuplicateActiveLayers.selector);
+        test.unpackLayersAndCheckForDuplicates(packedLayers);
+
+        // // fail: 33 length; duplicate on uint in array
+        layers = new uint8[](33);
+        for (uint256 i; i < layers.length; ++i) {
+            layers[i] = uint8(i + 5);
+        }
+        layers[32] = layers[31];
+        packedLayers = PackedByteUtility.packBytearray(layers);
+        vm.expectRevert(BoundLayerable.DuplicateActiveLayers.selector);
+        test.unpackLayersAndCheckForDuplicates(packedLayers);
+    }
+
+    function testSetActiveLayers() public {
+        uint256 boundLayers = 0;
+        BoundLayerable.LayerVariation[] memory variations = test
+            .getVariations();
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[1]);
+        boundLayers |= 1 << 255;
+        boundLayers |= 1 << 42;
+        test.bindLayers(0, boundLayers);
+        uint8[] memory layers = new uint8[](4);
+        layers[0] = 42;
+        layers[1] = 255;
+        layers[2] = 4;
+        layers[3] = 200;
+        uint256[] memory activeLayers = PackedByteUtility.packBytearray(layers);
+        test.setActiveLayers(0, activeLayers);
+        uint256[] memory result = test.getActiveLayersRaw(0);
+
+        assertEq(test.getActiveLayersRaw(0)[0], activeLayers[0]);
+    }
+
+    // todo: skip, need way to allocate memory
+    function testGetActiveLayers() public {
+        test.removeVariations();
+        uint256 boundlayers = 2**256 - 1;
+        test.bindLayers(0, boundlayers);
+        uint8[] memory layers = new uint8[](255);
+        for (uint256 i = 0; i < layers.length; ++i) {
+            layers[i] = uint8(i + 1);
+        }
+        uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
+        test.setActiveLayers(0, packedLayers);
+        uint256[] memory activeLayers = test.getActiveLayers(0);
+        emit log_named_uint("activeLayers.length", activeLayers.length);
+        // emit log_named_uint("activeLayers[255]", activeLayers[255]);
+        assertEq(activeLayers.length, 255);
+        for (uint256 i; i < activeLayers.length; ++i) {
+            assertEq(activeLayers[i], i + 1);
+        }
+    }
+}
