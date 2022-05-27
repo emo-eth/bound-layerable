@@ -313,4 +313,8 @@ contract BoundLayerableTest is Test {
             assertEq(activeLayers[i], i + 1);
         }
     }
+
+    function testGetActiveLayersNoLayers() public view {
+        test.getActiveLayers(0);
+    }
 }

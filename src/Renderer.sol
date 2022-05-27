@@ -14,7 +14,7 @@ contract Renderer is ERC721Recipient {
     uint8[] distributions;
 
     constructor() {
-        test = new Token("Token", "test");
+        test = new Token("Token", "test", "");
 
         // todo: set rarities
 

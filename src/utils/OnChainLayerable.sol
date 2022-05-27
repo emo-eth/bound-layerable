@@ -5,12 +5,23 @@ import {BoundLayerable} from "./BoundLayerable.sol";
 import {OnChainTraits} from "./OnChainTraits.sol";
 import {svg, utils} from "../SVG.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {RandomTraits} from "./RandomTraits.sol";
 import {json} from "./JSON.sol";
 
 // import {DSTestPlusPlus} from 'src/test/utils/DSTestPlusPlus.sol';
 
-contract OnChainLayerable is OnChainTraits, BoundLayerable {
+contract OnChainLayerable is OnChainTraits, RandomTraits, BoundLayerable {
     using Strings for uint256;
+
+    string defaultURI;
+
+    constructor(string memory _defaultURI) RandomTraits(7) {
+        defaultURI = _defaultURI;
+    }
+
+    function setDefaultURI(string calldata _defaultURI) public onlyOwner {
+        defaultURI = _defaultURI;
+    }
 
     function getLayerURI(uint256 _layerId) public view returns (string memory) {
         return string.concat(baseLayerURI, _layerId.toString(), ".png");
@@ -56,8 +67,28 @@ contract OnChainLayerable is OnChainTraits, BoundLayerable {
         returns (string memory)
     {
         string[] memory properties = new string[](2);
-        properties[0] = json.property("image", getTokenSVG(_tokenId));
-        properties[1] = json.property("attributes", getTokenTraits(_tokenId));
+
+        // return default uri
+        if (traitGenerationSeed == 0) {
+            return defaultURI;
+        }
+        uint256 bindings = _tokenIdToBoundLayers[_tokenId];
+
+        // if no bindings, format metadata as an individual NFT
+        if (bindings == 0) {
+            uint256 layerId = getLayerId(_tokenId);
+            properties[0] = json.property("image", getLayerURI(layerId));
+            properties[1] = json.property(
+                "attributes",
+                json.array(getTraitJson(layerId))
+            );
+        } else {
+            properties[0] = json.property("image", getTokenSVG(_tokenId));
+            properties[1] = json.property(
+                "attributes",
+                getTokenTraits(_tokenId)
+            );
+        }
         return json.objectOf(properties);
     }
 }

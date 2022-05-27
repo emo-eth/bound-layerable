@@ -10,13 +10,7 @@ import {RandomTraits} from "./utils/RandomTraits.sol";
 import {json} from "./utils/JSON.sol";
 import "./utils/Errors.sol";
 
-contract Token is
-    ERC721A,
-    Ownable,
-    ReentrancyGuard,
-    OnChainLayerable,
-    RandomTraits
-{
+contract Token is ERC721A, Ownable, ReentrancyGuard, OnChainLayerable {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;
@@ -30,10 +24,11 @@ contract Token is
     );
 
     // TODO: disable transferring to someone who does not own a base layer?
-    constructor(string memory _name, string memory _symbol)
-        ERC721A(_name, _symbol)
-        RandomTraits(7)
-    {}
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        string memory defaultURI
+    ) ERC721A(_name, _symbol) OnChainLayerable(defaultURI) {}
 
     modifier includesCorrectPayment(uint256 _numSets) {
         if (msg.value != _numSets * MINT_PRICE) {

@@ -14,7 +14,7 @@ contract TokenTest is Test, ERC721Recipient {
     uint8[] distributions;
 
     function setUp() public virtual {
-        test = new Token("Test", "test");
+        test = new Token("Test", "test", "");
     }
 
     function testSetDisableTrading() public {
