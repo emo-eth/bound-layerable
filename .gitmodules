@@ -10,3 +10,6 @@
 [submodule "lib/hot-chain-svg"]
 	path = lib/hot-chain-svg
 	url = https://github.com/w1nt3r-eth/hot-chain-svg
+[submodule "lib/ERC721A"]
+	path = lib/ERC721A
+	url = https://github.com/chiru-labs/ERC721A
