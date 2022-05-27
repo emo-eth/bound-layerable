@@ -1,5 +1,5 @@
 @openzeppelin/=lib/openzeppelin-contracts/
 @rari-capital/solmate/src/=lib/solmate/src/
-ds-test/=lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 hot-chain-svg/=lib/hot-chain-svg/contracts/
+ds-test/=lib/forge-std/lib/ds-test/src/

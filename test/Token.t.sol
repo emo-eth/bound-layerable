@@ -12,13 +12,12 @@ contract TokenTest is Test, ERC721Recipient {
     Token test;
     uint8[] distributions;
 
-    function setUp() public virtual override {
-        super.setUp();
+    function setUp() public virtual {
         test = new Token("Test", "test");
     }
 
     function testSetDisableTrading() public {
-        vm.prank(alice);
+        vm.prank(address(1));
         // test.mintSet{value: .1 ether}();
         // test.setInactive();
     }

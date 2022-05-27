@@ -5,10 +5,10 @@ import {Test} from "forge-std/Test.sol";
 import {RandomTraits} from "../../src/utils/RandomTraits.sol";
 import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
 
-contract RandomTraitsTest is DSTestPlusPlus {
+contract RandomTraitsTest is Test {
     RandomTraits test;
 
-    function setUp() public override {
+    function setUp() public {
         test = new RandomTraits(7);
     }
 
