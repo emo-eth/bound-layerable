@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
 
-import {svg} from "hot-chain-svg/SVG.sol";
-import {utils} from "hot-chain-svg/Utils.sol";
+import {svg} from "./SVG.sol";
+import {utils} from "./Utils.sol";
 import {Token} from "./Token.sol";
 import {PackedByteUtility} from "./utils/PackedByteUtility.sol";
 import {RandomTraits} from "./utils/RandomTraits.sol";

@@ -1,0 +1,25 @@
+{
+  "name": "hot-chain-svg",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "author": "w1nt3r.eth",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/index.js",
+    "qa": "node scripts/qa.js"
+  },
+  "prettier": {
+    "singleQuote": true
+  },
+  "dependencies": {
+    "@ethereumjs/vm": "^5.8.0",
+    "@ethersproject/abi": "^5.6.0",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@rari-capital/solmate": "^6.2.0",
+    "solc": "0.8.13",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
+  }
+}

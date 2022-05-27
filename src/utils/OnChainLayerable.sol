@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 import {BoundLayerable} from "./BoundLayerable.sol";
 import {OnChainTraits} from "./OnChainTraits.sol";
-import {svg, utils} from "hot-chain-svg/SVG.sol";
+import {svg, utils} from "../SVG.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {json} from "./JSON.sol";
 

@@ -37,6 +37,13 @@ contract RandomTraits is Ownable {
         traitGenerationSeed = _traitGenerationSeed;
     }
 
+    /**
+     * @notice Set the probability distribution for up to 32 different layer traitIds
+     * @param _layerType layer type to set distribution for
+     * @param _distribution a uint256 comprised of sorted, packed bytes
+     *  that will be compared against a random byte to determine the layerId
+     *  for a given tokenId
+     */
     function setLayerTypeDistribution(
         LayerType _layerType,
         uint256 _distribution
@@ -56,7 +63,9 @@ contract RandomTraits is Ownable {
             );
     }
 
-    // TODO: make this virtual and override
+    /**
+     * @notice Determine layer type by its token ID
+     */
     function getLayerType(uint256 _tokenId) public view returns (LayerType) {
         // might break tests but could move objects and borders to front:
         // LayerType((_tokenId % NUM_TOKENS_PER_SET) % 5);
@@ -72,6 +81,10 @@ contract RandomTraits is Ownable {
         return LayerType(layerTypeValue);
     }
 
+    /**
+     * @notice Get the layerId for a given tokenId by hashing tokenId with the random seed
+     * and comparing the final byte against the appropriate distributions
+     */
     function getLayerId(uint256 _tokenId) public view returns (uint256) {
         LayerType layerType = getLayerType(_tokenId);
         uint256 layerSeed = getLayerSeed(_tokenId, layerType) & 0xff;
