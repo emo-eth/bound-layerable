@@ -1,27 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {ERC721A} from "./token/ERC721A.sol";
-import {ReentrancyGuard} from "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {BoundLayerable} from "./utils/BoundLayerable.sol";
-import {OnChainLayerable} from "./utils/OnChainLayerable.sol";
-import {RandomTraits} from "./utils/RandomTraits.sol";
-import {json} from "./utils/JSON.sol";
-import "./utils/Errors.sol";
+import {ERC721A} from './token/ERC721A.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {BoundLayerable} from './utils/BoundLayerable.sol';
+import {OnChainLayerable} from './utils/OnChainLayerable.sol';
+import {RandomTraits} from './utils/RandomTraits.sol';
+import {json} from './utils/JSON.sol';
+import './utils/Errors.sol';
 
-contract Token is ERC721A, Ownable, ReentrancyGuard, OnChainLayerable {
+contract Token is ERC721A, Ownable, OnChainLayerable {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;
-
-    // EIP-2309
-    event ConsecutiveTransfer(
-        uint256 indexed fromTokenId,
-        uint256 toTokenId,
-        address indexed fromAddress,
-        address indexed toAddress
-    );
 
     // TODO: disable transferring to someone who does not own a base layer?
     constructor(
@@ -74,17 +65,17 @@ contract Token is ERC721A, Ownable, ReentrancyGuard, OnChainLayerable {
         return super.ownerOf(_tokenId);
     }
 
-    function mintSet() public payable includesCorrectPayment(1) nonReentrant {
-        super._safeMint(msg.sender, 7);
+    function mintSet() public payable includesCorrectPayment(1) {
+        super._mint(msg.sender, 7);
     }
 
+    // todo: restrict numminted
     function mintSets(uint256 _numSets)
         public
         payable
         includesCorrectPayment(_numSets)
-        nonReentrant
     {
-        super._safeMint(msg.sender, 7 * _numSets);
+        super._mint(msg.sender, 7 * _numSets);
     }
 
     function tokenURI(uint256 _tokenId)
