@@ -9,7 +9,7 @@ import {RandomTraits} from './utils/RandomTraits.sol';
 import {json} from './utils/JSON.sol';
 import './utils/Errors.sol';
 
-contract Token is ERC721A, Ownable, OnChainLayerable {
+contract Token is ERC721A, Ownable, BoundLayerable {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;
@@ -19,7 +19,7 @@ contract Token is ERC721A, Ownable, OnChainLayerable {
         string memory _name,
         string memory _symbol,
         string memory defaultURI
-    ) ERC721A(_name, _symbol) OnChainLayerable(defaultURI) {}
+    ) ERC721A(_name, _symbol) {}
 
     modifier includesCorrectPayment(uint256 _numSets) {
         if (msg.value != _numSets * MINT_PRICE) {
@@ -54,6 +54,16 @@ contract Token is ERC721A, Ownable, OnChainLayerable {
         }
     }
 
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC721A)
+        returns (string memory)
+    {
+        return _tokenURI(tokenId);
+    }
+
     function _burnLayers(uint256 _start, uint256 _end) public onlyOwner {}
 
     function ownerOf(uint256 _tokenId) public view override returns (address) {
@@ -76,14 +86,5 @@ contract Token is ERC721A, Ownable, OnChainLayerable {
         includesCorrectPayment(_numSets)
     {
         super._mint(msg.sender, 7 * _numSets);
-    }
-
-    function tokenURI(uint256 _tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
-        return getTokenURI(_tokenId);
     }
 }

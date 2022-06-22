@@ -5,23 +5,20 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {PackedByteUtility} from './PackedByteUtility.sol';
 import {BitFieldUtility} from './BitFieldUtility.sol';
 import {LayerVariation} from './Structs.sol';
+import {OnChainLayerable} from './OnChainLayerable.sol';
+import {RandomTraits} from './RandomTraits.sol';
 import './Errors.sol';
 
-contract BoundLayerable is Ownable {
-    string baseLayerURI;
-
+contract BoundLayerable is Ownable, RandomTraits(7) {
     // TODO: potentially initialize at mint by setting leftmost bit; will quarter gas cost of binding layers
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
     LayerVariation[] public layerVariations;
+    OnChainLayerable public metadataContract;
 
     /////////////
     // SETTERS //
     /////////////
-
-    function setBaseLayerURI(string calldata _baseLayerURI) external onlyOwner {
-        baseLayerURI = _baseLayerURI;
-    }
 
     function bindLayersBulk(
         uint256[] calldata _tokenId,
@@ -208,6 +205,23 @@ contract BoundLayerable is Ownable {
             layers[i] = unpacked[i];
         }
         return layers;
+    }
+
+    function _tokenURI(uint256 tokenId) internal view returns (string memory) {
+        return
+            metadataContract.getTokenURI(
+                tokenId,
+                _tokenIdToBoundLayers[tokenId],
+                traitGenerationSeed,
+                _tokenIdToPackedActiveLayers[tokenId]
+            );
+    }
+
+    function setMetadataContract(OnChainLayerable _metadataContract)
+        external
+        onlyOwner
+    {
+        metadataContract = _metadataContract;
     }
 
     /////////////

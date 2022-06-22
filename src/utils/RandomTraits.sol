@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {PackedByteUtility} from "./PackedByteUtility.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {LayerType} from "./Enums.sol";
-import {BadDistributions} from "./Errors.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {PackedByteUtility} from './PackedByteUtility.sol';
+import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {LayerType} from './Enums.sol';
+import {BadDistributions} from './Errors.sol';
 
 contract RandomTraits is Ownable {
     using Strings for uint256;
@@ -116,47 +116,4 @@ contract RandomTraits is Ownable {
         // in the case that there are 32 distributions, default to the last id
         return (i) + 32 * uint256(layerType);
     }
-
-    // function getLayerId2(uint256 _tokenId) public view returns (uint256) {
-    //     LayerType layerType = getLayerType(_tokenId);
-    //     uint256 layerSeed = getLayerSeed(_tokenId, layerType) & 0xffff;
-    //     // uint256 distributions = layerTypeToDistributions[layerType];
-    //     // iterate over distributions until we find one that our layer seed is *less than*
-    //     uint256 i;
-    //     uint256[2] memory distributions16Bit = layerTypeTo16BitDistributions[
-    //         layerType
-    //     ];
-    //     for (uint256 j; j < 2; ) {
-    //         uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
-    //             i,
-    //             distributions16Bit[j]
-    //         );
-    //         for (; i < 16; ) {
-    //             uint16 distributions = PackedByteUtility.getPackedShortFromLeft(
-    //                 i,
-    //                 distributions
-    //             );
-    //             // if distribution is 0, we've reached the end of the list
-    //             if (distribution == 0) {
-    //                 if (i > 0) {
-    //                     return i + 32 * uint256(layerType);
-    //                 } else {
-    //                     // first distribution should not be 0
-    //                     revert BadDistributions();
-    //                 }
-    //             }
-    //             // note: for layers with multiple variations, the same value should be packed multiple times
-    //             if (layerSeed < distribution) {
-    //                 return i + 32 * uint256(layerType);
-    //             }
-    //             unchecked {
-    //                 ++i;
-    //             }
-    //         }
-    //     }
-    //     // in the case that there are 32 distributions, default to the last id
-    //     return (i - 1) + 32 * uint256(layerType);
-
-    //     // revert("Something went wrong getting Trait ID");
-    // }
 }

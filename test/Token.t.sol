@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {Token} from "../src/Token.sol";
+import {Test} from 'forge-std/Test.sol';
+import {Token} from '../src/Token.sol';
 
-import {PackedByteUtility} from "../src/utils/PackedByteUtility.sol";
-import {RandomTraits} from "../src/utils/RandomTraits.sol";
-import {ERC721Recipient} from "./utils/ERC721Recipient.sol";
-import {LayerType} from "../src/utils/Enums.sol";
+import {PackedByteUtility} from '../src/utils/PackedByteUtility.sol';
+import {RandomTraits} from '../src/utils/RandomTraits.sol';
+import {ERC721Recipient} from './utils/ERC721Recipient.sol';
+import {LayerType} from '../src/utils/Enums.sol';
 
 contract TokenTest is Test, ERC721Recipient {
     Token test;
     uint8[] distributions;
 
     function setUp() public virtual {
-        test = new Token("Test", "test", "");
+        test = new Token('Test', 'test', '');
     }
 
     function testSetDisableTrading() public {
@@ -93,9 +93,9 @@ contract TokenTest is Test, ERC721Recipient {
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
         test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions[0]);
 
-        test.setBaseLayerURI(
-            "/Users/jameswenzel/dev/partner-smart-contracts/Layers/"
-        );
+        // test.setBaseLayerURI(
+        //     '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
+        // );
 
         // // do the thing
 
@@ -112,27 +112,27 @@ contract TokenTest is Test, ERC721Recipient {
             layerTokenId++
         ) {
             uint256 layer = test.getLayerId(layerTokenId);
-            emit log_named_uint("layer", layer);
+            emit log_named_uint('layer', layer);
             uint256 lastLayer = 0;
             if (layerTokenId > startingTokenId) {
                 lastLayer = layers[(layerTokenId % 7) - 1];
             }
             if (layer == lastLayer) {
-                emit log("oops");
+                emit log('oops');
                 layer += 1;
             }
             layers[layerTokenId % 7] = uint8(layer);
-            emit log_named_uint("copied layer", layers[layerTokenId % 7]);
+            emit log_named_uint('copied layer', layers[layerTokenId % 7]);
         }
 
         // create copy as uint256 bc todo: i need to fix
         uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
 
-        emit log_named_uint("packedLayers", packedLayers[0]);
+        emit log_named_uint('packedLayers', packedLayers[0]);
 
         // unpack layerIDs into a binding - todo: make this a public function idk
         uint256 binding = test.packedLayersToBitField(packedLayers);
-        emit log_named_uint("binding", binding);
+        emit log_named_uint('binding', binding);
         test.bindLayers(_tokenId * 7, binding);
 
         // swap layer ordering
@@ -146,8 +146,8 @@ contract TokenTest is Test, ERC721Recipient {
         test.setActiveLayers(startingTokenId, newPackedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(startingTokenId);
         for (uint256 i; i < activeLayers.length; i++) {
-            emit log_named_uint("activeLayer", activeLayers[i]);
+            emit log_named_uint('activeLayer', activeLayers[i]);
         }
-        emit log(test.getTokenSVG(startingTokenId));
+        // emit log(test.metadataContract().getTokenSVG(startingTokenId));
     }
 }

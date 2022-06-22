@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {PackedByteUtility} from "./PackedByteUtility.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {json} from "./JSON.sol";
-import {ArrayLengthMismatch} from "./Errors.sol";
-import {DisplayType} from "./Enums.sol";
-import {Attribute} from "./Structs.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {PackedByteUtility} from './PackedByteUtility.sol';
+import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {json} from './JSON.sol';
+import {ArrayLengthMismatch} from './Errors.sol';
+import {DisplayType} from './Enums.sol';
+import {Attribute} from './Structs.sol';
 
 contract OnChainTraits is Ownable {
     using Strings for uint256;
@@ -38,7 +38,7 @@ contract OnChainTraits is Ownable {
         pure
         returns (string memory)
     {
-        return json.property("display_type", displayTypeString);
+        return json.property('display_type', displayTypeString);
     }
 
     function getTraitJson(uint256 _traitId)
@@ -48,27 +48,27 @@ contract OnChainTraits is Ownable {
     {
         Attribute memory attribute = traitAttributes[_traitId];
         string memory properties = string.concat(
-            json.property("trait_type", attribute.traitType),
-            ","
+            json.property('trait_type', attribute.traitType),
+            ','
         );
         // todo: probably don't need this for layers, but good for generic
         DisplayType displayType = attribute.displayType;
         if (displayType != DisplayType.String) {
             string memory displayTypeString;
             if (displayType == DisplayType.Number) {
-                displayTypeString = displayTypeJson("number");
+                displayTypeString = displayTypeJson('number');
             } else if (attribute.displayType == DisplayType.Date) {
-                displayTypeString = displayTypeJson("date");
+                displayTypeString = displayTypeJson('date');
             } else if (attribute.displayType == DisplayType.BoostPercent) {
-                displayTypeString = displayTypeJson("boost_percent");
+                displayTypeString = displayTypeJson('boost_percent');
             } else if (attribute.displayType == DisplayType.BoostNumber) {
-                displayTypeString = displayTypeJson("boost_number");
+                displayTypeString = displayTypeJson('boost_number');
             }
-            properties = string.concat(properties, displayTypeString, ",");
+            properties = string.concat(properties, displayTypeString, ',');
         }
         properties = string.concat(
             properties,
-            json.property("value", attribute.value)
+            json.property('value', attribute.value)
         );
         return json.object(properties);
     }
