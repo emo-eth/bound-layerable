@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
+uint256 constant _2_128 = 2 ** 128;
+uint256 constant _2_64 = 2 ** 64;
+uint256 constant _2_32 = 2 ** 32;
+uint256 constant _2_16 = 2 ** 16;
+uint256 constant _2_8 = 2 ** 8;
+uint256 constant _2_4 = 2 ** 4;
+uint256 constant _2_2 = 2 ** 2;
+uint256 constant _2_1 = 2 ** 1;
+
 library BitFieldUtility {
     function unpackBitField(uint256 bitField)
         internal
@@ -55,37 +64,39 @@ library BitFieldUtility {
         pure
         returns (uint256 msb)
     {
-        if (x >= 2 ** 128) {
-            x >>= 128;
-            msb += 128;
-        }
-        if (x >= 2 ** 64) {
-            x >>= 64;
-            msb += 64;
-        }
-        if (x >= 2 ** 32) {
-            x >>= 32;
-            msb += 32;
-        }
-        if (x >= 2 ** 16) {
-            x >>= 16;
-            msb += 16;
-        }
-        if (x >= 2 ** 8) {
-            x >>= 8;
-            msb += 8;
-        }
-        if (x >= 2 ** 4) {
-            x >>= 4;
-            msb += 4;
-        }
-        if (x >= 2 ** 2) {
-            x >>= 2;
-            msb += 2;
-        }
-        if (x >= 2 ** 1) {
-            // No need to shift x any more.
-            msb += 1;
+        assembly {
+            if iszero(lt(x, _2_128)) {
+                x := shr(128, x)
+                msb := add(msb, 128)
+            }
+            if iszero(lt(x, _2_64)) {
+                x := shr(64, x)
+                msb := add(msb, 64)
+            }
+            if iszero(lt(x, _2_32)) {
+                x := shr(32, x)
+                msb := add(msb, 32)
+            }
+            if iszero(lt(x, _2_16)) {
+                x := shr(16, x)
+                msb := add(msb, 16)
+            }
+            if iszero(lt(x, _2_8)) {
+                x := shr(8, x)
+                msb := add(msb, 8)
+            }
+            if iszero(lt(x, _2_4)) {
+                x := shr(4, x)
+                msb := add(msb, 4)
+            }
+            if iszero(lt(x, _2_2)) {
+                x := shr(2, x)
+                msb := add(msb, 2)
+            }
+            if iszero(lt(x, _2_1)) {
+                // No need to shift x any more.
+                msb := add(msb, 1)
+            }
         }
     }
 }

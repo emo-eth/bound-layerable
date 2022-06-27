@@ -14,7 +14,7 @@ contract Renderer is ERC721Recipient {
     uint8[] distributions;
 
     constructor() {
-        test = new Token("Token", "test", "");
+        test = new Token('Token', 'test', '');
         // todo: set rarities
         // 6 backgrounds
         distributions =
@@ -61,7 +61,7 @@ contract Renderer is ERC721Recipient {
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
         test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions[0]);
         test.metadataContract().setBaseLayerURI(
-            "/Users/jameswenzel/dev/partner-smart-contracts/Layers/"
+            '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
         );
     }
 

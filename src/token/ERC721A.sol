@@ -808,8 +808,8 @@ contract ERC721A is IERC721A {
                 revert TransferToNonERC721ReceiverImplementer();
             } else {
                 assembly {
-                                    revert(add(32, reason), mload(reason))
-                                }
+                                                                revert(add(32, reason), mload(reason))
+                                                            }
             }
         }
     }

@@ -14,12 +14,12 @@ contract OnChainTraitsTest is Test {
     }
 
     function testGetTraitJson() public {
-        test.setAttribute(1, Attribute("test", "hello", DisplayType.String));
+        test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         string memory expected = '{"trait_type":"test","value":"hello"}';
         string memory actual = test.getTraitJson(1);
         assertEq(abi.encode(actual), abi.encode(expected));
 
-        test.setAttribute(2, Attribute("test", "hello", DisplayType.Date));
+        test.setAttribute(2, Attribute('test', 'hello', DisplayType.Date));
         expected = '{"trait_type":"test","display_type":"date","value":"hello"}';
         actual = test.getTraitJson(2);
         assertEq(abi.encode(actual), abi.encode(expected));

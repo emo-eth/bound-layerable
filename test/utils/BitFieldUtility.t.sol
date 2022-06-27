@@ -42,10 +42,7 @@ contract BitFieldUtilityTest is Test {
             bitMask = (1 << msb + 1) - 1;
         }
 
-        uint256 bitField = 1 << msb;
-        assertEq(bitField & bitMask, bitField);
-
-        bitField = (bitField | extraBits) & bitMask;
+        uint256 bitField = (1 << msb | extraBits) & bitMask;
         uint256 retrievedMsb = BitFieldUtility.mostSignificantBit(bitField);
         assertEq(retrievedMsb, msb);
     }
