@@ -77,9 +77,9 @@ library PackedByteUtility {
         uint256 bytearrayLength = bytearray.length;
         uint256[] memory packed = new uint256[]((bytearrayLength - 1) / 32 + 1);
         uint256 workingWord = 0;
-        for (uint256 i = 0; i < bytearrayLength; ) {
+        for (uint256 i = 0; i < bytearrayLength;) {
             // OR workingWord with this byte shifted by byte within the word
-            workingWord |= uint256(bytearray[i]) << (8 * (31 - (i % 32)));
+            workingWord |= uint256(bytearray[i]) << 8 * (31 - i % 32);
 
             // if we're on the last byte of the word, store in array
             if (i % 32 == 31) {
@@ -107,14 +107,11 @@ library PackedByteUtility {
         uint256 packedByteArraysLength = packedByteArrays.length;
         // TODO: is uint8 more efficient in memory?
         uint256[] memory unpacked = new uint256[](packedByteArraysLength * 32);
-        for (uint256 i = 0; i < packedByteArraysLength; ) {
+        for (uint256 i = 0; i < packedByteArraysLength;) {
             uint256 packedByteArray = packedByteArrays[i];
             uint256 j = 0;
-            for (; j < 32; ) {
-                uint256 unpackedByte = getPackedByteFromLeft(
-                    j,
-                    packedByteArray
-                );
+            for (; j < 32;) {
+                uint256 unpackedByte = getPackedByteFromLeft(j, packedByteArray);
                 if (unpackedByte == 0) {
                     break;
                 }

@@ -1,6 +1,8 @@
-[local-ffi]
+[default]
 src = 'src'
 out = 'out'
 libs = ['lib']
+fuzz_runs = 5000
+solc_version = '0.8.15'
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

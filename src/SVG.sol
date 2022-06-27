@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
+
 import {utils} from "./Utils.sol";
 
 // Core SVG utilitiy library which helps us construct
@@ -62,7 +63,11 @@ library svg {
         return el("rect", _props, _children);
     }
 
-    function rect(string memory _props) internal pure returns (string memory) {
+    function rect(string memory _props)
+        internal
+        pure
+        returns (string memory)
+    {
         return el("rect", _props);
     }
 
@@ -103,18 +108,21 @@ library svg {
         uint256 offset,
         string memory stopColor,
         string memory _props
-    ) internal pure returns (string memory) {
-        return
-            el(
-                "stop",
-                string.concat(
-                    prop("stop-color", stopColor),
-                    " ",
-                    prop("offset", string.concat(utils.uint2str(offset), "%")),
-                    " ",
-                    _props
-                )
-            );
+    )
+        internal
+        pure
+        returns (string memory)
+    {
+        return el(
+            "stop",
+            string.concat(
+                prop("stop-color", stopColor),
+                " ",
+                prop("offset", string.concat(utils.uint2str(offset), "%")),
+                " ",
+                _props
+            )
+        );
     }
 
     function animateTransform(string memory _props)
@@ -139,19 +147,14 @@ library svg {
         string memory _tag,
         string memory _props,
         string memory _children
-    ) internal pure returns (string memory) {
-        return
-            string.concat(
-                "<",
-                _tag,
-                " ",
-                _props,
-                ">",
-                _children,
-                "</",
-                _tag,
-                ">"
-            );
+    )
+        internal
+        pure
+        returns (string memory)
+    {
+        return string.concat(
+            "<", _tag, " ", _props, ">", _children, "</", _tag, ">"
+        );
     }
 
     // A generic element, can be used to construct any SVG (or HTML) element without children

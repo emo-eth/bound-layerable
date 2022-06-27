@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {ERC721A} from './token/ERC721A.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {BoundLayerable} from './utils/BoundLayerable.sol';
-import {OnChainLayerable} from './utils/OnChainLayerable.sol';
-import {RandomTraits} from './utils/RandomTraits.sol';
-import {json} from './utils/JSON.sol';
-import './utils/Errors.sol';
+import {ERC721A} from "./token/ERC721A.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {BoundLayerable} from "./utils/BoundLayerable.sol";
+import {OnChainLayerable} from "./utils/OnChainLayerable.sol";
+import {RandomTraits} from "./utils/RandomTraits.sol";
+import {json} from "./utils/JSON.sol";
+import "./utils/Errors.sol";
 
 contract Token is ERC721A, Ownable, BoundLayerable {
     uint256 public constant MAX_SUPPLY = 5555;
@@ -19,7 +19,10 @@ contract Token is ERC721A, Ownable, BoundLayerable {
         string memory _name,
         string memory _symbol,
         string memory defaultURI
-    ) ERC721A(_name, _symbol) {}
+    )
+        BoundLayerable(defaultURI)
+        ERC721A(_name, _symbol)
+    {}
 
     modifier includesCorrectPayment(uint256 _numSets) {
         if (msg.value != _numSets * MINT_PRICE) {
@@ -40,7 +43,7 @@ contract Token is ERC721A, Ownable, BoundLayerable {
 
     function _burnLayers() private {
         // iterate over all token ids
-        for (uint256 i; i < MAX_SUPPLY; ) {
+        for (uint256 i; i < MAX_SUPPLY;) {
             if (i % 7 != 0) {
                 // get owner of layer
                 address owner_ = super.ownerOf(i);
@@ -58,7 +61,7 @@ contract Token is ERC721A, Ownable, BoundLayerable {
         public
         view
         virtual
-        override(ERC721A)
+        override (ERC721A)
         returns (string memory)
     {
         return _tokenURI(tokenId);
@@ -66,7 +69,12 @@ contract Token is ERC721A, Ownable, BoundLayerable {
 
     function _burnLayers(uint256 _start, uint256 _end) public onlyOwner {}
 
-    function ownerOf(uint256 _tokenId) public view override returns (address) {
+    function ownerOf(uint256 _tokenId)
+        public
+        view
+        override
+        returns (address)
+    {
         // if trading layers is no longer active, report owner as null address
         // TODO: might be able to optimize this with two separate if statements
         if (_tokenId % 7 != 0 && !tradingActive) {

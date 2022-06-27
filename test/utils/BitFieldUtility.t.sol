@@ -27,10 +27,26 @@ contract BitFieldUtilityTest is Test {
     }
 
     function testUnpackBitFieldOneOne() public {
-        uint256 bitField = (1 << 255) | 1;
+        uint256 bitField = 1 << 255 | 1;
         uint256[] memory unpacked = BitFieldUtility.unpackBitField(bitField);
         assertEq(unpacked.length, 2);
         assertEq(unpacked[0], 0);
         assertEq(unpacked[1], 255);
+    }
+
+    function testMsb(uint8 msb, uint256 extraBits) public {
+        uint256 bitMask;
+        if (msb == 255) {
+            bitMask = 2 ** 256 - 1;
+        } else {
+            bitMask = (1 << msb + 1) - 1;
+        }
+
+        uint256 bitField = 1 << msb;
+        assertEq(bitField & bitMask, bitField);
+
+        bitField = (bitField | extraBits) & bitMask;
+        uint256 retrievedMsb = BitFieldUtility.mostSignificantBit(bitField);
+        assertEq(retrievedMsb, msb);
     }
 }

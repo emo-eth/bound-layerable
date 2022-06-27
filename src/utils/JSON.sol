@@ -29,7 +29,11 @@ library json {
         return object(result);
     }
 
-    function array(string memory _value) internal pure returns (string memory) {
+    function array(string memory _value)
+        internal
+        pure
+        returns (string memory)
+    {
         return string.concat("[", _value, "]");
     }
 

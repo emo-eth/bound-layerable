@@ -74,7 +74,7 @@ interface IERC721A {
     error URIQueryForNonexistentToken();
 
     struct TokenOwnership {
-        // The address of the owner.
+    // The address of the owner.
         address addr;
         // Keeps track of the start time of ownership with minimal overhead for tokenomics.
         uint64 startTimestamp;
@@ -101,7 +101,10 @@ interface IERC721A {
      *
      * This function call must use less than 30 000 gas.
      */
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+    function supportsInterface(bytes4 interfaceId)
+        external
+        view
+        returns (bool);
 
     // ==============================
     //            IERC721
@@ -137,7 +140,10 @@ interface IERC721A {
     /**
      * @dev Returns the number of tokens in ``owner``'s account.
      */
-    function balanceOf(address owner) external view returns (uint256 balance);
+    function balanceOf(address owner)
+        external
+        view
+        returns (uint256 balance);
 
     /**
      * @dev Returns the owner of the `tokenId` token.
@@ -166,7 +172,8 @@ interface IERC721A {
         address to,
         uint256 tokenId,
         bytes calldata data
-    ) external;
+    )
+        external;
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
@@ -182,11 +189,8 @@ interface IERC721A {
      *
      * Emits a {Transfer} event.
      */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
+    function safeTransferFrom(address from, address to, uint256 tokenId)
+        external;
 
     /**
      * @dev Transfers `tokenId` token from `from` to `to`.
@@ -202,11 +206,8 @@ interface IERC721A {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
+    function transferFrom(address from, address to, uint256 tokenId)
+        external;
 
     /**
      * @dev Gives permission to `to` to transfer `tokenId` token to another account.
