@@ -8,6 +8,8 @@ import {LayerVariation} from '../../src/utils/Structs.sol';
 import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from '../../src/utils/Errors.sol';
 
 contract BoundLayerableTestImpl is BoundLayerable {
+    uint256 private constant BITMASK_BURNED = 1 << 224;
+
     constructor() BoundLayerable('', '', 'default') {
         layerVariations.push(LayerVariation(4, 4));
         layerVariations.push(LayerVariation(200, 8));
@@ -68,6 +70,23 @@ contract BoundLayerableTestImpl is BoundLayerable {
     {
         return _tokenIdToBoundLayers[_tokenId];
     }
+
+    function mint() public {
+        super._mint(msg.sender, 7);
+    }
+
+    function getLayerId(uint256 tokenId)
+        public
+        pure
+        override
+        returns (uint256)
+    {
+        return tokenId + 1;
+    }
+
+    function isBurned(uint256 tokenId) public view returns (bool) {
+        return _isBurned(tokenId);
+    }
 }
 
 library Helpers {
@@ -91,6 +110,11 @@ contract BoundLayerableTest is Test {
 
     function setUp() public {
         test = new BoundLayerableTestImpl();
+        test.mint();
+        test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
+        uint256[] memory layers = new uint256[](2);
+        layers[0] = 1;
+        layers[1] = 2;
     }
 
     function testLayerIsBoundToTokenId() public {
@@ -105,7 +129,7 @@ contract BoundLayerableTest is Test {
         assertTrue(test.layerIsBoundToTokenId((0xFF << 248) | 2, 1));
     }
 
-    function testBindLayer() public {
+    function testSetBoundLayers() public {
         test.setBoundLayers(0, (0xFF << 248) | 2);
         assertEq(test.getBoundLayerBitField(0), (0xFF << 248) | 2);
         test.setBoundLayers(0, 14);
@@ -317,5 +341,52 @@ contract BoundLayerableTest is Test {
 
     function testGetActiveLayersNoLayers() public view {
         test.getActiveLayers(0);
+    }
+
+    function testBurnAndBindLayer() public {
+        test.burnAndBindLayer(6, 1);
+        assertTrue(test.isBurned(1));
+        assertFalse(test.isBurned(6));
+        uint256 bindings = test.getBoundLayerBitField(6);
+        emit log_named_uint('bindings', bindings);
+        uint256[] memory boundLayers = test.getBoundLayers(6);
+        assertEq(boundLayers.length, 2);
+        assertEq(boundLayers[0], 2);
+        assertEq(boundLayers[1], 7);
+
+        // test bind unowned layer to owned
+    }
+
+    function test_snapshotBurnAndBindLayers() public {
+        uint256[] memory layers = new uint256[](6);
+        layers[0] = 0;
+        layers[1] = 1;
+        layers[2] = 2;
+        layers[3] = 3;
+        layers[4] = 4;
+        layers[5] = 5;
+        test.burnAndBindLayers(6, layers);
+    }
+
+    function testBurnAndBindLayers() public {
+        uint256[] memory layers = new uint256[](2);
+        layers[0] = 1;
+        layers[1] = 2;
+        test.burnAndBindLayers(6, layers);
+        assertTrue(test.isBurned(1));
+        assertTrue(test.isBurned(2));
+        assertFalse(test.isBurned(6));
+        uint256 bindings = test.getBoundLayerBitField(6);
+        emit log_named_uint('bindings', bindings);
+        uint256[] memory boundLayers = test.getBoundLayers(6);
+        assertEq(boundLayers.length, 3);
+        assertEq(boundLayers[0], 2);
+        assertEq(boundLayers[1], 3);
+        assertEq(boundLayers[2], 7);
+    }
+
+    // todo: test this in real-world circumstances where layer-id is compared against trait seed
+    function test_snapshotBurnAndBindLayer() public {
+        test.burnAndBindLayer(6, 1);
     }
 }

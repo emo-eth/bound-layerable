@@ -95,7 +95,12 @@ contract RandomTraits is Ownable {
      * @notice Get the layerId for a given tokenId by hashing tokenId with the random seed
      * and comparing the final byte against the appropriate distributions
      */
-    function getLayerId(uint256 _tokenId) public view returns (uint256) {
+    function getLayerId(uint256 _tokenId)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
         LayerType layerType = getLayerType(_tokenId);
         uint256 layerSeed = getLayerSeed(_tokenId, layerType) & 0xff;
         uint256 distributions = layerTypeToDistributions[layerType];

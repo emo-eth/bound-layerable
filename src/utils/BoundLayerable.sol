@@ -84,14 +84,14 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
             revert OnlyBindable();
         }
 
-        _burn(_targetTokenId);
         uint256 layerId = getLayerId(_tokenIdToBind);
-        if (portraitLayerId % NUM_TOKENS_PER_SET == 0) {
+        if (layerId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBindable();
         }
 
         uint256 bindings = _tokenIdToBoundLayers[_targetTokenId];
-        // bindings |=
+        // always bind portrait, since it won't be set automatically
+        bindings |= portraitLayerId.toBitMap();
         // TODO: necessary?
         uint256 layerIdBitMap = layerId.toBitMap();
         if ((bindings & layerIdBitMap) > 0) {
@@ -100,15 +100,54 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         _tokenIdToBoundLayers[_targetTokenId] =
             (bindings | layerId.toBitMap()) &
             NOT_0TH_BITMASK;
+        _burn(_tokenIdToBind);
     }
 
     function burnAndBindLayers(
-        uint256 _targetTokenId,
-        uint256[] calldata tokenidsToBind
+        uint256 targetTokenId,
+        uint256[] calldata tokenIdsToBind
     ) public {
-        if (ownerOf(_targetTokenId) != msg.sender) {
+        // todo: modifier for these?
+        if (ownerOf(targetTokenId) != msg.sender) {
             revert NotOwner();
         }
+        uint256 portraitLayerId = getLayerId(targetTokenId);
+
+        if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
+            revert OnlyBindable();
+        }
+        uint256 bindings = _tokenIdToBoundLayers[targetTokenId];
+        // always bind portrait, since it won't be set automatically
+        bindings |= portraitLayerId.toBitMap();
+        // todo: try to batch with arrays by LayerType, fetching distribution for type,
+        // and looping over arrays of LayerType, to avoid duplicate lookups of distributions
+        // todo: iterate once over array, delegating to LayerType arrays
+        // then iterate over types + arrays
+        // todo: look at most efficient way to code in assembly
+        unchecked {
+            // todo: revisit if via_ir = true
+            uint256 length = tokenIdsToBind.length;
+            uint256 i;
+            for (; i < length; ) {
+                uint256 tokenId = tokenIdsToBind[i];
+                if (ownerOf(targetTokenId) != msg.sender) {
+                    revert NotOwner();
+                }
+                uint256 layerId = getLayerId(tokenId);
+                if (layerId % NUM_TOKENS_PER_SET == 0) {
+                    revert CannotBindBindable();
+                }
+                uint256 layerIdBitMap = layerId.toBitMap();
+                if ((bindings & layerIdBitMap) > 0) {
+                    revert LayerAlreadyBound();
+                }
+                bindings = (bindings | layerIdBitMap);
+                // todo: check-effects-interactions?
+                _burn(tokenId);
+                ++i;
+            }
+        }
+        _tokenIdToBoundLayers[targetTokenId] = (bindings & NOT_0TH_BITMASK);
     }
 
     function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)

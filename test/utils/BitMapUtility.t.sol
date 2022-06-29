@@ -12,6 +12,25 @@ contract BitMapUtilityTest is Test {
         assertEq(numBits.toBitMap(), uint256(1 << numBits));
     }
 
+    function testIsSupersetOf(uint256 superset, uint256 subset) public {
+        superset |= subset;
+        assertTrue(superset.isSupersetOf(subset));
+    }
+
+    function testIsSupersetOfNotSuperset(uint256 badSuperset, uint256 subset)
+        public
+    {
+        badSuperset &= subset;
+        if (badSuperset == subset) {
+            if (badSuperset != type(uint256).max) {
+                badSuperset += 1;
+            } else {
+                badSuperset -= 1;
+            }
+        }
+        assertTrue(badSuperset != subset);
+    }
+
     function testUnpackBitField(uint8 numBits) public {
         vm.assume(numBits > 0);
         uint256[] memory bits = new uint256[](numBits);
@@ -50,8 +69,25 @@ contract BitMapUtilityTest is Test {
         }
 
         uint256 bitField = ((1 << msb) | extraBits) & bitMask;
-        uint256 retrievedMsb = BitMapUtility.mostSignificantBit(bitField);
+        uint256 retrievedMsb = BitMapUtility.msb(bitField);
         assertEq(retrievedMsb, msb);
+    }
+
+    function testLsb(uint8 lsb, uint256 extraBits) public {
+        vm.assume(lsb != 0);
+
+        uint256 bitField = (((1 << lsb) | extraBits) >> lsb) << lsb;
+
+        uint256 retrievedLsb = BitMapUtility.lsb(bitField);
+        assertEq(retrievedLsb, lsb);
+    }
+
+    function test_fuzzLsb(uint256 randomBits) public pure {
+        BitMapUtility.lsb(randomBits);
+    }
+
+    function test_fuzzMsb(uint256 randomBits) public pure {
+        BitMapUtility.msb(randomBits);
     }
 
     function testThing() public {
