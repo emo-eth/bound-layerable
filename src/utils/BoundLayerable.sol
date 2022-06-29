@@ -10,6 +10,7 @@ import {RandomTraits} from './RandomTraits.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 
 import './Errors.sol';
+import {NOT_0TH_BITMASK} from './Constants.sol';
 
 contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
     using BitMapUtility for uint256;
@@ -36,7 +37,7 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         _tokenIdToBoundLayers[tokenId] = 1;
     }
 
-    function bindLayersBulk(
+    function setBoundLayersBulk(
         uint256[] calldata _tokenId,
         uint256[] calldata _layers
     ) public onlyOwner {
@@ -46,19 +47,28 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
             revert ArrayLengthMismatch(tokenIdLength, _layers.length);
         }
         for (uint256 i; i < tokenIdLength; ) {
-            _tokenIdToBoundLayers[_tokenId[i]] = _layers[i] & ~uint256(1);
+            _tokenIdToBoundLayers[_tokenId[i]] = _layers[i] & NOT_0TH_BITMASK;
             unchecked {
                 ++i;
             }
         }
     }
 
-    function bindLayers(uint256 _tokenId, uint256 _bindings) public onlyOwner {
-        // 0th bit is not a valid layer; make sure it is set to 0 with a bitmask
-        _tokenIdToBoundLayers[_tokenId] |= _bindings & ~uint256(1);
+    function setBoundLayers(uint256 tokenId, uint256 bindings)
+        public
+        onlyOwner
+    {
+        _tokenIdToBoundLayers[tokenId] = bindings & NOT_0TH_BITMASK;
     }
 
-    function burnAndBindToken(uint256 _targetTokenId, uint256 _tokenIdToBind)
+    function bindLayers(uint256 _tokenId, uint256 _bindings) internal {
+        // 0th bit is not a valid layer; make sure it is set to 0 with a bitmask
+        _tokenIdToBoundLayers[_tokenId] =
+            (_tokenIdToBoundLayers[_tokenId] | _bindings) &
+            NOT_0TH_BITMASK;
+    }
+
+    function burnAndBindLayer(uint256 _targetTokenId, uint256 _tokenIdToBind)
         public
     {
         if (
@@ -67,15 +77,38 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         ) {
             revert NotOwner();
         }
+        // TODO: bulk fetch layerid
+        uint256 portraitLayerId = getLayerId(_targetTokenId);
+
+        if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
+            revert OnlyBindable();
+        }
+
         _burn(_targetTokenId);
         uint256 layerId = getLayerId(_tokenIdToBind);
+        if (portraitLayerId % NUM_TOKENS_PER_SET == 0) {
+            revert CannotBindBindable();
+        }
+
         uint256 bindings = _tokenIdToBoundLayers[_targetTokenId];
+        // bindings |=
         // TODO: necessary?
         uint256 layerIdBitMap = layerId.toBitMap();
         if ((bindings & layerIdBitMap) > 0) {
             revert LayerAlreadyBound();
         }
-        _tokenIdToBoundLayers[_targetTokenId] = bindings | layerId.toBitMap();
+        _tokenIdToBoundLayers[_targetTokenId] =
+            (bindings | layerId.toBitMap()) &
+            NOT_0TH_BITMASK;
+    }
+
+    function burnAndBindLayers(
+        uint256 _targetTokenId,
+        uint256[] calldata tokenidsToBind
+    ) public {
+        if (ownerOf(_targetTokenId) != msg.sender) {
+            revert NotOwner();
+        }
     }
 
     function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)

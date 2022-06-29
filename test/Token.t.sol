@@ -128,7 +128,7 @@ contract TokenTest is Test, ERC721Recipient {
         // unpack layerIDs into a binding - todo: make this a public function idk
         uint256 binding = test.packedLayersToBitField(packedLayers);
         emit log_named_uint('binding', binding);
-        test.bindLayers(_tokenId * 7, binding);
+        test.setBoundLayers(_tokenId * 7, binding);
 
         // swap layer ordering
         uint8 temp = layers[0];

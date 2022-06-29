@@ -106,16 +106,16 @@ contract BoundLayerableTest is Test {
     }
 
     function testBindLayer() public {
-        test.bindLayers(0, (0xFF << 248) | 2);
+        test.setBoundLayers(0, (0xFF << 248) | 2);
         assertEq(test.getBoundLayerBitField(0), (0xFF << 248) | 2);
-        test.bindLayers(0, 14);
+        test.setBoundLayers(0, 14);
         assertEq(test.getBoundLayerBitField(0), 14);
-        test.bindLayers(0, 1);
+        test.setBoundLayers(0, 1);
         // test we do not set 0th bit
         assertEq(test.getBoundLayerBitField(1), 0);
     }
 
-    function testBindLayersBulk() public {
+    function testSetBoundLayersBulk() public {
         uint256[] memory tokenIds = new uint256[](4);
         tokenIds[0] = 1;
         tokenIds[1] = 2;
@@ -128,7 +128,7 @@ contract BoundLayerableTest is Test {
         layerBindingBitField[2] = (3 << 254) | 1;
         layerBindingBitField[3] = (3 << 254) | 2;
 
-        test.bindLayersBulk(tokenIds, layerBindingBitField);
+        test.setBoundLayersBulk(tokenIds, layerBindingBitField);
         assertEq(test.getBoundLayerBitField(1), 1 << 255);
         assertEq(test.getBoundLayerBitField(2), 3 << 254);
         //0th bit shouldn't be set
@@ -136,7 +136,7 @@ contract BoundLayerableTest is Test {
         assertEq(test.getBoundLayerBitField(4), (3 << 254) | 2);
     }
 
-    function testBindLayersBulk_unequalLengths() public {
+    function testSetBoundLayersBulk_unequalLengths() public {
         uint256[] memory tokenIds = new uint256[](4);
         tokenIds[0] = 1;
         tokenIds[1] = 2;
@@ -154,7 +154,7 @@ contract BoundLayerableTest is Test {
                 uint256(3)
             )
         );
-        test.bindLayersBulk(tokenIds, layerBindingBitField);
+        test.setBoundLayersBulk(tokenIds, layerBindingBitField);
     }
 
     function testCheckUnpackedIsSubsetOfBound() public {
@@ -283,7 +283,7 @@ contract BoundLayerableTest is Test {
         boundLayers = Helpers.generateVariationMask(boundLayers, variations[1]);
         boundLayers |= 1 << 255;
         boundLayers |= 1 << 42;
-        test.bindLayers(0, boundLayers);
+        test.setBoundLayers(0, boundLayers);
         uint8[] memory layers = new uint8[](4);
         layers[0] = 42;
         layers[1] = 255;
@@ -299,7 +299,7 @@ contract BoundLayerableTest is Test {
     function testGetActiveLayers() public {
         test.removeVariations();
         uint256 boundlayers = 2**256 - 1;
-        test.bindLayers(0, boundlayers);
+        test.setBoundLayers(0, boundlayers);
         uint8[] memory layers = new uint8[](255);
         for (uint256 i = 0; i < layers.length; ++i) {
             layers[i] = uint8(i + 1);

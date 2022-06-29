@@ -52,17 +52,25 @@ contract RandomTraits is Ownable {
     }
 
     /// @notice Get the random seed for a given tokenId by hashing it with the traitGenerationSeed
-    function getLayerSeed(uint256 _tokenId, LayerType _layerType)
+    function getLayerSeed(uint256 tokenId, LayerType layerType)
         public
         view
         returns (uint256)
     {
         // TODO: revisit this optimization if via_ir is enabled
-        bytes32 _seed = traitGenerationSeed;
-        if (_seed == 0) {
+        bytes32 seed = traitGenerationSeed;
+        if (seed == 0) {
             revert TraitGenerationSeedNotSet();
         }
-        return uint256(keccak256(abi.encode(_seed, _tokenId, _layerType)));
+        return getLayerSeed(tokenId, layerType, seed);
+    }
+
+    function getLayerSeed(
+        uint256 tokenId,
+        LayerType layerType,
+        bytes32 seed
+    ) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encode(seed, tokenId, layerType)));
     }
 
     /**
@@ -112,6 +120,51 @@ contract RandomTraits is Ownable {
                 return i + 1 + 32 * uint256(layerType);
             }
             unchecked {
+                ++i;
+            }
+        }
+        // in the case that there are 32 distributions, default to the last id
+        return i + 32 * uint256(layerType);
+    }
+
+    function getLayerId(uint256 tokenId, bytes32 seed)
+        public
+        view
+        returns (uint256)
+    {
+        LayerType layerType = getLayerType(tokenId);
+        uint256 layerSeed = getLayerSeed(tokenId, layerType, seed) & 0xff;
+        uint256 distributions = layerTypeToDistributions[layerType];
+        return getLayerId(layerType, layerSeed, distributions);
+    }
+
+    // lays groundwork for batching layer types
+    function getLayerId(
+        LayerType layerType,
+        uint256 seed,
+        uint256 distributions
+    ) internal pure returns (uint256) {
+        // iterate over distributions until we find one that our layer seed is *less than*
+        uint256 i;
+        unchecked {
+            for (; i < 32; ) {
+                uint8 distribution = PackedByteUtility.getPackedByteFromLeft(
+                    i,
+                    distributions
+                );
+                // if distribution is 0, we've reached the end of the list
+                if (distribution == 0) {
+                    if (i > 0) {
+                        return i + 1 + 32 * uint256(layerType);
+                    } else {
+                        // first distribution should not be 0
+                        revert BadDistributions();
+                    }
+                }
+                // note: for layers with multiple variations, the same value should be packed multiple times
+                if (seed < distribution) {
+                    return i + 1 + 32 * uint256(layerType);
+                }
                 ++i;
             }
         }

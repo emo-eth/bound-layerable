@@ -13,3 +13,5 @@ error NotOwner();
 error TraitGenerationSeedNotSet();
 error LayerAlreadyBound();
 error NotBindable();
+error CannotBindBindable();
+error OnlyBindable();
