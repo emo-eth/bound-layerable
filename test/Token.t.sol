@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {Token} from "../src/Token.sol";
+import {Test} from 'forge-std/Test.sol';
+import {Token} from '../src/Token.sol';
 
-import {PackedByteUtility} from "../src/utils/PackedByteUtility.sol";
-import {RandomTraits} from "../src/utils/RandomTraits.sol";
-import {ERC721Recipient} from "./utils/ERC721Recipient.sol";
-import {LayerType} from "../src/utils/Enums.sol";
+import {PackedByteUtility} from '../src/utils/PackedByteUtility.sol';
+import {RandomTraits} from '../src/utils/RandomTraits.sol';
+import {ERC721Recipient} from './utils/ERC721Recipient.sol';
+import {LayerType} from '../src/utils/Enums.sol';
 
 contract TokenTest is Test, ERC721Recipient {
     Token test;
@@ -15,37 +15,49 @@ contract TokenTest is Test, ERC721Recipient {
 
     function setUp() public virtual {
         test = new Token('Test', 'test', '');
-    }
-
-    function testSetDisableTrading() public {
-        vm.prank(address(1)); // test.mintSet{value: .1 ether}();
-            // test.setInactive();
+        test.setTraitGenerationSeed(bytes32(uint256(1)));
     }
 
     function testDoTheMost() public {
         // // todo: set rarities
 
         // 6 backgrounds
-        distributions =
-            [uint8(42), uint8(84), uint8(126), uint8(168), uint8(210), uint8(252)];
+        distributions = [
+            uint8(42),
+            uint8(84),
+            uint8(126),
+            uint8(168),
+            uint8(210),
+            uint8(252)
+        ];
 
         uint8[] memory _distributions = distributions;
-        uint256[] memory packedDistributions =
-            PackedByteUtility.packBytearray(_distributions);
+        uint256[] memory packedDistributions = PackedByteUtility.packBytearray(
+            _distributions
+        );
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND, packedDistributions[0]
+            LayerType.BACKGROUND,
+            packedDistributions[0]
         );
 
         // 1 portrait
         test.setLayerTypeDistribution(LayerType.PORTRAIT, 255 << 248);
 
         // 5 textures
-        distributions =
-            [uint8(51), uint8(102), uint8(153), uint8(204), uint8(255)];
+        distributions = [
+            uint8(51),
+            uint8(102),
+            uint8(153),
+            uint8(204),
+            uint8(255)
+        ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
 
-        test.setLayerTypeDistribution(LayerType.TEXTURE, packedDistributions[0]);
+        test.setLayerTypeDistribution(
+            LayerType.TEXTURE,
+            packedDistributions[0]
+        );
 
         // 8 objects
         distributions = [
@@ -98,7 +110,7 @@ contract TokenTest is Test, ERC721Recipient {
             emit log_named_uint('layer', layer);
             uint256 lastLayer = 0;
             if (layerTokenId > startingTokenId) {
-                lastLayer = layers[layerTokenId % 7 - 1];
+                lastLayer = layers[(layerTokenId % 7) - 1];
             }
             if (layer == lastLayer) {
                 emit log('oops');
@@ -122,8 +134,9 @@ contract TokenTest is Test, ERC721Recipient {
         uint8 temp = layers[0];
         layers[0] = layers[1];
         layers[1] = temp;
-        uint256[] memory newPackedLayers =
-            PackedByteUtility.packBytearray(layers);
+        uint256[] memory newPackedLayers = PackedByteUtility.packBytearray(
+            layers
+        );
         // set active layers - use portrait id, not b
         test.setActiveLayers(startingTokenId, newPackedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(startingTokenId);

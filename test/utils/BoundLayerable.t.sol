@@ -1,24 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {BoundLayerable} from "../../src/utils/BoundLayerable.sol";
-import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
-import {LayerVariation} from "../../src/utils/Structs.sol";
-import {
-    ArrayLengthMismatch,
-    LayerNotBoundToTokenId,
-    MultipleVariationsEnabled,
-    DuplicateActiveLayers
-} from "../../src/utils/Errors.sol";
+import {Test} from 'forge-std/Test.sol';
+import {BoundLayerable} from '../../src/utils/BoundLayerable.sol';
+import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
+import {LayerVariation} from '../../src/utils/Structs.sol';
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from '../../src/utils/Errors.sol';
 
 contract BoundLayerableTestImpl is BoundLayerable {
-    constructor() BoundLayerable('default') {
+    constructor() BoundLayerable('', '', 'default') {
         layerVariations.push(LayerVariation(4, 4));
         layerVariations.push(LayerVariation(200, 8));
     }
 
-    function removeVariations() public {
+    // TODO: add tests for these + access control
+    function removeVariations() public onlyOwner {
         delete layerVariations;
     }
 
@@ -38,22 +34,14 @@ contract BoundLayerableTestImpl is BoundLayerable {
     function checkUnpackedIsSubsetOfBound(
         uint256 _unpackedLayers,
         uint256 _boundLayers
-    )
-        public
-        pure
-        virtual
-    {
+    ) public pure virtual {
         _checkUnpackedIsSubsetOfBound(_unpackedLayers, _boundLayers);
     }
 
     function checkForMultipleVariations(
         uint256 _unpackedLayers,
         uint256 _boundLayers
-    )
-        public
-        view
-        virtual
-    {
+    ) public view virtual {
         _checkForMultipleVariations(_unpackedLayers, _boundLayers);
     }
 
@@ -86,11 +74,7 @@ library Helpers {
     function generateVariationMask(
         uint256 _layers,
         LayerVariation memory variation
-    )
-        internal
-        pure
-        returns (uint256)
-    {
+    ) internal pure returns (uint256) {
         for (
             uint256 i = variation.layerId;
             i < variation.layerId + variation.numVariations;
@@ -118,12 +102,12 @@ contract BoundLayerableTest is Test {
         assertTrue(test.layerIsBoundToTokenId(0x2, 1));
         assertTrue(test.layerIsBoundToTokenId(0x4, 2));
         assertTrue(test.layerIsBoundToTokenId(0xFF << 248, 255));
-        assertTrue(test.layerIsBoundToTokenId(0xFF << 248 | 2, 1));
+        assertTrue(test.layerIsBoundToTokenId((0xFF << 248) | 2, 1));
     }
 
     function testBindLayer() public {
-        test.bindLayers(0, 0xFF << 248 | 2);
-        assertEq(test.getBoundLayerBitField(0), 0xFF << 248 | 2);
+        test.bindLayers(0, (0xFF << 248) | 2);
+        assertEq(test.getBoundLayerBitField(0), (0xFF << 248) | 2);
         test.bindLayers(0, 14);
         assertEq(test.getBoundLayerBitField(0), 14);
         test.bindLayers(0, 1);
@@ -141,15 +125,15 @@ contract BoundLayerableTest is Test {
         layerBindingBitField[0] = 1 << 255;
         layerBindingBitField[1] = 3 << 254;
         // 0th bit shouldn't be set
-        layerBindingBitField[2] = 3 << 254 | 1;
-        layerBindingBitField[3] = 3 << 254 | 2;
+        layerBindingBitField[2] = (3 << 254) | 1;
+        layerBindingBitField[3] = (3 << 254) | 2;
 
         test.bindLayersBulk(tokenIds, layerBindingBitField);
         assertEq(test.getBoundLayerBitField(1), 1 << 255);
         assertEq(test.getBoundLayerBitField(2), 3 << 254);
         //0th bit shouldn't be set
         assertEq(test.getBoundLayerBitField(3), 3 << 254);
-        assertEq(test.getBoundLayerBitField(4), 3 << 254 | 2);
+        assertEq(test.getBoundLayerBitField(4), (3 << 254) | 2);
     }
 
     function testBindLayersBulk_unequalLengths() public {
@@ -161,17 +145,21 @@ contract BoundLayerableTest is Test {
         uint256[] memory layerBindingBitField = new uint256[](3);
         layerBindingBitField[0] = 1 << 255;
         layerBindingBitField[1] = 3 << 254;
-        layerBindingBitField[2] = 3 << 254 | 2;
+        layerBindingBitField[2] = (3 << 254) | 2;
 
         vm.expectRevert(
-            abi.encodePacked(ArrayLengthMismatch.selector, uint256(4), uint256(3))
+            abi.encodePacked(
+                ArrayLengthMismatch.selector,
+                uint256(4),
+                uint256(3)
+            )
         );
         test.bindLayersBulk(tokenIds, layerBindingBitField);
     }
 
     function testCheckUnpackedIsSubsetOfBound() public {
         // pass: bound is superset of unpacked
-        uint256 boundLayers = 0xFF << 248 | 2;
+        uint256 boundLayers = (0xFF << 248) | 2;
         uint256 unpackedLayers = 0xFF << 248;
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
@@ -206,44 +194,42 @@ contract BoundLayerableTest is Test {
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // pass: one of each variation
-        unpackedLayers = 1 << 200 | 1 << 4;
+        unpackedLayers = (1 << 200) | (1 << 4);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // pass: different variations
-        unpackedLayers = 1 << 201 | 1 << 5;
+        unpackedLayers = (1 << 201) | (1 << 5);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // pass: variations plus other layers
-        unpackedLayers = 1 << 208 | 1 << 12 | 1 << 42 | 1 << 255;
+        unpackedLayers = (1 << 208) | (1 << 12) | (1 << 42) | (1 << 255);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // revert: multiple variations
-        unpackedLayers = 1 << 200 | 1 << 201 | 1 << 42 | 1 << 255;
+        unpackedLayers = (1 << 200) | (1 << 201) | (1 << 42) | (1 << 255);
         vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // revert: multiple multiple variations (same variation)
-        unpackedLayers = 1 << 200 | 1 << 201 | 1 << 202 | 1 << 42 | 1 << 255;
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 42) |
+            (1 << 255);
         vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
 
         // revert: multiple multiple variations (different variations)
-        unpackedLayers = 1
-            << 200
-            | 1
-            << 201
-            | 1
-            << 202
-            | 1
-            << 4
-            | 1
-            << 5
-            | 1
-            << 12
-            | 1
-            << 42
-            | 1
-            << 255;
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 4) |
+            (1 << 5) |
+            (1 << 12) |
+            (1 << 42) |
+            (1 << 255);
         vm.expectRevert(MultipleVariationsEnabled.selector);
         test.checkForMultipleVariations(boundLayers, unpackedLayers);
     }
@@ -312,7 +298,7 @@ contract BoundLayerableTest is Test {
     // todo: skip, need way to allocate memory
     function testGetActiveLayers() public {
         test.removeVariations();
-        uint256 boundlayers = 2 ** 256 - 1;
+        uint256 boundlayers = 2**256 - 1;
         test.bindLayers(0, boundlayers);
         uint8[] memory layers = new uint8[](255);
         for (uint256 i = 0; i < layers.length; ++i) {
@@ -321,7 +307,7 @@ contract BoundLayerableTest is Test {
         uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
         test.setActiveLayers(0, packedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(0);
-        emit log_named_uint("activeLayers.length", activeLayers.length);
+        emit log_named_uint('activeLayers.length', activeLayers.length);
         // emit log_named_uint("activeLayers[255]", activeLayers[255]);
         assertEq(activeLayers.length, 255);
         for (uint256 i; i < activeLayers.length; ++i) {

@@ -7,22 +7,34 @@ import {BitMapUtility} from './BitMapUtility.sol';
 import {LayerVariation} from './Structs.sol';
 import {OnChainLayerable} from './OnChainLayerable.sol';
 import {RandomTraits} from './RandomTraits.sol';
+import {ERC721A} from '../token/ERC721A.sol';
+
 import './Errors.sol';
 
-contract BoundLayerable is Ownable, RandomTraits(7) {
+contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
+    using BitMapUtility for uint256;
     // TODO: potentially initialize at mint by setting leftmost bit; will quarter gas cost of binding layers
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
     LayerVariation[] public layerVariations;
     OnChainLayerable public metadataContract;
 
-    constructor(string memory baseUri) {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        string memory baseUri
+    ) ERC721A(_name, _symbol) {
         metadataContract = new OnChainLayerable(baseUri, msg.sender);
     }
 
     /////////////
     // SETTERS //
-    /////////////x`
+    /////////////
+
+    /// @dev set 0th bit to 1 in order to make first binding cost cheaper for user
+    function _setPlaceholderBinding(uint256 tokenId) internal {
+        _tokenIdToBoundLayers[tokenId] = 1;
+    }
 
     function bindLayersBulk(
         uint256[] calldata _tokenId,
@@ -41,16 +53,42 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         }
     }
 
-    function bindLayers(uint256 _tokenId, uint256 _layers) public onlyOwner {
+    function bindLayers(uint256 _tokenId, uint256 _bindings) public onlyOwner {
         // 0th bit is not a valid layer; make sure it is set to 0 with a bitmask
-        _tokenIdToBoundLayers[_tokenId] = _layers & ~uint256(1);
+        _tokenIdToBoundLayers[_tokenId] = _bindings & ~uint256(1);
+    }
+
+    function burnAndBindToken(uint256 _targetTokenId, uint256 _tokenIdToBind)
+        public
+    {
+        if (
+            ownerOf(_targetTokenId) != msg.sender ||
+            ownerOf(_tokenIdToBind) != msg.sender
+        ) {
+            revert NotOwner();
+        }
+        _burn(_targetTokenId);
+        uint256 layerId = getLayerId(_tokenIdToBind);
+        uint256 bindings = _tokenIdToBoundLayers[_targetTokenId];
+        // TODO: necessary?
+        uint256 layerIdBitMap = layerId.toBitMap();
+        if ((bindings & layerIdBitMap) > 0) {
+            revert LayerAlreadyBound();
+        }
+        _tokenIdToBoundLayers[_targetTokenId] = bindings | layerId.toBitMap();
     }
 
     function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)
         external
     {
         // TODO: check tokenId is owned or authorized for msg.sender
-
+        // TODO: check tokenId is bindable
+        // if (ownerOf(_tokenId) != msg.sender) {
+        //     revert NotOwner();
+        // }
+        if (_tokenId % NUM_TOKENS_PER_SET != 0) {
+            revert NotBindable();
+        }
         // unpack layers into a single bitfield and check there are no duplicates
         uint256 unpackedLayers = _unpackLayersAndCheckForDuplicates(
             _packedLayers
@@ -73,14 +111,11 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         uint256 packedLayersArrLength = _packedLayersArr.length;
         for (uint256 i; i < packedLayersArrLength; ++i) {
             uint256 packedLayers = _packedLayersArr[i];
-            // emit log_named_uint('packed layers', packedLayers);
             for (uint256 j; j < 32; ++j) {
-                // uint8
                 uint256 layer = PackedByteUtility.getPackedByteFromLeft(
                     j,
                     packedLayers
                 );
-                // emit log_named_uint('unpacked layer', layer);
                 if (layer == 0) {
                     break;
                 }

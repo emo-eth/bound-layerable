@@ -9,3 +9,7 @@ error DuplicateActiveLayers();
 error MultipleVariationsEnabled();
 error InvalidLayer(uint256 layer);
 error BadDistributions();
+error NotOwner();
+error TraitGenerationSeedNotSet();
+error LayerAlreadyBound();
+error NotBindable();

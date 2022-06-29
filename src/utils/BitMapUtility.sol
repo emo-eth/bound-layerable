@@ -11,6 +11,22 @@ uint256 constant _2_2 = 2**2;
 uint256 constant _2_1 = 2**1;
 
 library BitMapUtility {
+    function toBitMap(uint256 val) internal pure returns (uint256 bitmap) {
+        assembly {
+            bitmap := shl(val, 1)
+        }
+    }
+
+    function intersect(uint256 target, uint256 test)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            result := and(target, test)
+        }
+    }
+
     function unpackBitMap(uint256 bitMap)
         internal
         pure
@@ -39,16 +55,22 @@ library BitMapUtility {
         }
     }
 
-    function uint8sToBitMap(uint8[] memory uints)
+    function uintsToBitMap(uint256[] memory uints)
         internal
         pure
         returns (uint256)
     {
         uint256 bitMap;
         uint256 layersLength = uints.length;
-        for (uint256 i; i < layersLength; ++i) {
-            uint8 bit = uints[i];
-            bitMap |= 1 << bit;
+        for (uint256 i; i < layersLength; ) {
+            uint256 bit = uints[i];
+            assembly {
+                bitMap := or(bitMap, shl(bit, 1))
+            }
+            bitMap |= toBitMap(uints[i]);
+            unchecked {
+                ++i;
+            }
         }
         return bitMap;
     }

@@ -5,13 +5,20 @@ import {Test} from 'forge-std/Test.sol';
 import {BitMapUtility} from '../../src/utils/BitMapUtility.sol';
 
 contract BitMapUtilityTest is Test {
+    using BitMapUtility for uint256;
+    using BitMapUtility for uint8;
+
+    function testToBitMap(uint8 numBits) public {
+        assertEq(numBits.toBitMap(), uint256(1 << numBits));
+    }
+
     function testUnpackBitField(uint8 numBits) public {
         vm.assume(numBits > 0);
-        uint8[] memory bits = new uint8[](numBits);
+        uint256[] memory bits = new uint256[](numBits);
         for (uint8 i = 0; i < numBits; ++i) {
             bits[i] = i;
         }
-        uint256 bitField = BitMapUtility.uint8sToBitMap(bits);
+        uint256 bitField = BitMapUtility.uintsToBitMap(bits);
 
         if (numBits == 1) {
             assertEq(bitField, 1);
@@ -45,5 +52,13 @@ contract BitMapUtilityTest is Test {
         uint256 bitField = ((1 << msb) | extraBits) & bitMask;
         uint256 retrievedMsb = BitMapUtility.mostSignificantBit(bitField);
         assertEq(retrievedMsb, msb);
+    }
+
+    function testThing() public {
+        bool thing;
+        assembly {
+            thing := 0xf0
+        }
+        assertTrue(thing);
     }
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {PackedByteUtility} from "./PackedByteUtility.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {LayerType} from "./Enums.sol";
-import {BadDistributions} from "./Errors.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {PackedByteUtility} from './PackedByteUtility.sol';
+import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {LayerType} from './Enums.sol';
+import {BadDistributions, TraitGenerationSeedNotSet} from './Errors.sol';
 
 contract RandomTraits is Ownable {
     using Strings for uint256;
@@ -47,10 +47,7 @@ contract RandomTraits is Ownable {
     function setLayerTypeDistribution(
         LayerType _layerType,
         uint256 _distribution
-    )
-        public
-        onlyOwner
-    {
+    ) public onlyOwner {
         layerTypeToDistributions[_layerType] = _distribution;
     }
 
@@ -60,9 +57,12 @@ contract RandomTraits is Ownable {
         view
         returns (uint256)
     {
-        return uint256(
-            keccak256(abi.encode(traitGenerationSeed, _tokenId, _layerType))
-        );
+        // TODO: revisit this optimization if via_ir is enabled
+        bytes32 _seed = traitGenerationSeed;
+        if (_seed == 0) {
+            revert TraitGenerationSeedNotSet();
+        }
+        return uint256(keccak256(abi.encode(_seed, _tokenId, _layerType)));
     }
 
     /**
@@ -93,9 +93,11 @@ contract RandomTraits is Ownable {
         uint256 distributions = layerTypeToDistributions[layerType];
         // iterate over distributions until we find one that our layer seed is *less than*
         uint256 i;
-        for (; i < 32;) {
-            uint8 distribution =
-                PackedByteUtility.getPackedByteFromLeft(i, distributions);
+        for (; i < 32; ) {
+            uint8 distribution = PackedByteUtility.getPackedByteFromLeft(
+                i,
+                distributions
+            );
             // if distribution is 0, we've reached the end of the list
             if (distribution == 0) {
                 if (i > 0) {
