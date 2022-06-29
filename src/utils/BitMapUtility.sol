@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
 uint256 constant _2_128 = 2**128;
 uint256 constant _2_64 = 2**64;

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {OnChainLayerable} from "../../src/utils/OnChainLayerable.sol";
-import {Attribute} from "../../src/utils/Structs.sol";
-import {DisplayType, LayerType} from "../../src/utils/Enums.sol";
+import {Test} from 'forge-std/Test.sol';
+import {OnChainLayerable} from '../../src/utils/OnChainLayerable.sol';
+import {Attribute} from '../../src/utils/Structs.sol';
+import {DisplayType, LayerType} from '../../src/utils/Enums.sol';
 
 contract OnChainLayerableImpl is OnChainLayerable {
     uint256 bindings;
@@ -33,9 +33,13 @@ contract OnChainLayerableImpl is OnChainLayerable {
     {
         // return '';
         // todo: unpack to actual layer ids
-        return this.getTokenURI(
-            _layerId, bindings, traitGenerationSeed, activeLayers
-        );
+        return
+            this.getTokenURI(
+                _layerId,
+                bindings,
+                traitGenerationSeed,
+                activeLayers
+            );
     }
 }
 
@@ -56,8 +60,7 @@ contract OnChainLayerableTest is Test {
 
         // once seeded, if not bound, regular nft metadata
         // test.setTraitGenerationSeed(bytes32(uint256(1)));
-        expected =
-            '{"image":"layer/1.png","attributes":"[{"trait_type":"test","value":"hello"}]"}';
+        expected = '{"image":"layer/1.png","attributes":"[{"trait_type":"test","value":"hello"}]"}';
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
 
@@ -69,8 +72,7 @@ contract OnChainLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        expected =
-            '{"image":"<svg xmlns="http://www.w3.org/2000/svg"></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]"}';
+        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]"}';
         actual = test.tokenURI(1);
         assertEq(actual, expected);
         uint256[] memory activeLayers = new uint256[](2);
@@ -79,8 +81,7 @@ contract OnChainLayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected =
-            '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2.png"  height="100%" /><image href="layer/1.png"  height="100%" /></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]"}';
+        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2.png"  height="100%" /><image href="layer/1.png"  height="100%" /></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]"}';
         actual = test.tokenURI(1);
         assertEq(actual, expected);
     }

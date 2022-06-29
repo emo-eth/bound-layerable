@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
+import {Test} from 'forge-std/Test.sol';
+import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
 
 contract PackedByteUtilityTest is Test {
     function testGetPackedBytesFromRight() public {
-        uint256 bitField =
-            0xff00000000000000000000000000000000000000000000000000000000000201;
+        uint256 bitField = 0xff00000000000000000000000000000000000000000000000000000000000201;
         uint256 expected = 0x1;
         uint256 actual = PackedByteUtility.getPackedByteFromRight(0, bitField);
         assertEq(actual, expected);
@@ -36,8 +35,7 @@ contract PackedByteUtilityTest is Test {
     }
 
     function testGetPackedBytesFromLeft() public {
-        uint256 bitField =
-            0x02010000000000000000000000000000000000000000000000000000000000ff;
+        uint256 bitField = 0x02010000000000000000000000000000000000000000000000000000000000ff;
         uint256 expected = 0x2;
         uint256 actual = PackedByteUtility.getPackedByteFromLeft(0, bitField);
 
@@ -52,8 +50,7 @@ contract PackedByteUtilityTest is Test {
         actual = PackedByteUtility.getPackedByteFromLeft(31, bitField);
         assertEq(actual, expected);
 
-        uint256 bitFieldShort =
-            0x0311000000000000000000000000000000000000000000000000000000000000;
+        uint256 bitFieldShort = 0x0311000000000000000000000000000000000000000000000000000000000000;
         expected = 0x3;
         actual = PackedByteUtility.getPackedByteFromLeft(0, bitFieldShort);
         assertEq(actual, expected);
@@ -90,12 +87,12 @@ contract PackedByteUtilityTest is Test {
         assertEq(actual, expected);
 
         packed = 0xFFFE01 << 232; // 0b11111111111111111111111111111110
-        expected = 0xC0 << 248 | 2; // 0b11......1 - 0-byte translates to 1
+        expected = (0xC0 << 248) | 2; // 0b11......1 - 0-byte translates to 1
         actual = PackedByteUtility.unpackBytesToBitField(packed);
         assertEq(actual, expected);
 
         // test identical bytes, as well as a straggling byte at the end of the array
-        packed = 0xFFFF << 240 | 1;
+        packed = (0xFFFF << 240) | 1;
         expected = 1 << 255;
         actual = PackedByteUtility.unpackBytesToBitField(packed);
         assertEq(actual, expected);
@@ -128,7 +125,7 @@ contract PackedByteUtilityTest is Test {
         bytearray[1] = 2;
         packed = PackedByteUtility.packBytearray(bytearray);
         assertEq(packed.length, 1);
-        assertEq(packed[0], 0x1 << 248 | 0x2 << 240);
+        assertEq(packed[0], (0x1 << 248) | (0x2 << 240));
 
         bytearray = new uint8[](32);
         bytearray[0] = 1;
@@ -136,7 +133,7 @@ contract PackedByteUtilityTest is Test {
         packed = PackedByteUtility.packBytearray(bytearray);
         assertEq(packed.length, 1);
 
-        assertEq(packed[0], 0x1 << 248 | 2);
+        assertEq(packed[0], (0x1 << 248) | 2);
 
         bytearray = new uint8[](33);
         bytearray[0] = 1;
@@ -144,7 +141,7 @@ contract PackedByteUtilityTest is Test {
         bytearray[32] = 5;
         packed = PackedByteUtility.packBytearray(bytearray);
         assertEq(packed.length, 2);
-        assertEq(packed[0], 0x1 << 248 | 2);
+        assertEq(packed[0], (0x1 << 248) | 2);
         assertEq(packed[1], 5 << 248);
     }
 }

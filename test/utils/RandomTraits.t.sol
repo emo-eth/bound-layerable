@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
-import {Test} from "forge-std/Test.sol";
-import {RandomTraits} from "../../src/utils/RandomTraits.sol";
-import {PackedByteUtility} from "../../src/utils/PackedByteUtility.sol";
-import {LayerType} from "../../src/utils/Enums.sol";
+import {Test} from 'forge-std/Test.sol';
+import {RandomTraits} from '../../src/utils/RandomTraits.sol';
+import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
+import {LayerType} from '../../src/utils/Enums.sol';
 
 contract RandomTraitsTest is Test {
     RandomTraits test;
@@ -19,7 +19,8 @@ contract RandomTraitsTest is Test {
         test.setTraitGenerationSeed(traitGenerationSeed);
         distributions.push(0x80);
         test.setLayerTypeDistribution(
-            LayerType.PORTRAIT, PackedByteUtility.packBytearray(distributions)[0]
+            LayerType.PORTRAIT,
+            PackedByteUtility.packBytearray(distributions)[0]
         );
         uint256 layerId = test.getLayerId(0);
         assertTrue(layerId == 1 || layerId == 2);
@@ -58,23 +59,28 @@ contract RandomTraitsTest is Test {
 
     function testGetLayerId() public {
         test.setTraitGenerationSeed(bytes32(uint256(42)));
-        emit log_named_bytes32("seed", test.traitGenerationSeed());
+        emit log_named_bytes32('seed', test.traitGenerationSeed());
         // first byte is 0x64, or 0b01100100
         emit log_named_bytes32(
-            "hash 1",
+            'hash 1',
             keccak256(
-                abi.encode(test.traitGenerationSeed(), uint256(1), LayerType.BACKGROUND)
+                abi.encode(
+                    test.traitGenerationSeed(),
+                    uint256(1),
+                    LayerType.BACKGROUND
+                )
             )
-            );
+        );
         // less than first distribution
         distributions = new uint8[](0);
         distributions.push(0x80);
         distributions.push(0xc0);
         test.setLayerTypeDistribution(
-            LayerType.PORTRAIT, PackedByteUtility.packBytearray(distributions)[0]
+            LayerType.PORTRAIT,
+            PackedByteUtility.packBytearray(distributions)[0]
         );
         uint256 layerId = test.getLayerId(0);
-        emit log_named_uint("layerId", layerId);
+        emit log_named_uint('layerId', layerId);
         assertEq(layerId, 1);
 
         distributions = new uint8[](0);
@@ -82,17 +88,24 @@ contract RandomTraitsTest is Test {
         // less than second distribution
         distributions.push(0x40); // 0b01000000
         distributions.push(0x80); // 0b10000000
-        uint256[] memory packedDistribution =
-            PackedByteUtility.packBytearray(distributions);
-        emit log_named_uint("packedDistribution", packedDistribution[0]);
-        test.setLayerTypeDistribution(LayerType.PORTRAIT, packedDistribution[0]);
+        uint256[] memory packedDistribution = PackedByteUtility.packBytearray(
+            distributions
+        );
+        emit log_named_uint('packedDistribution', packedDistribution[0]);
+        test.setLayerTypeDistribution(
+            LayerType.PORTRAIT,
+            packedDistribution[0]
+        );
         layerId = test.getLayerId(0);
         assertEq(layerId, 2);
 
         // greater than second distribution
         distributions[1] = 0x60; // 0b01100000
         packedDistribution = PackedByteUtility.packBytearray(distributions);
-        test.setLayerTypeDistribution(LayerType.PORTRAIT, packedDistribution[0]);
+        test.setLayerTypeDistribution(
+            LayerType.PORTRAIT,
+            packedDistribution[0]
+        );
         layerId = test.getLayerId(0);
         assertEq(layerId, 3);
 
@@ -101,7 +114,10 @@ contract RandomTraitsTest is Test {
             distributions.push(i);
         }
         packedDistribution = PackedByteUtility.packBytearray(distributions);
-        test.setLayerTypeDistribution(LayerType.PORTRAIT, packedDistribution[0]);
+        test.setLayerTypeDistribution(
+            LayerType.PORTRAIT,
+            packedDistribution[0]
+        );
         layerId = test.getLayerId(0);
         assertEq(layerId, 32);
 
@@ -112,7 +128,8 @@ contract RandomTraitsTest is Test {
         distributions.push(0x20);
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND, packedDistribution[0]
+            LayerType.BACKGROUND,
+            packedDistribution[0]
         );
         layerId = test.getLayerId(1);
         assertEq(layerId, 33);
@@ -121,7 +138,8 @@ contract RandomTraitsTest is Test {
         distributions[0] = 0x17;
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND, packedDistribution[0]
+            LayerType.BACKGROUND,
+            packedDistribution[0]
         );
         layerId = test.getLayerId(1);
         assertEq(layerId, 34);
@@ -131,7 +149,8 @@ contract RandomTraitsTest is Test {
         distributions[1] = 0x17;
         packedDistribution = PackedByteUtility.packBytearray(distributions);
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND, packedDistribution[0]
+            LayerType.BACKGROUND,
+            packedDistribution[0]
         );
         layerId = test.getLayerId(1);
         assertEq(layerId, 35);

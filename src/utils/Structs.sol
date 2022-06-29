@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
-import {DisplayType} from "./Enums.sol";
+import {DisplayType} from './Enums.sol';
 
 struct Attribute {
     string traitType;

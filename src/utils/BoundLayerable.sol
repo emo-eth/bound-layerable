@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.4;
+pragma solidity ^0.8.4;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {PackedByteUtility} from './PackedByteUtility.sol';
@@ -55,7 +55,7 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
 
     function bindLayers(uint256 _tokenId, uint256 _bindings) public onlyOwner {
         // 0th bit is not a valid layer; make sure it is set to 0 with a bitmask
-        _tokenIdToBoundLayers[_tokenId] = _bindings & ~uint256(1);
+        _tokenIdToBoundLayers[_tokenId] |= _bindings & ~uint256(1);
     }
 
     function burnAndBindToken(uint256 _targetTokenId, uint256 _tokenIdToBind)
