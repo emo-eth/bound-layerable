@@ -1,56 +1,56 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-uint256 constant _2_128 = 2 ** 128;
-uint256 constant _2_64 = 2 ** 64;
-uint256 constant _2_32 = 2 ** 32;
-uint256 constant _2_16 = 2 ** 16;
-uint256 constant _2_8 = 2 ** 8;
-uint256 constant _2_4 = 2 ** 4;
-uint256 constant _2_2 = 2 ** 2;
-uint256 constant _2_1 = 2 ** 1;
+uint256 constant _2_128 = 2**128;
+uint256 constant _2_64 = 2**64;
+uint256 constant _2_32 = 2**32;
+uint256 constant _2_16 = 2**16;
+uint256 constant _2_8 = 2**8;
+uint256 constant _2_4 = 2**4;
+uint256 constant _2_2 = 2**2;
+uint256 constant _2_1 = 2**1;
 
-library BitFieldUtility {
-    function unpackBitField(uint256 bitField)
+library BitMapUtility {
+    function unpackBitMap(uint256 bitMap)
         internal
         pure
         returns (uint256[] memory unpacked)
     {
-        if (bitField == 0) {
+        if (bitMap == 0) {
             return new uint256[](0);
         }
         uint256 numLayers = 0;
-        uint256 bitFieldTemp = bitField;
+        uint256 bitMapTemp = bitMap;
         // count the number of 1's in the bit field to get the number of layers
-        while (bitFieldTemp != 0) {
-            bitFieldTemp = bitFieldTemp & bitFieldTemp - 1;
+        while (bitMapTemp != 0) {
+            bitMapTemp = bitMapTemp & (bitMapTemp - 1);
             numLayers++;
         }
         // use that number to allocate a memory array
         // todo: look into assigning length of 255 and then modifying in-memory, if gas is ever a concern
         unpacked = new uint256[](numLayers);
-        bitFieldTemp = bitField;
+        bitMapTemp = bitMap;
         unchecked {
             for (uint256 i = 0; i < numLayers; ++i) {
-                bitFieldTemp = bitFieldTemp & bitFieldTemp - 1;
-                unpacked[i] = mostSignificantBit(bitField - bitFieldTemp);
-                bitField = bitFieldTemp;
+                bitMapTemp = bitMapTemp & (bitMapTemp - 1);
+                unpacked[i] = mostSignificantBit(bitMap - bitMapTemp);
+                bitMap = bitMapTemp;
             }
         }
     }
 
-    function uint8sToBitField(uint8[] memory uints)
+    function uint8sToBitMap(uint8[] memory uints)
         internal
         pure
         returns (uint256)
     {
-        uint256 bitField;
+        uint256 bitMap;
         uint256 layersLength = uints.length;
         for (uint256 i; i < layersLength; ++i) {
             uint8 bit = uints[i];
-            bitField |= 1 << bit;
+            bitMap |= 1 << bit;
         }
-        return bitField;
+        return bitMap;
     }
 
     // todo: fuzz-test this with random uint8 and uint256;
@@ -59,11 +59,7 @@ library BitFieldUtility {
     /// @dev See the note on msb in the "Find First Set" Wikipedia article https://en.wikipedia.org/wiki/Find_first_set
     /// @param x The uint256 number for which to find the index of the most significant bit.
     /// @return msb The index of the most significant bit as an uint256.
-    function mostSignificantBit(uint256 x)
-        internal
-        pure
-        returns (uint256 msb)
-    {
+    function mostSignificantBit(uint256 x) internal pure returns (uint256 msb) {
         assembly {
             if iszero(lt(x, _2_128)) {
                 x := shr(128, x)

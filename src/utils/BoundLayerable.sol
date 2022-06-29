@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {PackedByteUtility} from "./PackedByteUtility.sol";
-import {BitFieldUtility} from "./BitFieldUtility.sol";
-import {LayerVariation} from "./Structs.sol";
-import {OnChainLayerable} from "./OnChainLayerable.sol";
-import {RandomTraits} from "./RandomTraits.sol";
-import "./Errors.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {PackedByteUtility} from './PackedByteUtility.sol';
+import {BitMapUtility} from './BitMapUtility.sol';
+import {LayerVariation} from './Structs.sol';
+import {OnChainLayerable} from './OnChainLayerable.sol';
+import {RandomTraits} from './RandomTraits.sol';
+import './Errors.sol';
 
 contract BoundLayerable is Ownable, RandomTraits(7) {
     // TODO: potentially initialize at mint by setting leftmost bit; will quarter gas cost of binding layers
@@ -17,9 +17,7 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
     OnChainLayerable public metadataContract;
 
     constructor(string memory baseUri) {
-        metadataContract = new OnChainLayerable(
-            baseUri, msg.sender 
-        );
+        metadataContract = new OnChainLayerable(baseUri, msg.sender);
     }
 
     /////////////
@@ -29,16 +27,13 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
     function bindLayersBulk(
         uint256[] calldata _tokenId,
         uint256[] calldata _layers
-    )
-        public
-        onlyOwner
-    {
+    ) public onlyOwner {
         // TODO: check tokenIds are valid?
         uint256 tokenIdLength = _tokenId.length;
         if (tokenIdLength != _layers.length) {
             revert ArrayLengthMismatch(tokenIdLength, _layers.length);
         }
-        for (uint256 i; i < tokenIdLength;) {
+        for (uint256 i; i < tokenIdLength; ) {
             _tokenIdToBoundLayers[_tokenId[i]] = _layers[i] & ~uint256(1);
             unchecked {
                 ++i;
@@ -57,8 +52,9 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         // TODO: check tokenId is owned or authorized for msg.sender
 
         // unpack layers into a single bitfield and check there are no duplicates
-        uint256 unpackedLayers =
-            _unpackLayersAndCheckForDuplicates(_packedLayers);
+        uint256 unpackedLayers = _unpackLayersAndCheckForDuplicates(
+            _packedLayers
+        );
         uint256 boundLayers = _tokenIdToBoundLayers[_tokenId];
         // check new active layers are all bound to tokenId
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
@@ -72,11 +68,7 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
 
     function _unpackLayersAndCheckForDuplicates(
         uint256[] calldata _packedLayersArr
-    )
-        internal
-        virtual
-        returns (uint256)
-    {
+    ) internal virtual returns (uint256) {
         uint256 unpackedLayers;
         uint256 packedLayersArrLength = _packedLayersArr.length;
         for (uint256 i; i < packedLayersArrLength; ++i) {
@@ -84,8 +76,10 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
             // emit log_named_uint('packed layers', packedLayers);
             for (uint256 j; j < 32; ++j) {
                 // uint8
-                uint256 layer =
-                    PackedByteUtility.getPackedByteFromLeft(j, packedLayers);
+                uint256 layer = PackedByteUtility.getPackedByteFromLeft(
+                    j,
+                    packedLayers
+                );
                 // emit log_named_uint('unpacked layer', layer);
                 if (layer == 0) {
                     break;
@@ -110,8 +104,10 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         for (uint256 i; i < packedLayersArrLength; ++i) {
             uint256 packedLayers = _packedLayersArr[i];
             for (uint256 j; j < 32; ++j) {
-                uint256 layer =
-                    PackedByteUtility.getPackedByteFromLeft(j, packedLayers);
+                uint256 layer = PackedByteUtility.getPackedByteFromLeft(
+                    j,
+                    packedLayers
+                );
                 if (layer == 0) {
                     break;
                 }
@@ -141,11 +137,7 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
     function _checkUnpackedIsSubsetOfBound(
         uint256 _unpackedLayers,
         uint256 _boundLayers
-    )
-        internal
-        pure
-        virtual
-    {
+    ) internal pure virtual {
         // boundLayers should be superset of unpackedLayers
         uint256 unionSetLayers = _boundLayers | _unpackedLayers;
         if (unionSetLayers != _boundLayers) {
@@ -156,26 +148,22 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
     function _checkForMultipleVariations(
         uint256 _boundLayers,
         uint256 _unpackedLayers
-    )
-        internal
-        view
-    {
+    ) internal view {
         uint256 variationsLength = layerVariations.length;
         for (uint256 i; i < variationsLength; ++i) {
             LayerVariation memory variation = layerVariations[i];
             if (_layerIsBoundToTokenId(_boundLayers, variation.layerId)) {
                 int256 activeVariations = int256(
                     // put variation bytes at the end of the number
-                    _unpackedLayers
-                        >> variation.layerId
-                        &
-                        // drop bits above numVariations by &'ing with the same number of 1s
-                        (1 << variation.numVariations) - 1
+                    (_unpackedLayers >> variation.layerId) &
+                        ((1 << variation.numVariations) - 1)
+                    // drop bits above numVariations by &'ing with the same number of 1s
                 );
                 // n&(n-1) drops least significant 1
                 // valid active variation sets are powers of 2 (a single 1) or 0
-                uint256 zeroIfOneOrNoneActive =
-                    uint256(activeVariations & activeVariations - 1);
+                uint256 zeroIfOneOrNoneActive = uint256(
+                    activeVariations & (activeVariations - 1)
+                );
                 if (zeroIfOneOrNoneActive != 0) {
                     revert MultipleVariationsEnabled();
                 }
@@ -192,7 +180,7 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         view
         returns (uint256[] memory)
     {
-        return BitFieldUtility.unpackBitField(_tokenIdToBoundLayers[_tokenId]);
+        return BitMapUtility.unpackBitMap(_tokenIdToBoundLayers[_tokenId]);
     }
 
     function getActiveLayers(uint256 _tokenId)
@@ -200,10 +188,12 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         view
         returns (uint256[] memory)
     {
-        uint256[] memory activePackedLayers =
-            _tokenIdToPackedActiveLayers[_tokenId];
-        uint256[] memory unpacked =
-            PackedByteUtility.unpackByteArrays(activePackedLayers);
+        uint256[] memory activePackedLayers = _tokenIdToPackedActiveLayers[
+            _tokenId
+        ];
+        uint256[] memory unpacked = PackedByteUtility.unpackByteArrays(
+            activePackedLayers
+        );
         uint256 length = unpacked.length;
         uint256 realLength;
         for (uint256 i; i < length; i++) {
@@ -221,17 +211,14 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         return layers;
     }
 
-    function _tokenURI(uint256 tokenId)
-        internal
-        view
-        returns (string memory)
-    {
-        return metadataContract.getTokenURI(
-            tokenId,
-            _tokenIdToBoundLayers[tokenId],
-            traitGenerationSeed,
-            _tokenIdToPackedActiveLayers[tokenId]
-        );
+    function _tokenURI(uint256 tokenId) internal view returns (string memory) {
+        return
+            metadataContract.getTokenURI(
+                tokenId,
+                _tokenIdToBoundLayers[tokenId],
+                traitGenerationSeed,
+                _tokenIdToPackedActiveLayers[tokenId]
+            );
     }
 
     function setMetadataContract(OnChainLayerable _metadataContract)
@@ -241,9 +228,7 @@ contract BoundLayerable is Ownable, RandomTraits(7) {
         _setMetadataContract(_metadataContract);
     }
 
-    function _setMetadataContract(OnChainLayerable _metadataContract)
-        internal
-    {
+    function _setMetadataContract(OnChainLayerable _metadataContract) internal {
         metadataContract = _metadataContract;
     }
 
