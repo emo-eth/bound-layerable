@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// ERC721A Contracts v4.0.0
+// ERC721A Contracts v4.1.0
 // Creator: Chiru Labs
 
 pragma solidity ^0.8.4;
@@ -22,11 +22,6 @@ interface IERC721A {
      * The caller cannot approve to their own address.
      */
     error ApproveToCaller();
-
-    /**
-     * The caller cannot approve to the current owner.
-     */
-    error ApprovalToCurrentOwner();
 
     /**
      * Cannot query the balance for the zero address.
@@ -73,13 +68,25 @@ interface IERC721A {
      */
     error URIQueryForNonexistentToken();
 
+    /**
+     * The `quantity` minted with ERC2309 exceeds the safety limit.
+     */
+    error MintERC2309QuantityExceedsLimit();
+
+    /**
+     * The `extraData` cannot be set on an unintialized ownership slot.
+     */
+    error OwnershipNotInitializedForExtraData();
+
     struct TokenOwnership {
-    // The address of the owner.
+        // The address of the owner.
         address addr;
         // Keeps track of the start time of ownership with minimal overhead for tokenomics.
         uint64 startTimestamp;
         // Whether the token has been burned.
         bool burned;
+        // Arbitrary data similar to `startTimestamp` that can be set through `_extraData`.
+        uint24 extraData;
     }
 
     /**
@@ -101,10 +108,7 @@ interface IERC721A {
      *
      * This function call must use less than 30 000 gas.
      */
-    function supportsInterface(bytes4 interfaceId)
-        external
-        view
-        returns (bool);
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
 
     // ==============================
     //            IERC721
@@ -140,10 +144,7 @@ interface IERC721A {
     /**
      * @dev Returns the number of tokens in ``owner``'s account.
      */
-    function balanceOf(address owner)
-        external
-        view
-        returns (uint256 balance);
+    function balanceOf(address owner) external view returns (uint256 balance);
 
     /**
      * @dev Returns the owner of the `tokenId` token.
@@ -172,8 +173,7 @@ interface IERC721A {
         address to,
         uint256 tokenId,
         bytes calldata data
-    )
-        external;
+    ) external;
 
     /**
      * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
@@ -189,8 +189,11 @@ interface IERC721A {
      *
      * Emits a {Transfer} event.
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId)
-        external;
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
 
     /**
      * @dev Transfers `tokenId` token from `from` to `to`.
@@ -206,8 +209,11 @@ interface IERC721A {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 tokenId)
-        external;
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
 
     /**
      * @dev Gives permission to `to` to transfer `tokenId` token to another account.
@@ -276,4 +282,19 @@ interface IERC721A {
      * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
      */
     function tokenURI(uint256 tokenId) external view returns (string memory);
+
+    // ==============================
+    //            IERC2309
+    // ==============================
+
+    /**
+     * @dev Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`,
+     * as defined in the ERC2309 standard. See `_mintERC2309` for more details.
+     */
+    event ConsecutiveTransfer(
+        uint256 indexed fromTokenId,
+        uint256 toTokenId,
+        address indexed from,
+        address indexed to
+    );
 }
