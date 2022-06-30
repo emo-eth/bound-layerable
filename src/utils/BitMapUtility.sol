@@ -54,25 +54,68 @@ library BitMapUtility {
         if (bitMap == 0) {
             return new uint256[](0);
         }
-        uint256 numLayers = 0;
+        uint256 numLayers;
         uint256 bitMapTemp = bitMap;
         // count the number of 1's in the bit field to get the number of layers
-        while (bitMapTemp != 0) {
-            bitMapTemp = bitMapTemp & (bitMapTemp - 1);
-            numLayers++;
+        assembly {
+            for {
+
+            } bitMapTemp {
+
+            } {
+                bitMapTemp := and(bitMapTemp, sub(bitMapTemp, 1))
+                numLayers := add(numLayers, 1)
+            }
         }
+
         // use that number to allocate a memory array
         // todo: look into assigning length of 255 and then modifying in-memory, if gas is ever a concern
+        // todo: revisit defining this in assembly
         unpacked = new uint256[](numLayers);
-        bitMapTemp = bitMap;
-        unchecked {
-            for (uint256 i = 0; i < numLayers; ++i) {
-                unpacked[i] = lsb(bitMap);
-                bitMap = bitMap & (bitMap - 1);
-                // todo: this more roundabout way of getting LSB via MSB might be a bit more gas efficient, lol
-                // bitMapTemp = bitMapTemp & (bitMapTemp - 1);
-                // unpacked[i] = mostSignificantBit(bitMap - bitMapTemp);
-                // bitMap = bitMapTemp;
+        assembly {
+            function lsb(x) -> leastSignificantBit {
+                if iszero(and(x, _128_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 128)
+                    x := shr(128, x)
+                }
+                if iszero(and(x, _64_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 64)
+                    x := shr(64, x)
+                }
+                if iszero(and(x, _32_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 32)
+                    x := shr(32, x)
+                }
+                if iszero(and(x, _16_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 16)
+                    x := shr(16, x)
+                }
+                if iszero(and(x, _8_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 8)
+                    x := shr(8, x)
+                }
+                if iszero(and(x, _4_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 4)
+                    x := shr(4, x)
+                }
+                if iszero(and(x, _2_MASK)) {
+                    leastSignificantBit := add(leastSignificantBit, 2)
+                    x := shr(2, x)
+                }
+                if iszero(and(x, _1_MASK)) {
+                    // No need to shift x any more.
+                    leastSignificantBit := add(leastSignificantBit, 1)
+                }
+            }
+            let unpackedPtr := add(unpacked, 0x20)
+            let finalUnpackedPtr := add(unpackedPtr, mul(0x20, numLayers))
+            for {
+
+            } lt(unpackedPtr, finalUnpackedPtr) {
+                unpackedPtr := add(unpackedPtr, 0x20)
+            } {
+                mstore(unpackedPtr, lsb(bitMap))
+                bitMap := and(bitMap, sub(bitMap, 1))
             }
         }
     }
@@ -80,20 +123,22 @@ library BitMapUtility {
     function uintsToBitMap(uint256[] memory uints)
         internal
         pure
-        returns (uint256)
+        returns (uint256 bitMap)
     {
-        uint256 bitMap;
-        uint256 layersLength = uints.length;
-        for (uint256 i; i < layersLength; ) {
-            uint256 bit = uints[i];
-            assembly {
-                bitMap := or(bitMap, shl(bit, 1))
-            }
-            unchecked {
-                ++i;
+        assembly {
+            let uintsIndexPtr := add(uints, 0x20)
+            let finalUintsIndexPtr := add(
+                uintsIndexPtr,
+                mul(0x20, mload(uints))
+            )
+            for {
+
+            } lt(uintsIndexPtr, finalUintsIndexPtr) {
+                uintsIndexPtr := add(uintsIndexPtr, 0x20)
+            } {
+                bitMap := or(bitMap, shl(mload(uintsIndexPtr), 1))
             }
         }
-        return bitMap;
     }
 
     /// from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol
