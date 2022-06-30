@@ -32,6 +32,7 @@ contract BitMapUtilityTest is Test {
     }
 
     function testUnpackBitField(uint8 numBits) public {
+        // TODO: update for 0
         vm.assume(numBits > 0);
         uint256[] memory bits = new uint256[](numBits);
         for (uint8 i = 0; i < numBits; ++i) {
@@ -71,6 +72,14 @@ contract BitMapUtilityTest is Test {
         uint256 bitField = ((1 << msb) | extraBits) & bitMask;
         uint256 retrievedMsb = BitMapUtility.msb(bitField);
         assertEq(retrievedMsb, msb);
+    }
+
+    function testLsbZero() public {
+        assertEq(BitMapUtility.lsb(0), 0);
+    }
+
+    function testMsbZero() public {
+        assertEq(BitMapUtility.msb(0), 0);
     }
 
     function testLsb(uint8 lsb, uint256 extraBits) public {

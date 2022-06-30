@@ -16,6 +16,7 @@ contract RandomTraitsTest is Test {
     uint8[] distributions;
 
     function testGetLayerIdBounds(bytes32 traitGenerationSeed) public {
+        vm.assume(traitGenerationSeed != 0);
         test.setTraitGenerationSeed(traitGenerationSeed);
         distributions.push(0x80);
         test.setLayerTypeDistribution(

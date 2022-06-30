@@ -51,28 +51,18 @@ library BitMapUtility {
         pure
         returns (uint256[] memory unpacked)
     {
-        if (bitMap == 0) {
-            return new uint256[](0);
-        }
-        uint256 numLayers;
-        uint256 bitMapTemp = bitMap;
+        // if (bitMap == 0) {
+        //     return new uint256[](0);
+        // }
+        // uint256 bitMapTemp = bitMap;
         // count the number of 1's in the bit field to get the number of layers
         assembly {
-            for {
-
-            } bitMapTemp {
-
-            } {
-                bitMapTemp := and(bitMapTemp, sub(bitMapTemp, 1))
-                numLayers := add(numLayers, 1)
+            // TODO: test this
+            if iszero(bitMap) {
+                let freePtr := mload(0x40)
+                mstore(0x40, add(freePtr, 0x20))
+                return(freePtr, 0x20)
             }
-        }
-
-        // use that number to allocate a memory array
-        // todo: look into assigning length of 255 and then modifying in-memory, if gas is ever a concern
-        // todo: revisit defining this in assembly
-        unpacked = new uint256[](numLayers);
-        assembly {
             function lsb(x) -> leastSignificantBit {
                 if iszero(and(x, _128_MASK)) {
                     leastSignificantBit := add(leastSignificantBit, 128)
@@ -107,14 +97,34 @@ library BitMapUtility {
                     leastSignificantBit := add(leastSignificantBit, 1)
                 }
             }
-            let unpackedPtr := add(unpacked, 0x20)
-            let finalUnpackedPtr := add(unpackedPtr, mul(0x20, numLayers))
+            let numLayers
+            for {
+                let bitMapTemp := bitMap
+            } bitMapTemp {
+
+            } {
+                bitMapTemp := and(bitMapTemp, sub(bitMapTemp, 1))
+                numLayers := add(numLayers, 1)
+            }
+            // set unpacked ptr to free mem
+            unpacked := mload(0x40)
+            let unpackedIndexPtr := add(unpacked, 0x20)
+
+            // store length of array at unpacked ptr
+            mstore(unpacked, numLayers)
+            // update free mem ptr
+            // add 1 word for unpackedPtr
+            let unpackedLength := mul(0x20, numLayers)
+            // calculate numer of extra words to allocate for each element
+            mstore(0x40, add(0x20, add(unpacked, unpackedLength)))
+
+            let finalUnpackedPtr := add(unpackedIndexPtr, unpackedLength)
             for {
 
-            } lt(unpackedPtr, finalUnpackedPtr) {
-                unpackedPtr := add(unpackedPtr, 0x20)
+            } lt(unpackedIndexPtr, finalUnpackedPtr) {
+                unpackedIndexPtr := add(unpackedIndexPtr, 0x20)
             } {
-                mstore(unpackedPtr, lsb(bitMap))
+                mstore(unpackedIndexPtr, lsb(bitMap))
                 bitMap := and(bitMap, sub(bitMap, 1))
             }
         }
@@ -188,10 +198,11 @@ library BitMapUtility {
         pure
         returns (uint256 leastSignificantBit)
     {
-        if (x == 0) {
-            return 0;
-        }
         assembly {
+            if iszero(x) {
+                mstore(0, 0)
+                return(0, 0x20)
+            }
             if iszero(and(x, _128_MASK)) {
                 leastSignificantBit := add(leastSignificantBit, 128)
                 x := shr(128, x)
