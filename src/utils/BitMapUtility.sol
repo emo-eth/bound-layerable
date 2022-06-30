@@ -89,7 +89,6 @@ library BitMapUtility {
             assembly {
                 bitMap := or(bitMap, shl(bit, 1))
             }
-            bitMap |= toBitMap(uints[i]);
             unchecked {
                 ++i;
             }
