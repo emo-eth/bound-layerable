@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {OnChainLayerable} from '../../src/utils/OnChainLayerable.sol';
-import {Attribute} from '../../src/utils/Structs.sol';
-import {DisplayType, LayerType} from '../../src/utils/Enums.sol';
+import {OnChainLayerable} from 'bound-layerable/metadata/OnChainLayerable.sol';
+import {Attribute} from 'bound-layerable/interface/Structs.sol';
+import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 
 contract OnChainLayerableImpl is OnChainLayerable {
     uint256 bindings;

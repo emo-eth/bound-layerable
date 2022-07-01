@@ -2,12 +2,12 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {Token} from '../src/Token.sol';
+import {Token} from 'bound-layerable/Token.sol';
 
-import {PackedByteUtility} from '../src/utils/PackedByteUtility.sol';
-import {RandomTraits} from '../src/utils/RandomTraits.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
+import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {ERC721Recipient} from './utils/ERC721Recipient.sol';
-import {LayerType} from '../src/utils/Enums.sol';
+import {LayerType} from 'bound-layerable/interface/Enums.sol';
 
 contract TokenImpl is Token {
     constructor(

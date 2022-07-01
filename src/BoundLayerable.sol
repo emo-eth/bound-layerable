@@ -2,16 +2,16 @@
 pragma solidity ^0.8.4;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {PackedByteUtility} from './PackedByteUtility.sol';
-import {BitMapUtility} from './BitMapUtility.sol';
-import {LayerVariation} from './Structs.sol';
-import {OnChainLayerable} from './OnChainLayerable.sol';
-import {RandomTraits} from './RandomTraits.sol';
-import {ERC721A} from '../token/ERC721A.sol';
+import {PackedByteUtility} from './lib/PackedByteUtility.sol';
+import {BitMapUtility} from './lib/BitMapUtility.sol';
+import {LayerVariation} from './interface/Structs.sol';
+import {OnChainLayerable} from './metadata/OnChainLayerable.sol';
+import {RandomTraits} from './traits/RandomTraits.sol';
+import {ERC721A} from './token/ERC721A.sol';
 
-import './Errors.sol';
-import {NOT_0TH_BITMASK} from './Constants.sol';
-import {BoundLayerableEvents} from './Events.sol';
+import './interface/Errors.sol';
+import {NOT_0TH_BITMASK} from './interface/Constants.sol';
+import {BoundLayerableEvents} from './interface/Events.sol';
 
 contract BoundLayerable is
     ERC721A,

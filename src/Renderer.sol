@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
 
-import {svg} from "./SVG.sol";
-import {utils} from "./Utils.sol";
-import {Token} from "./Token.sol";
-import {PackedByteUtility} from "./utils/PackedByteUtility.sol";
-import {RandomTraits} from "./utils/RandomTraits.sol";
-import {ERC721Recipient} from "./utils/ERC721Recipient.sol";
-import {LayerType} from "./utils/Enums.sol";
+import {svg} from './SVG.sol';
+import {utils} from './Utils.sol';
+import {Token} from './Token.sol';
+import {PackedByteUtility} from './lib/PackedByteUtility.sol';
+import {RandomTraits} from './traits/RandomTraits.sol';
+import {ERC721Recipient} from './utils/ERC721Recipient.sol';
+import {LayerType} from './interface/Enums.sol';
 
 contract Renderer is ERC721Recipient {
     Token test;
@@ -17,22 +17,38 @@ contract Renderer is ERC721Recipient {
         test = new Token('Token', 'test', '');
         // todo: set rarities
         // 6 backgrounds
-        distributions =
-            [uint8(42), uint8(84), uint8(126), uint8(168), uint8(210), uint8(252)];
+        distributions = [
+            uint8(42),
+            uint8(84),
+            uint8(126),
+            uint8(168),
+            uint8(210),
+            uint8(252)
+        ];
         uint8[] memory _distributions = distributions;
-        uint256[] memory packedDistributions =
-            PackedByteUtility.packBytearray(_distributions);
+        uint256[] memory packedDistributions = PackedByteUtility.packBytearray(
+            _distributions
+        );
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND, packedDistributions[0]
+            LayerType.BACKGROUND,
+            packedDistributions[0]
         );
         // 1 portrait
         test.setLayerTypeDistribution(LayerType.PORTRAIT, 255 << 248);
         // 5 textures
-        distributions =
-            [uint8(51), uint8(102), uint8(153), uint8(204), uint8(255)];
+        distributions = [
+            uint8(51),
+            uint8(102),
+            uint8(153),
+            uint8(204),
+            uint8(255)
+        ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
-        test.setLayerTypeDistribution(LayerType.TEXTURE, packedDistributions[0]);
+        test.setLayerTypeDistribution(
+            LayerType.TEXTURE,
+            packedDistributions[0]
+        );
         // 8 objects
         distributions = [
             uint8(31),
@@ -78,7 +94,7 @@ contract Renderer is ERC721Recipient {
             uint256 layer = test.getLayerId(layerTokenId);
             uint256 lastLayer = 0;
             if (layerTokenId > startingTokenId) {
-                lastLayer = layers[layerTokenId % 7 - 1];
+                lastLayer = layers[(layerTokenId % 7) - 1];
             }
             if (layer == lastLayer) {
                 layer += 1;

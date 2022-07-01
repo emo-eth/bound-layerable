@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BitMapUtility} from '../../src/utils/BitMapUtility.sol';
+import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
 
 contract BitMapUtilityTest is Test {
     using BitMapUtility for uint256;

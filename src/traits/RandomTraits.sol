@@ -2,10 +2,10 @@
 pragma solidity ^0.8.4;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {PackedByteUtility} from './PackedByteUtility.sol';
+import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
-import {LayerType} from './Enums.sol';
-import {BadDistributions, TraitGenerationSeedNotSet} from './Errors.sol';
+import {LayerType} from '../interface/Enums.sol';
+import {BadDistributions, TraitGenerationSeedNotSet} from '../interface/Errors.sol';
 
 contract RandomTraits is Ownable {
     using Strings for uint256;

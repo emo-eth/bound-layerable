@@ -4,3 +4,4 @@ forge-std/=lib/forge-std/src/
 hot-chain-svg/=lib/hot-chain-svg/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
 erc721a/=lib/ERC721a/contracts/
+bound-layerable/=src/

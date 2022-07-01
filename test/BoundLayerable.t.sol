@@ -2,11 +2,11 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BoundLayerable} from '../../src/utils/BoundLayerable.sol';
-import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
-import {LayerVariation} from '../../src/utils/Structs.sol';
-import {BoundLayerableEvents} from '../../src/utils/Events.sol';
-import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from '../../src/utils/Errors.sol';
+import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
+import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
+import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
 
 contract BoundLayerableTestImpl is BoundLayerable {
     uint256 private constant BITMASK_BURNED = 1 << 224;

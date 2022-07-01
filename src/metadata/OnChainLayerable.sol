@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {BoundLayerable} from './BoundLayerable.sol';
-import {OnChainTraits} from './OnChainTraits.sol';
+import {BoundLayerable} from '../BoundLayerable.sol';
+import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg, utils} from '../SVG.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
-import {RandomTraits} from './RandomTraits.sol';
-import {json} from './JSON.sol';
-import {BitMapUtility} from './BitMapUtility.sol';
+import {RandomTraits} from '../traits/RandomTraits.sol';
+import {json} from '../lib/JSON.sol';
+import {BitMapUtility} from '../lib/BitMapUtility.sol';
 
 contract OnChainLayerable is OnChainTraits {
     // TODO: different strings impl?

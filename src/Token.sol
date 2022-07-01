@@ -4,11 +4,11 @@ pragma solidity ^0.8.4;
 import {ERC721A} from './token/ERC721A.sol';
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {BoundLayerable} from './utils/BoundLayerable.sol';
-import {OnChainLayerable} from './utils/OnChainLayerable.sol';
-import {RandomTraits} from './utils/RandomTraits.sol';
-import {json} from './utils/JSON.sol';
-import './utils/Errors.sol';
+import {BoundLayerable} from './BoundLayerable.sol';
+import {OnChainLayerable} from './metadata/OnChainLayerable.sol';
+import {RandomTraits} from './traits/RandomTraits.sol';
+import {json} from './lib/JSON.sol';
+import './interface/Errors.sol';
 
 contract Token is Ownable, BoundLayerable {
     uint256 public constant MAX_SUPPLY = 5555;

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract PackedByteUtilityTest is Test {
     function testGetPackedBytesFromRight() public {
