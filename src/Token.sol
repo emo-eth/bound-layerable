@@ -43,11 +43,10 @@ contract Token is Ownable, BoundLayerable {
         // iterate over all token ids
         for (uint256 i; i < MAX_SUPPLY; ) {
             if (i % 7 != 0) {
-                // get owner of layer
-                address owner_ = super.ownerOf(i);
                 // "burn" layer by emitting transfer event to null address
                 // note: can't use bulktransfer bc no guarantee that all layers are owned by same address
-                emit Transfer(owner_, address(0), i);
+                // emit Transfer(owner_, address(0), i);
+                _burn(i);
             }
             unchecked {
                 ++i;
@@ -77,6 +76,8 @@ contract Token is Ownable, BoundLayerable {
     }
 
     function mintSet() public payable includesCorrectPayment(1) {
+        // TODO: test this does not mess with active layers etc
+        _setPlaceholderBinding(_nextTokenId());
         super._mint(msg.sender, 7);
     }
 

@@ -9,6 +9,7 @@ struct Attribute {
     DisplayType displayType;
 }
 
+// TODO: just pack these into a uint256 bytearray
 struct LayerVariation {
     uint8 layerId;
     uint8 numVariations;

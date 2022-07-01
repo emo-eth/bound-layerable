@@ -5,6 +5,7 @@ import {Test} from 'forge-std/Test.sol';
 import {BoundLayerable} from '../../src/utils/BoundLayerable.sol';
 import {PackedByteUtility} from '../../src/utils/PackedByteUtility.sol';
 import {LayerVariation} from '../../src/utils/Structs.sol';
+import {BoundLayerableEvents} from '../../src/utils/Events.sol';
 import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from '../../src/utils/Errors.sol';
 
 contract BoundLayerableTestImpl is BoundLayerable {
@@ -72,6 +73,7 @@ contract BoundLayerableTestImpl is BoundLayerable {
     }
 
     function mint() public {
+        _setPlaceholderBinding(_nextTokenId() + 6);
         super._mint(msg.sender, 7);
     }
 
@@ -105,7 +107,7 @@ library Helpers {
     }
 }
 
-contract BoundLayerableTest is Test {
+contract BoundLayerableTest is Test, BoundLayerableEvents {
     BoundLayerableTestImpl test;
 
     function setUp() public {
@@ -344,11 +346,13 @@ contract BoundLayerableTest is Test {
     }
 
     function testBurnAndBindLayer() public {
+        vm.expectEmit(true, true, false, false, address(test));
+        emit LayersBoundToToken(6, ((1 << 2) | (1 << 7)));
         test.burnAndBindLayer(6, 1);
         assertTrue(test.isBurned(1));
         assertFalse(test.isBurned(6));
         uint256 bindings = test.getBoundLayerBitField(6);
-        emit log_named_uint('bindings', bindings);
+
         uint256[] memory boundLayers = test.getBoundLayers(6);
         assertEq(boundLayers.length, 2);
         assertEq(boundLayers[0], 2);
@@ -372,6 +376,8 @@ contract BoundLayerableTest is Test {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
+        vm.expectEmit(true, true, false, false, address(test));
+        emit LayersBoundToToken(6, ((1 << 2) | (1 << 3) | (1 << 7)));
         test.burnAndBindLayers(6, layers);
         assertTrue(test.isBurned(1));
         assertTrue(test.isBurned(2));

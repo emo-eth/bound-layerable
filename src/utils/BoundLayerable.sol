@@ -11,11 +11,17 @@ import {ERC721A} from '../token/ERC721A.sol';
 
 import './Errors.sol';
 import {NOT_0TH_BITMASK} from './Constants.sol';
+import {BoundLayerableEvents} from './Events.sol';
 
-contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
+contract BoundLayerable is
+    ERC721A,
+    Ownable,
+    RandomTraits(7),
+    BoundLayerableEvents
+{
     using BitMapUtility for uint256;
-    // TODO: potentially initialize at mint by setting leftmost bit; will quarter gas cost of binding layers
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
+    // TODO: consider setting limit of 32 layers, only store one uint256
     mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
     LayerVariation[] public layerVariations;
     OnChainLayerable public metadataContract;
@@ -61,13 +67,6 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         _tokenIdToBoundLayers[tokenId] = bindings & NOT_0TH_BITMASK;
     }
 
-    function bindLayers(uint256 _tokenId, uint256 _bindings) internal {
-        // 0th bit is not a valid layer; make sure it is set to 0 with a bitmask
-        _tokenIdToBoundLayers[_tokenId] =
-            (_tokenIdToBoundLayers[_tokenId] | _bindings) &
-            NOT_0TH_BITMASK;
-    }
-
     function burnAndBindLayer(uint256 _targetTokenId, uint256 _tokenIdToBind)
         public
     {
@@ -97,10 +96,24 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         if ((bindings & layerIdBitMap) > 0) {
             revert LayerAlreadyBound();
         }
-        _tokenIdToBoundLayers[_targetTokenId] =
-            (bindings | layerId.toBitMap()) &
-            NOT_0TH_BITMASK;
+        // bindings = (bindings | layerIdBitMap) & NOT_0TH_BITMASK;
+        // _tokenIdToBoundLayers[_targetTokenId] = bindings;
         _burn(_tokenIdToBind);
+        _setBoundLayersAndEmitEvent(_targetTokenId, bindings | layerIdBitMap);
+        // emit LayersBoundToToken(_targetTokenId, bindings);
+    }
+
+    function _setBoundLayersAndEmitEvent(
+        uint256 _targetTokenId,
+        uint256 bindings
+    ) internal {
+        bindings = bindings & NOT_0TH_BITMASK;
+        _tokenIdToBoundLayers[_targetTokenId] = bindings;
+        emit LayersBoundToToken(_targetTokenId, bindings);
+    }
+
+    function _isBindable(uint256 layerId) internal view returns (bool) {
+        return layerId % NUM_TOKENS_PER_SET == 0;
     }
 
     function burnAndBindLayers(
@@ -116,7 +129,8 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBindable();
         }
-        uint256 bindings = _tokenIdToBoundLayers[targetTokenId];
+        uint256 bindings = _tokenIdToBoundLayers[targetTokenId] &
+            NOT_0TH_BITMASK;
         // always bind portrait, since it won't be set automatically
         bindings |= portraitLayerId.toBitMap();
         // todo: try to batch with arrays by LayerType, fetching distribution for type,
@@ -147,7 +161,8 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
                 ++i;
             }
         }
-        _tokenIdToBoundLayers[targetTokenId] = (bindings & NOT_0TH_BITMASK);
+        _setBoundLayersAndEmitEvent(targetTokenId, bindings);
+        // _tokenIdToBoundLayers[targetTokenId] = (bindings & NOT_0TH_BITMASK);
     }
 
     function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)
@@ -172,6 +187,7 @@ contract BoundLayerable is ERC721A, Ownable, RandomTraits(7) {
         _checkForMultipleVariations(boundLayers, unpackedLayers);
 
         _tokenIdToPackedActiveLayers[_tokenId] = _packedLayers;
+        emit ActiveLayersChanged(_tokenId, _packedLayers);
     }
 
     // CHECK //
