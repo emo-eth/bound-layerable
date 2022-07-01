@@ -53,12 +53,30 @@ contract BitMapUtilityTest is Test {
         }
     }
 
-    function testUnpackBitFieldOneOne() public {
+    function testUnpackBitField1and255() public {
         uint256 bitField = (1 << 255) | 1;
         uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
         assertEq(unpacked.length, 2);
         assertEq(unpacked[0], 0);
         assertEq(unpacked[1], 255);
+    }
+
+    function testUnpackBitField32Ones() public {
+        uint256 bitField = 2**32 - 1;
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+        assertEq(unpacked.length, 32);
+        for (uint8 i = 0; i < 32; ++i) {
+            assertEq(unpacked[i], i);
+        }
+    }
+
+    function testUnpackOopsAllOnes() public {
+        uint256 bitField = (1 << 255) - 1;
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+        assertEq(unpacked.length, 255);
+        for (uint8 i = 0; i < 255; ++i) {
+            assertEq(unpacked[i], i);
+        }
     }
 
     function testMsb(uint8 msb, uint256 extraBits) public {

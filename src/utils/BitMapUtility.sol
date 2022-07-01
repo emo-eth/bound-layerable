@@ -51,11 +51,6 @@ library BitMapUtility {
         pure
         returns (uint256[] memory unpacked)
     {
-        // if (bitMap == 0) {
-        //     return new uint256[](0);
-        // }
-        // uint256 bitMapTemp = bitMap;
-        // count the number of 1's in the bit field to get the number of layers
         assembly {
             // TODO: test this
             if iszero(bitMap) {
@@ -63,6 +58,7 @@ library BitMapUtility {
                 mstore(0x40, add(freePtr, 0x20))
                 return(freePtr, 0x20)
             }
+            // TODO: call internal fn
             function lsb(x) -> leastSignificantBit {
                 if iszero(and(x, _128_MASK)) {
                     leastSignificantBit := add(leastSignificantBit, 128)
@@ -97,36 +93,29 @@ library BitMapUtility {
                     leastSignificantBit := add(leastSignificantBit, 1)
                 }
             }
-            let numLayers
-            for {
-                let bitMapTemp := bitMap
-            } bitMapTemp {
 
-            } {
-                bitMapTemp := and(bitMapTemp, sub(bitMapTemp, 1))
-                numLayers := add(numLayers, 1)
-            }
             // set unpacked ptr to free mem
             unpacked := mload(0x40)
+            // get ptr to first index of array
             let unpackedIndexPtr := add(unpacked, 0x20)
 
-            // store length of array at unpacked ptr
-            mstore(unpacked, numLayers)
-            // update free mem ptr
-            // add 1 word for unpackedPtr
-            let unpackedLength := mul(0x20, numLayers)
-            // calculate numer of extra words to allocate for each element
-            mstore(0x40, add(0x20, add(unpacked, unpackedLength)))
-
-            let finalUnpackedPtr := add(unpackedIndexPtr, unpackedLength)
+            let numLayers
             for {
 
-            } lt(unpackedIndexPtr, finalUnpackedPtr) {
+            } bitMap {
                 unpackedIndexPtr := add(unpackedIndexPtr, 0x20)
             } {
+                // store the index of the lsb at the index in the array
                 mstore(unpackedIndexPtr, lsb(bitMap))
+                // drop the lsb from the bitMap
                 bitMap := and(bitMap, sub(bitMap, 1))
+                // increment numLayers
+                numLayers := add(numLayers, 1)
             }
+            // store the number of layers at the pointer to unpacked array
+            mstore(unpacked, numLayers)
+            // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
+            mstore(0x40, add(unpacked, add(0x20, mul(numLayers, 0x20))))
         }
     }
 
