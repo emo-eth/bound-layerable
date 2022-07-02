@@ -140,7 +140,7 @@ library BitMapUtility {
         }
     }
 
-    /// from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol
+    /// from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol, ported to pure assembly
     /// @notice Finds the zero-based index of the first one in the binary representation of x.
     /// @dev See the note on msb in the "Find First Set" Wikipedia article https://en.wikipedia.org/wiki/Find_first_set
     /// @param x The uint256 number for which to find the index of the most significant bit.
