@@ -45,12 +45,78 @@ contract BoundLayerable is
     }
 
     /////////////
+    // GETTERS //
+    /////////////
+
+    /// @notice get the layerIds currently bound to a tokenId
+    function getBoundLayers(uint256 tokenId)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        // if (tokenId % NUM_TOKENS_PER_SET != 0) {
+        //     revert OnlyBase();
+        // }
+        // TODO: test doesn't return 0
+        return
+            BitMapUtility.unpackBitMap(
+                _tokenIdToBoundLayers[tokenId] & NOT_0TH_BITMASK
+            );
+    }
+
+    /// @notice get the layerIds currently active on a tokenId
+    function getActiveLayers(uint256 tokenId)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        // if (tokenId % NUM_TOKENS_PER_SET != 0) {
+        //     revert OnlyBase();
+        // }
+        uint256[] memory activePackedLayers = _tokenIdToPackedActiveLayers[
+            tokenId
+        ];
+        uint256[] memory unpacked = PackedByteUtility.unpackByteArrays(
+            activePackedLayers
+        );
+        uint256 length = unpacked.length;
+        uint256 realLength;
+        for (uint256 i; i < length; i++) {
+            if (unpacked[i] == 0) {
+                break;
+            }
+            unchecked {
+                ++realLength;
+            }
+        }
+        uint256[] memory layers = new uint256[](realLength);
+        for (uint256 i; i < realLength; ++i) {
+            layers[i] = unpacked[i];
+        }
+        return layers;
+    }
+
+    function _tokenURI(uint256 tokenId) internal view returns (string memory) {
+        return
+            metadataContract.getTokenURI(
+                tokenId,
+                _tokenIdToBoundLayers[tokenId],
+                traitGenerationSeed,
+                _tokenIdToPackedActiveLayers[tokenId]
+            );
+    }
+
+    /////////////
     // SETTERS //
     /////////////
 
-    /// @dev set 0th bit to 1 in order to make first binding cost cheaper for user
-    function _setPlaceholderBinding(uint256 tokenId) internal {
-        _tokenIdToBoundLayers[tokenId] = 1;
+    /// @notice set the address of the metadata contract. OnlyOwner
+    /// @param _metadataContract the address of the metadata contract
+    function setMetadataContract(ILayerable _metadataContract)
+        external
+        onlyOwner
+    {
+        _setMetadataContract(_metadataContract);
     }
 
     /**
@@ -68,9 +134,9 @@ contract BoundLayerable is
         ) {
             revert NotOwner();
         }
-        uint256 portraitLayerId = getLayerId(baseTokenId);
+        uint256 baseLayerId = getLayerId(baseTokenId);
 
-        if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
+        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
 
@@ -80,8 +146,8 @@ contract BoundLayerable is
         }
 
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
-        // always bind portrait, since it won't be set automatically
-        bindings |= portraitLayerId.toBitMap();
+        // always bind baseLayer, since it won't be set automatically
+        bindings |= baseLayerId.toBitMap();
         // TODO: necessary?
         uint256 layerIdBitMap = layerId.toBitMap();
         if ((bindings & layerIdBitMap) > 0) {
@@ -106,14 +172,14 @@ contract BoundLayerable is
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
-        uint256 portraitLayerId = getLayerId(baseTokenId);
+        uint256 baseLayerId = getLayerId(baseTokenId);
 
-        if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
+        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
-        // always bind portrait, since it won't be set automatically
-        bindings |= portraitLayerId.toBitMap();
+        // always bind baseLayer, since it won't be set automatically
+        bindings |= baseLayerId.toBitMap();
         // todo: try to batch with arrays by LayerType, fetching distribution for type,
         // and looping over arrays of LayerType, to avoid duplicate lookups of distributions
         // todo: iterate once over array, delegating to LayerType arrays
@@ -145,27 +211,34 @@ contract BoundLayerable is
         _setBoundLayersAndEmitEvent(baseTokenId, bindings);
     }
 
-    function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)
-        external
-    {
-        if (ownerOf(_tokenId) != msg.sender) {
+    /**
+     * @notice Set the active layer IDs for a base token. Layers must be bound to token
+     * @param baseTokenId TokenID of a base token
+     * @param packedLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
+     * emits ActiveLayersChanged
+     */
+    function setActiveLayers(
+        uint256 baseTokenId,
+        uint256[] calldata packedLayerIds
+    ) external {
+        if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
-        if (_tokenId % NUM_TOKENS_PER_SET != 0) {
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
-        // unpack layers into a single bitfield and check there are no duplicates
+        // unpack layers into a single bitmap and check there are no duplicates
         uint256 unpackedLayers = _unpackLayersToBitMapAndCheckForDuplicates(
-            _packedLayers
+            packedLayerIds
         );
-        uint256 boundLayers = _tokenIdToBoundLayers[_tokenId];
-        // check new active layers are all bound to tokenId
+        uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
+        // check new active layers are all bound to baseTokenId
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
         // check active layers do not include multiple variations of the same trait
         _checkForMultipleVariations(boundLayers, unpackedLayers);
 
-        _tokenIdToPackedActiveLayers[_tokenId] = _packedLayers;
-        emit ActiveLayersChanged(_tokenId, _packedLayers);
+        _tokenIdToPackedActiveLayers[baseTokenId] = packedLayerIds;
+        emit ActiveLayersChanged(baseTokenId, packedLayerIds);
     }
 
     function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
@@ -175,11 +248,6 @@ contract BoundLayerable is
         bindings = bindings & NOT_0TH_BITMASK;
         _tokenIdToBoundLayers[baseTokenId] = bindings;
         emit LayersBoundToToken(baseTokenId, bindings);
-    }
-
-    // todo: use this? compare gas
-    function _isBindable(uint256 layerId) internal view returns (bool) {
-        return layerId % NUM_TOKENS_PER_SET == 0;
     }
 
     // CHECK //
@@ -211,30 +279,6 @@ contract BoundLayerable is
                     }
                     unpackedLayers |= 1 << layer;
                 }
-            }
-        }
-        return unpackedLayers;
-    }
-
-    // // tood: remove?
-    function packedLayersToBitMap(uint256[] calldata bytePackedLayers)
-        public
-        pure
-        returns (uint256)
-    {
-        uint256 unpackedLayers;
-        uint256 packedLayersArrLength = bytePackedLayers.length;
-        for (uint256 i; i < packedLayersArrLength; ++i) {
-            uint256 packedLayers = bytePackedLayers[i];
-            for (uint256 j; j < 32; ++j) {
-                uint256 layer = PackedByteUtility.getPackedByteFromLeft(
-                    j,
-                    packedLayers
-                );
-                if (layer == 0) {
-                    break;
-                }
-                unpackedLayers |= 1 << layer;
             }
         }
         return unpackedLayers;
@@ -277,64 +321,10 @@ contract BoundLayerable is
         }
     }
 
-    /////////////
-    // GETTERS //
-    /////////////
-
-    function getBoundLayers(uint256 _tokenId)
-        public
-        view
-        returns (uint256[] memory)
+    function _setMetadataContract(ILayerable _metadataContract)
+        internal
+        virtual
     {
-        return BitMapUtility.unpackBitMap(_tokenIdToBoundLayers[_tokenId]);
-    }
-
-    function getActiveLayers(uint256 _tokenId)
-        public
-        view
-        returns (uint256[] memory)
-    {
-        uint256[] memory activePackedLayers = _tokenIdToPackedActiveLayers[
-            _tokenId
-        ];
-        uint256[] memory unpacked = PackedByteUtility.unpackByteArrays(
-            activePackedLayers
-        );
-        uint256 length = unpacked.length;
-        uint256 realLength;
-        for (uint256 i; i < length; i++) {
-            if (unpacked[i] == 0) {
-                break;
-            }
-            unchecked {
-                ++realLength;
-            }
-        }
-        uint256[] memory layers = new uint256[](realLength);
-        for (uint256 i; i < realLength; ++i) {
-            layers[i] = unpacked[i];
-        }
-        return layers;
-    }
-
-    function _tokenURI(uint256 tokenId) internal view returns (string memory) {
-        return
-            metadataContract.getTokenURI(
-                tokenId,
-                _tokenIdToBoundLayers[tokenId],
-                traitGenerationSeed,
-                _tokenIdToPackedActiveLayers[tokenId]
-            );
-    }
-
-    function setMetadataContract(ILayerable _metadataContract)
-        external
-        onlyOwner
-    {
-        _setMetadataContract(_metadataContract);
-    }
-
-    function _setMetadataContract(ILayerable _metadataContract) internal {
         metadataContract = _metadataContract;
     }
 
@@ -342,14 +332,19 @@ contract BoundLayerable is
     // HELPERS //
     /////////////
 
-    function _layerIsBoundToTokenId(uint256 boundLayers, uint256 _layer)
+    function _layerIsBoundToTokenId(uint256 boundLayers, uint256 layer)
         internal
         pure
         virtual
         returns (bool isBound)
     {
         assembly {
-            isBound := and(shr(_layer, boundLayers), 1)
+            isBound := and(shr(layer, boundLayers), 1)
         }
+    }
+
+    /// @dev set 0th bit to 1 in order to make first binding cost cheaper for user
+    function _setPlaceholderBinding(uint256 tokenId) internal {
+        _tokenIdToBoundLayers[tokenId] = 1;
     }
 }
