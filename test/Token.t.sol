@@ -2,16 +2,17 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {Token} from 'bound-layerable/Token.sol';
+import {Token} from 'bound-layerable/test/Token.sol';
 
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {ERC721Recipient} from './utils/ERC721Recipient.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
+import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
 
 contract TokenTest is Test, ERC721Recipient {
     Token test;
-    uint8[] distributions;
+    uint256[] distributions;
 
     function setUp() public virtual {
         test = new Token('Test', 'test', '');
@@ -23,15 +24,15 @@ contract TokenTest is Test, ERC721Recipient {
 
         // 6 backgrounds
         distributions = [
-            uint8(42),
-            uint8(84),
-            uint8(126),
-            uint8(168),
-            uint8(210),
-            uint8(252)
+            uint256(42),
+            uint256(84),
+            uint256(126),
+            uint256(168),
+            uint256(210),
+            uint256(252)
         ];
 
-        uint8[] memory _distributions = distributions;
+        uint256[] memory _distributions = distributions;
         uint256[] memory packedDistributions = PackedByteUtility.packBytearray(
             _distributions
         );
@@ -45,11 +46,11 @@ contract TokenTest is Test, ERC721Recipient {
 
         // 5 textures
         distributions = [
-            uint8(51),
-            uint8(102),
-            uint8(153),
-            uint8(204),
-            uint8(255)
+            uint256(51),
+            uint256(102),
+            uint256(153),
+            uint256(204),
+            uint256(255)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
@@ -61,14 +62,14 @@ contract TokenTest is Test, ERC721Recipient {
 
         // 8 objects
         distributions = [
-            uint8(31),
-            uint8(62),
-            uint8(93),
-            uint8(124),
-            uint8(155),
-            uint8(186),
-            uint8(217),
-            uint8(248)
+            uint256(31),
+            uint256(62),
+            uint256(93),
+            uint256(124),
+            uint256(155),
+            uint256(186),
+            uint256(217),
+            uint256(248)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
@@ -76,13 +77,13 @@ contract TokenTest is Test, ERC721Recipient {
 
         // 7 borders
         distributions = [
-            uint8(36),
-            uint8(72),
-            uint8(108),
-            uint8(144),
-            uint8(180),
-            uint8(216),
-            uint8(252)
+            uint256(36),
+            uint256(72),
+            uint256(108),
+            uint256(144),
+            uint256(180),
+            uint256(216),
+            uint256(252)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
@@ -100,7 +101,7 @@ contract TokenTest is Test, ERC721Recipient {
         uint256 startingTokenId = _tokenId * 7;
 
         // get layerIds from token IDs
-        uint8[] memory layers = new uint8[](7);
+        uint256[] memory layers = new uint256[](7);
         for (
             uint256 layerTokenId = startingTokenId;
             layerTokenId < startingTokenId + 7;
@@ -116,7 +117,7 @@ contract TokenTest is Test, ERC721Recipient {
                 emit log('oops');
                 layer += 1;
             }
-            layers[layerTokenId % 7] = uint8(layer);
+            layers[layerTokenId % 7] = uint256(layer);
             emit log_named_uint('copied layer', layers[layerTokenId % 7]);
         }
 
@@ -125,13 +126,13 @@ contract TokenTest is Test, ERC721Recipient {
 
         emit log_named_uint('packedLayers', packedLayers[0]);
 
-        // unpack layerIDs into a binding - todo: make this a public function idk
-        uint256 binding = test.packedLayersToBitField(packedLayers);
+        uint256 binding = BitMapUtility.uintsToBitMap(layers);
+
         emit log_named_uint('binding', binding);
         test.setBoundLayers(_tokenId * 7, binding);
 
         // swap layer ordering
-        uint8 temp = layers[0];
+        uint256 temp = layers[0];
         layers[0] = layers[1];
         layers[1] = temp;
         uint256[] memory newPackedLayers = PackedByteUtility.packBytearray(

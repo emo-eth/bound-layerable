@@ -53,52 +53,33 @@ contract BoundLayerable is
         _tokenIdToBoundLayers[tokenId] = 1;
     }
 
-    function setBoundLayersBulk(
-        uint256[] calldata _tokenId,
-        uint256[] calldata _layers
-    ) public onlyOwner {
-        // TODO: check tokenIds are valid?
-        uint256 tokenIdLength = _tokenId.length;
-        if (tokenIdLength != _layers.length) {
-            revert ArrayLengthMismatch(tokenIdLength, _layers.length);
-        }
-        for (uint256 i; i < tokenIdLength; ) {
-            _tokenIdToBoundLayers[_tokenId[i]] = _layers[i] & NOT_0TH_BITMASK;
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function setBoundLayers(uint256 tokenId, uint256 bindings)
-        public
-        onlyOwner
-    {
-        _tokenIdToBoundLayers[tokenId] = bindings & NOT_0TH_BITMASK;
-    }
-
-    function burnAndBindSingle(uint256 _targetTokenId, uint256 _tokenIdToBind)
+    /**
+     * @notice Bind a layer token to a base token and burn the layer token. User must own both tokens.
+     * @param baseTokenId TokenID of a base token
+     * @param layerTokenId TokenID of a layer token
+     * emits LayersBoundToToken
+     */
+    function burnAndBindSingle(uint256 baseTokenId, uint256 layerTokenId)
         public
     {
         if (
-            ownerOf(_targetTokenId) != msg.sender ||
-            ownerOf(_tokenIdToBind) != msg.sender
+            ownerOf(baseTokenId) != msg.sender ||
+            ownerOf(layerTokenId) != msg.sender
         ) {
             revert NotOwner();
         }
-        // TODO: bulk fetch layerid
-        uint256 portraitLayerId = getLayerId(_targetTokenId);
+        uint256 portraitLayerId = getLayerId(baseTokenId);
 
         if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
 
-        uint256 layerId = getLayerId(_tokenIdToBind);
+        uint256 layerId = getLayerId(layerTokenId);
         if (layerId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBase();
         }
 
-        uint256 bindings = _tokenIdToBoundLayers[_targetTokenId];
+        uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
         // always bind portrait, since it won't be set automatically
         bindings |= portraitLayerId.toBitMap();
         // TODO: necessary?
@@ -106,41 +87,31 @@ contract BoundLayerable is
         if ((bindings & layerIdBitMap) > 0) {
             revert LayerAlreadyBound();
         }
-        // bindings = (bindings | layerIdBitMap) & NOT_0TH_BITMASK;
-        // _tokenIdToBoundLayers[_targetTokenId] = bindings;
-        _burn(_tokenIdToBind);
-        _setBoundLayersAndEmitEvent(_targetTokenId, bindings | layerIdBitMap);
-        // emit LayersBoundToToken(_targetTokenId, bindings);
+
+        _burn(layerTokenId);
+        _setBoundLayersAndEmitEvent(baseTokenId, bindings | layerIdBitMap);
     }
 
-    function _setBoundLayersAndEmitEvent(
-        uint256 _targetTokenId,
-        uint256 bindings
-    ) internal {
-        bindings = bindings & NOT_0TH_BITMASK;
-        _tokenIdToBoundLayers[_targetTokenId] = bindings;
-        emit LayersBoundToToken(_targetTokenId, bindings);
-    }
-
-    function _isBindable(uint256 layerId) internal view returns (bool) {
-        return layerId % NUM_TOKENS_PER_SET == 0;
-    }
-
+    /**
+     * @notice Bind layer tokens to a base token and burn the layer tokens. User must own all tokens.
+     * @param baseTokenId TokenID of a base token
+     * @param layerTokenIds TokenID of a layer token
+     * emits LayersBoundToToken
+     */
     function burnAndBindMultiple(
-        uint256 targetTokenId,
-        uint256[] calldata tokenIdsToBind
+        uint256 baseTokenId,
+        uint256[] calldata layerTokenIds
     ) public {
         // todo: modifier for these?
-        if (ownerOf(targetTokenId) != msg.sender) {
+        if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
-        uint256 portraitLayerId = getLayerId(targetTokenId);
+        uint256 portraitLayerId = getLayerId(baseTokenId);
 
         if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
-        uint256 bindings = _tokenIdToBoundLayers[targetTokenId] &
-            NOT_0TH_BITMASK;
+        uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind portrait, since it won't be set automatically
         bindings |= portraitLayerId.toBitMap();
         // todo: try to batch with arrays by LayerType, fetching distribution for type,
@@ -150,11 +121,11 @@ contract BoundLayerable is
         // todo: look at most efficient way to code in assembly
         unchecked {
             // todo: revisit if via_ir = true
-            uint256 length = tokenIdsToBind.length;
+            uint256 length = layerTokenIds.length;
             uint256 i;
             for (; i < length; ) {
-                uint256 tokenId = tokenIdsToBind[i];
-                if (ownerOf(targetTokenId) != msg.sender) {
+                uint256 tokenId = layerTokenIds[i];
+                if (ownerOf(baseTokenId) != msg.sender) {
                     revert NotOwner();
                 }
                 uint256 layerId = getLayerId(tokenId);
@@ -171,23 +142,20 @@ contract BoundLayerable is
                 ++i;
             }
         }
-        _setBoundLayersAndEmitEvent(targetTokenId, bindings);
-        // _tokenIdToBoundLayers[targetTokenId] = (bindings & NOT_0TH_BITMASK);
+        _setBoundLayersAndEmitEvent(baseTokenId, bindings);
     }
 
     function setActiveLayers(uint256 _tokenId, uint256[] calldata _packedLayers)
         external
     {
-        // TODO: check tokenId is owned or authorized for msg.sender
-        // TODO: check tokenId is bindable
-        // if (ownerOf(_tokenId) != msg.sender) {
-        //     revert NotOwner();
-        // }
+        if (ownerOf(_tokenId) != msg.sender) {
+            revert NotOwner();
+        }
         if (_tokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
         // unpack layers into a single bitfield and check there are no duplicates
-        uint256 unpackedLayers = _unpackLayersAndCheckForDuplicates(
+        uint256 unpackedLayers = _unpackLayersToBitMapAndCheckForDuplicates(
             _packedLayers
         );
         uint256 boundLayers = _tokenIdToBoundLayers[_tokenId];
@@ -200,15 +168,64 @@ contract BoundLayerable is
         emit ActiveLayersChanged(_tokenId, _packedLayers);
     }
 
+    function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
+        internal
+    {
+        // 0 is not a valid layerId, so make sure it is not set on bindings.
+        bindings = bindings & NOT_0TH_BITMASK;
+        _tokenIdToBoundLayers[baseTokenId] = bindings;
+        emit LayersBoundToToken(baseTokenId, bindings);
+    }
+
+    // todo: use this? compare gas
+    function _isBindable(uint256 layerId) internal view returns (bool) {
+        return layerId % NUM_TOKENS_PER_SET == 0;
+    }
+
     // CHECK //
 
-    function _unpackLayersAndCheckForDuplicates(
-        uint256[] calldata _packedLayersArr
+    /**
+     * @notice Unpack bytepacked layerIds and check that there are no duplicates
+     * @param bytePackedLayers uint256 of packed layerIds
+     * @return uint256 bitMap of unpacked layerIds
+     */
+    function _unpackLayersToBitMapAndCheckForDuplicates(
+        uint256[] calldata bytePackedLayers
     ) internal virtual returns (uint256) {
         uint256 unpackedLayers;
-        uint256 packedLayersArrLength = _packedLayersArr.length;
+        uint256 packedLayersArrLength = bytePackedLayers.length;
+        unchecked {
+            for (uint256 i; i < packedLayersArrLength; ++i) {
+                uint256 packedLayers = bytePackedLayers[i];
+                for (uint256 j; j < 32; ++j) {
+                    uint256 layer = PackedByteUtility.getPackedByteFromLeft(
+                        j,
+                        packedLayers
+                    );
+                    if (layer == 0) {
+                        break;
+                    }
+                    // todo: see if assembly dropping least significant 1's is more efficient here
+                    if (_layerIsBoundToTokenId(unpackedLayers, layer)) {
+                        revert DuplicateActiveLayers();
+                    }
+                    unpackedLayers |= 1 << layer;
+                }
+            }
+        }
+        return unpackedLayers;
+    }
+
+    // // tood: remove?
+    function packedLayersToBitMap(uint256[] calldata bytePackedLayers)
+        public
+        pure
+        returns (uint256)
+    {
+        uint256 unpackedLayers;
+        uint256 packedLayersArrLength = bytePackedLayers.length;
         for (uint256 i; i < packedLayersArrLength; ++i) {
-            uint256 packedLayers = _packedLayersArr[i];
+            uint256 packedLayers = bytePackedLayers[i];
             for (uint256 j; j < 32; ++j) {
                 uint256 layer = PackedByteUtility.getPackedByteFromLeft(
                     j,
@@ -217,82 +234,38 @@ contract BoundLayerable is
                 if (layer == 0) {
                     break;
                 }
-                // todo: see if assembly dropping least significant 1's is more efficient here
-                if (_layerIsBoundToTokenId(unpackedLayers, layer)) {
-                    revert DuplicateActiveLayers();
-                }
                 unpackedLayers |= 1 << layer;
             }
-        }
-        return unpackedLayers;
-    }
-
-    function packedLayersToBitField(uint256[] calldata _packedLayersArr)
-        public
-        pure
-        returns (uint256)
-    {
-        uint256 unpackedLayers;
-        uint256 packedLayersArrLength = _packedLayersArr.length;
-        for (uint256 i; i < packedLayersArrLength; ++i) {
-            uint256 packedLayers = _packedLayersArr[i];
-            for (uint256 j; j < 32; ++j) {
-                uint256 layer = PackedByteUtility.getPackedByteFromLeft(
-                    j,
-                    packedLayers
-                );
-                if (layer == 0) {
-                    break;
-                }
-                unpackedLayers |= 1 << layer;
-            }
-        }
-        return unpackedLayers;
-    }
-
-    function layersToBitField(uint8[] calldata layers)
-        public
-        pure
-        returns (uint256)
-    {
-        uint256 unpackedLayers;
-        uint256 layersLength = layers.length;
-        for (uint256 i; i < layersLength; ++i) {
-            uint8 layer = layers[i];
-            if (layer == 0) {
-                break;
-            }
-            unpackedLayers |= 1 << layer;
         }
         return unpackedLayers;
     }
 
     function _checkUnpackedIsSubsetOfBound(
-        uint256 _unpackedLayers,
-        uint256 _boundLayers
+        uint256 unpackedLayers,
+        uint256 boundLayers
     ) internal pure virtual {
-        // boundLayers should be superset of unpackedLayers
-        uint256 unionSetLayers = _boundLayers | _unpackedLayers;
-        if (unionSetLayers != _boundLayers) {
+        // boundLayers should be superset of unpackedLayers, compare union to boundLayers
+        if ((boundLayers | unpackedLayers) != boundLayers) {
             revert LayerNotBoundToTokenId();
         }
     }
 
+    // TODO: remove?
     function _checkForMultipleVariations(
-        uint256 _boundLayers,
-        uint256 _unpackedLayers
+        uint256 boundLayers,
+        uint256 unpackedLayers
     ) internal view {
         uint256 variationsLength = layerVariations.length;
         for (uint256 i; i < variationsLength; ++i) {
             LayerVariation memory variation = layerVariations[i];
-            if (_layerIsBoundToTokenId(_boundLayers, variation.layerId)) {
+            if (_layerIsBoundToTokenId(boundLayers, variation.layerId)) {
                 int256 activeVariations = int256(
                     // put variation bytes at the end of the number
-                    (_unpackedLayers >> variation.layerId) &
+                    (unpackedLayers >> variation.layerId) &
                         ((1 << variation.numVariations) - 1)
                     // drop bits above numVariations by &'ing with the same number of 1s
                 );
-                // n&(n-1) drops least significant 1
+                // n&(n-1) drops least significant bit
                 // valid active variation sets are powers of 2 (a single 1) or 0
                 uint256 zeroIfOneOrNoneActive = uint256(
                     activeVariations & (activeVariations - 1)
@@ -369,14 +342,14 @@ contract BoundLayerable is
     // HELPERS //
     /////////////
 
-    function _layerIsBoundToTokenId(uint256 _boundLayers, uint256 _layer)
+    function _layerIsBoundToTokenId(uint256 boundLayers, uint256 _layer)
         internal
         pure
         virtual
         returns (bool isBound)
     {
         assembly {
-            isBound := and(shr(_layer, _boundLayers), 1)
+            isBound := and(shr(_layer, boundLayers), 1)
         }
     }
 }

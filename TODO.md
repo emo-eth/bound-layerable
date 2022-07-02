@@ -10,3 +10,10 @@ TODOs:
 - [ ] Genericize LayerType
 - [ ] More tests
 - [ ] burnAndBindSingleAndSetActiveLayers methods
+- [ ] MaxMintable etc
+- [ ] natspec comments
+- [ ] remove leading underscores where not necessary to disambiguate
+- [ ] decide on Variations
+- [ ] rename bitMap to bitMap
+- [x] use uint256s everywhere instead of uint128s
+  - [ ] test that nothing weird is possible

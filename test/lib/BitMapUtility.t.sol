@@ -31,21 +31,21 @@ contract BitMapUtilityTest is Test {
         assertTrue(badSuperset != subset);
     }
 
-    function testUnpackBitField(uint8 numBits) public {
+    function testUnpackBitMap(uint8 numBits) public {
         // TODO: update for 0
         vm.assume(numBits > 0);
         uint256[] memory bits = new uint256[](numBits);
         for (uint8 i = 0; i < numBits; ++i) {
             bits[i] = i;
         }
-        uint256 bitField = BitMapUtility.uintsToBitMap(bits);
+        uint256 bitMap = BitMapUtility.uintsToBitMap(bits);
 
         if (numBits == 1) {
-            assertEq(bitField, 1);
+            assertEq(bitMap, 1);
         } else {
-            assertEq(bitField, (1 << numBits) - 1);
+            assertEq(bitMap, (1 << numBits) - 1);
         }
-        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, numBits);
 
         for (uint8 i = 0; i < numBits; ++i) {
@@ -53,17 +53,17 @@ contract BitMapUtilityTest is Test {
         }
     }
 
-    function testUnpackBitField1and255() public {
-        uint256 bitField = (1 << 255) | 1;
-        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+    function testUnpackBitMap1and255() public {
+        uint256 bitMap = (1 << 255) | 1;
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, 2);
         assertEq(unpacked[0], 0);
         assertEq(unpacked[1], 255);
     }
 
-    function testUnpackBitField32Ones() public {
-        uint256 bitField = 2**32 - 1;
-        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+    function testUnpackBitMap32Ones() public {
+        uint256 bitMap = 2**32 - 1;
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, 32);
         for (uint8 i = 0; i < 32; ++i) {
             assertEq(unpacked[i], i);
@@ -71,8 +71,8 @@ contract BitMapUtilityTest is Test {
     }
 
     function testUnpackOopsAllOnes() public {
-        uint256 bitField = (1 << 255) - 1;
-        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitField);
+        uint256 bitMap = (1 << 255) - 1;
+        uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, 255);
         for (uint8 i = 0; i < 255; ++i) {
             assertEq(unpacked[i], i);
@@ -87,8 +87,8 @@ contract BitMapUtilityTest is Test {
             bitMask = (1 << (msb + 1)) - 1;
         }
 
-        uint256 bitField = ((1 << msb) | extraBits) & bitMask;
-        uint256 retrievedMsb = BitMapUtility.msb(bitField);
+        uint256 bitMap = ((1 << msb) | extraBits) & bitMask;
+        uint256 retrievedMsb = BitMapUtility.msb(bitMap);
         assertEq(retrievedMsb, msb);
     }
 
@@ -103,9 +103,9 @@ contract BitMapUtilityTest is Test {
     function testLsb(uint8 lsb, uint256 extraBits) public {
         vm.assume(lsb != 0);
 
-        uint256 bitField = (((1 << lsb) | extraBits) >> lsb) << lsb;
+        uint256 bitMap = (((1 << lsb) | extraBits) >> lsb) << lsb;
 
-        uint256 retrievedLsb = BitMapUtility.lsb(bitField);
+        uint256 retrievedLsb = BitMapUtility.lsb(bitMap);
         assertEq(retrievedLsb, lsb);
     }
 

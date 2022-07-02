@@ -46,7 +46,7 @@ library PackedByteUtility {
         }
     }
 
-    function unpackBytesToBitField(uint256 _packedBytes)
+    function unpackBytesToBitMap(uint256 _packedBytes)
         internal
         pure
         returns (uint256 unpacked)
@@ -69,7 +69,7 @@ library PackedByteUtility {
     }
 
     // note: this was accidentally marked public, which was causing panics in foundry debugger?
-    function packBytearray(uint8[] memory bytearray)
+    function packBytearray(uint256[] memory bytearray)
         internal
         pure
         returns (uint256[] memory)

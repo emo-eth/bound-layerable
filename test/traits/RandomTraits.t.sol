@@ -13,7 +13,7 @@ contract RandomTraitsTest is Test {
         test = new RandomTraits(7);
     }
 
-    uint8[] distributions;
+    uint256[] distributions;
 
     function testGetLayerIdBounds(bytes32 traitGenerationSeed) public {
         vm.assume(traitGenerationSeed != 0);
@@ -28,7 +28,7 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerType() public {
-        distributions = new uint8[](0);
+        distributions = new uint256[](0);
         // % 7 == 0 should be portrait
         assertEq(uint256(test.getLayerType(0)), 0);
         assertEq(uint256(test.getLayerType(7)), 0);
@@ -73,7 +73,7 @@ contract RandomTraitsTest is Test {
             )
         );
         // less than first distribution
-        distributions = new uint8[](0);
+        distributions = new uint256[](0);
         distributions.push(0x80);
         distributions.push(0xc0);
         test.setLayerTypeDistribution(
@@ -84,7 +84,7 @@ contract RandomTraitsTest is Test {
         emit log_named_uint('layerId', layerId);
         assertEq(layerId, 1);
 
-        distributions = new uint8[](0);
+        distributions = new uint256[](0);
 
         // less than second distribution
         distributions.push(0x40); // 0b01000000
@@ -110,8 +110,8 @@ contract RandomTraitsTest is Test {
         layerId = test.getLayerId(0);
         assertEq(layerId, 3);
 
-        distributions = new uint8[](0);
-        for (uint8 i = 1; i <= 32; i++) {
+        distributions = new uint256[](0);
+        for (uint256 i = 1; i <= 32; i++) {
             distributions.push(i);
         }
         packedDistribution = PackedByteUtility.packBytearray(distributions);
@@ -124,7 +124,7 @@ contract RandomTraitsTest is Test {
 
         // first byte is 0x18, or 0b00011000
         // less than first byte
-        distributions = new uint8[](0);
+        distributions = new uint256[](0);
         distributions.push(0x19);
         distributions.push(0x20);
         packedDistribution = PackedByteUtility.packBytearray(distributions);
@@ -156,7 +156,7 @@ contract RandomTraitsTest is Test {
         layerId = test.getLayerId(1);
         assertEq(layerId, 35);
 
-        distributions = new uint8[](0);
+        distributions = new uint256[](0);
         distributions.push(0x1);
         distributions.push(0x2);
         distributions.push(0x3);

@@ -3,7 +3,7 @@ pragma solidity ^0.8.11;
 
 import {svg} from './SVG.sol';
 import {utils} from './Utils.sol';
-import {Token} from './Token.sol';
+import {Token} from './test/Token.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721Recipient} from './utils/ERC721Recipient.sol';
@@ -11,21 +11,21 @@ import {LayerType} from './interface/Enums.sol';
 
 contract Renderer is ERC721Recipient {
     Token test;
-    uint8[] distributions;
+    uint256[] distributions;
 
     constructor() {
         test = new Token('Token', 'test', '');
         // todo: set rarities
         // 6 backgrounds
         distributions = [
-            uint8(42),
-            uint8(84),
-            uint8(126),
-            uint8(168),
-            uint8(210),
-            uint8(252)
+            uint256(42),
+            uint256(84),
+            uint256(126),
+            uint256(168),
+            uint256(210),
+            uint256(252)
         ];
-        uint8[] memory _distributions = distributions;
+        uint256[] memory _distributions = distributions;
         uint256[] memory packedDistributions = PackedByteUtility.packBytearray(
             _distributions
         );
@@ -37,11 +37,11 @@ contract Renderer is ERC721Recipient {
         test.setLayerTypeDistribution(LayerType.PORTRAIT, 255 << 248);
         // 5 textures
         distributions = [
-            uint8(51),
-            uint8(102),
-            uint8(153),
-            uint8(204),
-            uint8(255)
+            uint256(51),
+            uint256(102),
+            uint256(153),
+            uint256(204),
+            uint256(255)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
@@ -51,27 +51,27 @@ contract Renderer is ERC721Recipient {
         );
         // 8 objects
         distributions = [
-            uint8(31),
-            uint8(62),
-            uint8(93),
-            uint8(124),
-            uint8(155),
-            uint8(186),
-            uint8(217),
-            uint8(248)
+            uint256(31),
+            uint256(62),
+            uint256(93),
+            uint256(124),
+            uint256(155),
+            uint256(186),
+            uint256(217),
+            uint256(248)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
         test.setLayerTypeDistribution(LayerType.OBJECT, packedDistributions[0]);
         // 7 borders
         distributions = [
-            uint8(36),
-            uint8(72),
-            uint8(108),
-            uint8(144),
-            uint8(180),
-            uint8(216),
-            uint8(252)
+            uint256(36),
+            uint256(72),
+            uint256(108),
+            uint256(144),
+            uint256(180),
+            uint256(216),
+            uint256(252)
         ];
         _distributions = distributions;
         packedDistributions = PackedByteUtility.packBytearray(_distributions);
@@ -102,12 +102,12 @@ contract Renderer is ERC721Recipient {
             if (layer == 2) {
                 layer = 1;
             }
-            layers[layerTokenId % 7] = uint8(layer);
+            layers[layerTokenId % 7] = uint256(layer);
         }
         // create copy as uint256 bc todo: i need to fix
         // uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
         // unpack layerIDs into a binding - todo: make this a public function idk
-        // uint256 binding = test.packedLayersToBitField(packedLayers);
+        // uint256 binding = test.packedLayersToBitMap(packedLayers);
         // test.bindLayers(startingTokenId, binding);
         // swap layer ordering
         uint256 temp = layers[0];

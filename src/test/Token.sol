@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {ERC721A} from './token/ERC721A.sol';
+import {ERC721A} from '../token/ERC721A.sol';
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {BoundLayerable} from './BoundLayerable.sol';
-import {RandomTraits} from './traits/RandomTraits.sol';
-import {json} from './lib/JSON.sol';
-import './interface/Errors.sol';
+import {BoundLayerableTestImpl} from './BoundLayerableTestImpl.sol';
+import {RandomTraits} from '../traits/RandomTraits.sol';
+import {json} from '../lib/JSON.sol';
+import '../interface/Errors.sol';
 
-contract Token is Ownable, BoundLayerable {
+contract Token is Ownable, BoundLayerableTestImpl {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;
@@ -19,7 +19,7 @@ contract Token is Ownable, BoundLayerable {
         string memory _name,
         string memory _symbol,
         string memory defaultURI
-    ) BoundLayerable(_name, _symbol, defaultURI) {}
+    ) {}
 
     modifier includesCorrectPayment(uint256 _numSets) {
         if (msg.value != _numSets * MINT_PRICE) {
@@ -63,15 +63,8 @@ contract Token is Ownable, BoundLayerable {
         return _tokenURI(tokenId);
     }
 
-    function _burnLayers(uint256 _start, uint256 _end) public onlyOwner {}
-
-    function ownerOf(uint256 _tokenId) public view override returns (address) {
-        // if trading layers is no longer active, report owner as null address
-        // TODO: might be able to optimize this with two separate if statements
-        if (_tokenId % 7 != 0 && !tradingActive) {
-            return address(0);
-        }
-        return super.ownerOf(_tokenId);
+    function ownerOf(uint256) public view override returns (address) {
+        return msg.sender;
     }
 
     function mintSet() public payable includesCorrectPayment(1) {
