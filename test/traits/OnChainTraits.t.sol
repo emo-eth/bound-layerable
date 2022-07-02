@@ -23,5 +23,9 @@ contract OnChainTraitsTest is Test {
         expected = '{"trait_type":"test","display_type":"date","value":"hello"}';
         actual = test.getTraitJson(2);
         assertEq(abi.encode(actual), abi.encode(expected));
+
+        expected = '{"trait_type":"qual test","display_type":"date","value":"hello"}';
+        actual = test.getTraitJson(2, 'qual');
+        assertEq(abi.encode(actual), abi.encode(expected));
     }
 }

@@ -9,6 +9,7 @@ enum DisplayType {
     BoostNumber
 }
 
+// TODO: generalize this, probably uint8s
 enum LayerType {
     PORTRAIT,
     BACKGROUND,

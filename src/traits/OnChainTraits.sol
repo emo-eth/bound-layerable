@@ -41,16 +41,21 @@ contract OnChainTraits is Ownable {
         return json.property('display_type', displayTypeString);
     }
 
-    function getTraitJson(uint256 _traitId)
-        public
-        view
-        returns (string memory)
-    {
-        Attribute memory attribute = traitAttributes[_traitId];
+    function getTraitJson(uint256 traitId) public view returns (string memory) {
+        Attribute memory attribute = traitAttributes[traitId];
+
         string memory properties = string.concat(
             json.property('trait_type', attribute.traitType),
             ','
         );
+        return _getTraitJson(properties, attribute);
+    }
+
+    function _getTraitJson(string memory properties, Attribute memory attribute)
+        internal
+        pure
+        returns (string memory)
+    {
         // todo: probably don't need this for layers, but good for generic
         DisplayType displayType = attribute.displayType;
         if (displayType != DisplayType.String) {
@@ -71,5 +76,22 @@ contract OnChainTraits is Ownable {
             json.property('value', attribute.value)
         );
         return json.object(properties);
+    }
+
+    function getTraitJson(uint256 _traitId, string memory qualifier)
+        public
+        view
+        returns (string memory)
+    {
+        Attribute memory attribute = traitAttributes[_traitId];
+
+        string memory properties = string.concat(
+            json.property(
+                'trait_type',
+                string.concat(qualifier, ' ', attribute.traitType)
+            ),
+            ','
+        );
+        return _getTraitJson(properties, attribute);
     }
 }

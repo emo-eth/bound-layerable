@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {BoundLayerable} from '../BoundLayerable.sol';
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg, utils} from '../SVG.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
+import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
+import {ILayerable} from './ILayerable.sol';
 
-contract OnChainLayerable is OnChainTraits {
+contract Layerable is ILayerable, OnChainTraits {
     // TODO: different strings impl?
     using Strings for uint256;
+    using BitMapUtility for uint256;
 
     string defaultURI;
     string baseLayerURI;
@@ -55,17 +57,53 @@ contract OnChainLayerable is OnChainTraits {
             );
     }
 
-    function getTokenTraits(uint256 bindings)
+    function getLayerTraits(uint256 bindings)
         public
         view
         returns (string memory)
     {
+        return json.arrayOf(_getLayerTraits(bindings));
+    }
+
+    function getActiveLayerTraits(uint256[] calldata activeLayers)
+        public
+        view
+        returns (string memory)
+    {
+        return json.arrayOf(_getActiveLayerTraits(activeLayers));
+    }
+
+    function _getLayerTraits(uint256 bindings)
+        internal
+        view
+        returns (string[] memory layerTraits)
+    {
         uint256[] memory boundLayers = BitMapUtility.unpackBitMap(bindings);
-        string[] memory layerTraits = new string[](boundLayers.length);
+        layerTraits = new string[](boundLayers.length);
         for (uint256 i; i < boundLayers.length; ++i) {
             layerTraits[i] = getTraitJson(boundLayers[i]);
         }
-        return json.arrayOf(layerTraits);
+    }
+
+    // eg 'Background' -> 'Active Background'
+    function _getActiveLayerTraits(uint256[] calldata activeLayers)
+        internal
+        view
+        returns (string[] memory activeLayerTraits)
+    {
+        activeLayerTraits = new string[](activeLayers.length);
+        for (uint256 i; i < activeLayers.length; ++i) {
+            activeLayerTraits[i] = getTraitJson(activeLayers[i], 'Active');
+        }
+    }
+
+    function getLayerAndActiveTraits(
+        uint256 bindings,
+        uint256[] calldata activeLayers
+    ) public view returns (string memory) {
+        string[] memory layerTraits = _getLayerTraits(bindings);
+        string[] memory activeLayerTraits = _getActiveLayerTraits(activeLayers);
+        return json.arrayOf(layerTraits, activeLayerTraits);
     }
 
     // TODO: restrict so other contracts cannot call?
@@ -84,8 +122,8 @@ contract OnChainLayerable is OnChainTraits {
         // uint256 bindings = _tokenIdToBoundLayers[_tokenId];
 
         // if no bindings, format metadata as an individual NFT
-        // TODO explore setting bindings to 1
-        if (bindings == 0) {
+        // check if bindings == 0 or 1; bindable traits will be treated differently
+        if (bindings == 0 || bindings == 0) {
             // uint256 layerId = getLayerId(_tokenId);
             properties[0] = json.property('image', getLayerURI(layerId));
             properties[1] = json.property(
@@ -96,7 +134,7 @@ contract OnChainLayerable is OnChainTraits {
             properties[0] = json.property('image', getTokenSVG(activeLayers));
             properties[1] = json.property(
                 'attributes',
-                getTokenTraits(bindings)
+                getLayerTraits(bindings)
             );
         }
         return json.objectOf(properties);

@@ -5,7 +5,6 @@ import {ERC721A} from './token/ERC721A.sol';
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {BoundLayerable} from './BoundLayerable.sol';
-import {OnChainLayerable} from './metadata/OnChainLayerable.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {json} from './lib/JSON.sol';
 import './interface/Errors.sol';

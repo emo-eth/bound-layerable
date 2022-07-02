@@ -5,7 +5,9 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
 import {LayerVariation} from './interface/Structs.sol';
-import {OnChainLayerable} from './metadata/OnChainLayerable.sol';
+import {ILayerable} from './metadata/ILayerable.sol';
+import {Layerable} from './metadata/Layerable.sol';
+
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721A} from './token/ERC721A.sol';
 
@@ -24,14 +26,14 @@ contract BoundLayerable is
     // TODO: consider setting limit of 32 layers, only store one uint256
     mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
     LayerVariation[] public layerVariations;
-    OnChainLayerable public metadataContract;
+    ILayerable public metadataContract;
 
     constructor(
         string memory _name,
         string memory _symbol,
         string memory baseUri
     ) ERC721A(_name, _symbol) {
-        metadataContract = new OnChainLayerable(baseUri, msg.sender);
+        metadataContract = new Layerable(baseUri, msg.sender);
     }
 
     /////////////
@@ -344,14 +346,14 @@ contract BoundLayerable is
             );
     }
 
-    function setMetadataContract(OnChainLayerable _metadataContract)
+    function setMetadataContract(ILayerable _metadataContract)
         external
         onlyOwner
     {
         _setMetadataContract(_metadataContract);
     }
 
-    function _setMetadataContract(OnChainLayerable _metadataContract) internal {
+    function _setMetadataContract(ILayerable _metadataContract) internal {
         metadataContract = _metadataContract;
     }
 

@@ -33,19 +33,34 @@ library json {
         return string.concat('[', _value, ']');
     }
 
-    function arrayOf(string[] memory _values)
+    function arrayOf(string[] memory values)
         internal
         pure
         returns (string memory)
     {
-        if (_values.length == 0) {
-            return array('');
+        return array(_join(values));
+    }
+
+    function arrayOf(string[] memory values1, string[] memory values2)
+        internal
+        pure
+        returns (string memory)
+    {
+        return array(string.concat(_join(values1), _join(values2)));
+    }
+
+    function _join(string[] memory values)
+        internal
+        pure
+        returns (string memory result)
+    {
+        if (values.length == 0) {
+            return '';
         }
-        string memory _result = _values[0];
-        for (uint256 i = 1; i < _values.length; ++i) {
-            _result = string.concat(_result, ',', _values[i]);
+        result = values[0];
+        for (uint256 i = 1; i < values.length; ++i) {
+            result = string.concat(result, ',', values[i]);
         }
-        return array(_result);
     }
 
     function property(string memory _name, string memory _value)

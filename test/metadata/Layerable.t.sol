@@ -2,16 +2,16 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {OnChainLayerable} from 'bound-layerable/metadata/OnChainLayerable.sol';
+import {Layerable} from 'bound-layerable/metadata/Layerable.sol';
 import {Attribute} from 'bound-layerable/interface/Structs.sol';
 import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 
-contract OnChainLayerableImpl is OnChainLayerable {
+contract LayerableImpl is Layerable {
     uint256 bindings;
     uint256[] activeLayers;
     bytes32 traitGenerationSeed;
 
-    constructor() OnChainLayerable('default', msg.sender) {}
+    constructor() Layerable('default', msg.sender) {}
 
     function setBindings(uint256 _bindings) public {
         bindings = _bindings;
@@ -43,11 +43,11 @@ contract OnChainLayerableImpl is OnChainLayerable {
     }
 }
 
-contract OnChainLayerableTest is Test {
-    OnChainLayerableImpl test;
+contract LayerableTest is Test {
+    LayerableImpl test;
 
     function setUp() public {
-        test = new OnChainLayerableImpl();
+        test = new LayerableImpl();
         test.setBaseLayerURI('layer/'); // test.setLayerTypeDistribution(LayerType.PORTRAIT, 0xFF << 248);
     }
 
