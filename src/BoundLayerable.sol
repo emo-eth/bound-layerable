@@ -28,6 +28,14 @@ contract BoundLayerable is
     LayerVariation[] public layerVariations;
     ILayerable public metadataContract;
 
+    // TODO: incorporate modifier, compare gas
+    modifier onlyBase(uint256 tokenId) {
+        if (tokenId % NUM_TOKENS_PER_SET != 0) {
+            revert OnlyBase();
+        }
+        _;
+    }
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -69,7 +77,7 @@ contract BoundLayerable is
         _tokenIdToBoundLayers[tokenId] = bindings & NOT_0TH_BITMASK;
     }
 
-    function burnAndBindLayer(uint256 _targetTokenId, uint256 _tokenIdToBind)
+    function burnAndBindSingle(uint256 _targetTokenId, uint256 _tokenIdToBind)
         public
     {
         if (
@@ -82,12 +90,12 @@ contract BoundLayerable is
         uint256 portraitLayerId = getLayerId(_targetTokenId);
 
         if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
-            revert OnlyBindable();
+            revert OnlyBase();
         }
 
         uint256 layerId = getLayerId(_tokenIdToBind);
         if (layerId % NUM_TOKENS_PER_SET == 0) {
-            revert CannotBindBindable();
+            revert CannotBindBase();
         }
 
         uint256 bindings = _tokenIdToBoundLayers[_targetTokenId];
@@ -118,7 +126,7 @@ contract BoundLayerable is
         return layerId % NUM_TOKENS_PER_SET == 0;
     }
 
-    function burnAndBindLayers(
+    function burnAndBindMultiple(
         uint256 targetTokenId,
         uint256[] calldata tokenIdsToBind
     ) public {
@@ -129,7 +137,7 @@ contract BoundLayerable is
         uint256 portraitLayerId = getLayerId(targetTokenId);
 
         if (portraitLayerId % NUM_TOKENS_PER_SET != 0) {
-            revert OnlyBindable();
+            revert OnlyBase();
         }
         uint256 bindings = _tokenIdToBoundLayers[targetTokenId] &
             NOT_0TH_BITMASK;
@@ -151,7 +159,7 @@ contract BoundLayerable is
                 }
                 uint256 layerId = getLayerId(tokenId);
                 if (layerId % NUM_TOKENS_PER_SET == 0) {
-                    revert CannotBindBindable();
+                    revert CannotBindBase();
                 }
                 uint256 layerIdBitMap = layerId.toBitMap();
                 if ((bindings & layerIdBitMap) > 0) {
@@ -176,7 +184,7 @@ contract BoundLayerable is
         //     revert NotOwner();
         // }
         if (_tokenId % NUM_TOKENS_PER_SET != 0) {
-            revert NotBindable();
+            revert OnlyBase();
         }
         // unpack layers into a single bitfield and check there are no duplicates
         uint256 unpackedLayers = _unpackLayersAndCheckForDuplicates(
