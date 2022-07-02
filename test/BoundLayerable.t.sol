@@ -345,10 +345,10 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.getActiveLayers(0);
     }
 
-    function testBurnAndBindLayer() public {
+    function testburnAndBindSingle() public {
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(6, ((1 << 2) | (1 << 7)));
-        test.burnAndBindLayer(6, 1);
+        test.burnAndBindSingle(6, 1);
         assertTrue(test.isBurned(1));
         assertFalse(test.isBurned(6));
         uint256 bindings = test.getBoundLayerBitField(6);
@@ -361,7 +361,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         // test bind unowned layer to owned
     }
 
-    function test_snapshotBurnAndBindLayers() public {
+    function test_snapshotburnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](6);
         layers[0] = 0;
         layers[1] = 1;
@@ -369,16 +369,16 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[3] = 3;
         layers[4] = 4;
         layers[5] = 5;
-        test.burnAndBindLayers(6, layers);
+        test.burnAndBindMultiple(6, layers);
     }
 
-    function testBurnAndBindLayers() public {
+    function testburnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(6, ((1 << 2) | (1 << 3) | (1 << 7)));
-        test.burnAndBindLayers(6, layers);
+        test.burnAndBindMultiple(6, layers);
         assertTrue(test.isBurned(1));
         assertTrue(test.isBurned(2));
         assertFalse(test.isBurned(6));
@@ -392,7 +392,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     // todo: test this in real-world circumstances where layer-id is compared against trait seed
-    function test_snapshotBurnAndBindLayer() public {
-        test.burnAndBindLayer(6, 1);
+    function test_snapshotburnAndBindSingle() public {
+        test.burnAndBindSingle(6, 1);
     }
 }
