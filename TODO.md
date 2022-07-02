@@ -12,8 +12,10 @@ TODOs:
 - [ ] burnAndBindSingleAndSetActiveLayers methods
 - [ ] MaxMintable etc
 - [ ] natspec comments
+  - [x] BoundLayerable
+  - [x] Layerable
 - [ ] remove leading underscores where not necessary to disambiguate
 - [ ] decide on Variations
-- [ ] rename bitMap to bitMap
+- [x] rename bitField to bitMap
 - [x] use uint256s everywhere instead of uint128s
   - [ ] test that nothing weird is possible
