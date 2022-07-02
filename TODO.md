@@ -6,7 +6,7 @@ TODOs:
 - [x] investigate manually binding tokens owned by binder
 - [ ] TwoStepOwnable
 - [ ] Withdrawable
-- [ ] Split main Layerable functionality out and make SVGLayerable an example contract
+- [x] Split main Layerable functionality out and make ImageLayerable an example contract
 - [ ] Genericize LayerType
 - [ ] More tests
 - [ ] burnAndBindSingleAndSetActiveLayers methods

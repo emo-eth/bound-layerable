@@ -3,19 +3,18 @@ pragma solidity ^0.8.4;
 
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg, utils} from '../SVG.sol';
-import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {ILayerable} from './ILayerable.sol';
 
-contract Layerable is ILayerable, OnChainTraits {
-    // TODO: different strings impl?
-    using Strings for uint256;
+abstract contract Layerable is ILayerable, OnChainTraits {
     using BitMapUtility for uint256;
 
+    // TODO: make these optional; remove from interface
     string defaultURI;
+    // todo: use different URIs for solo layers and layered layers?
     string baseLayerURI;
 
     constructor(string memory _defaultURI, address _owner) {
@@ -23,40 +22,37 @@ contract Layerable is ILayerable, OnChainTraits {
         transferOwnership(_owner);
     }
 
-    function setDefaultURI(string calldata _defaultURI) public onlyOwner {
-        defaultURI = _defaultURI;
-    }
+    // TODO: restrict so other contracts cannot call?
+    /**
+     * @notice get the complete URI of a set of token traits
+     * @param layerId the layerId of the base token
+     * @param bindings the bitmap of bound traits
+     * @param activeLayers packed array of active layerIds as bytes
+     * @param traitGenerationSeed the random seed for random generation of traits, used to determine if layers have been revealed
+     * @return the complete URI of the token, including image and all attributes
+     */
+    function getTokenURI(
+        uint256 layerId,
+        uint256 bindings,
+        uint256[] calldata activeLayers,
+        bytes32 traitGenerationSeed
+    ) public view virtual returns (string memory);
 
-    function setBaseLayerURI(string calldata _baseLayerURI) external onlyOwner {
-        baseLayerURI = _baseLayerURI;
-    }
-
-    function getLayerURI(uint256 _layerId) public view returns (string memory) {
-        return string.concat(baseLayerURI, _layerId.toString(), '.png');
-    }
-
-    function getTokenSVG(uint256[] calldata activeLayers)
+    /// @notice get the complete SVG for a set of activeLayers
+    function getLayeredTokenImageURI(uint256[] calldata activeLayers)
         public
         view
-        returns (string memory)
-    {
-        string memory layerImages = '';
-        for (uint256 i; i < activeLayers.length; ++i) {
-            string memory layerUri = getLayerURI(activeLayers[i]);
-            layerImages = string.concat(
-                layerImages,
-                svg.image(layerUri, svg.prop('height', '100%'))
-            );
-        }
+        virtual
+        returns (string memory);
 
-        return
-            string.concat(
-                '<svg xmlns="http://www.w3.org/2000/svg">',
-                layerImages,
-                '</svg>'
-            );
-    }
+    /// @notice get the image URI for a layerId
+    function getLayerImageURI(uint256 layerId)
+        public
+        view
+        virtual
+        returns (string memory);
 
+    /// @notice get stringified JSON array of bound layer traits
     function getLayerTraits(uint256 bindings)
         public
         view
@@ -65,6 +61,7 @@ contract Layerable is ILayerable, OnChainTraits {
         return json.arrayOf(_getLayerTraits(bindings));
     }
 
+    /// @notice get stringified JSON array of active layer traits
     function getActiveLayerTraits(uint256[] calldata activeLayers)
         public
         view
@@ -73,6 +70,27 @@ contract Layerable is ILayerable, OnChainTraits {
         return json.arrayOf(_getActiveLayerTraits(activeLayers));
     }
 
+    /// @notice get stringified JSON array of combined bound and active layer traits
+    function getLayerAndActiveTraits(
+        uint256 bindings,
+        uint256[] calldata activeLayers
+    ) public view returns (string memory) {
+        string[] memory layerTraits = _getLayerTraits(bindings);
+        string[] memory activeLayerTraits = _getActiveLayerTraits(activeLayers);
+        return json.arrayOf(layerTraits, activeLayerTraits);
+    }
+
+    /// @notice set the default URI for tokens when they are not revealed. OnlyOwner
+    function setDefaultURI(string calldata _defaultURI) public onlyOwner {
+        defaultURI = _defaultURI;
+    }
+
+    /// @notice set the base URI for layers. OnlyOwner
+    function setBaseLayerURI(string calldata _baseLayerURI) external onlyOwner {
+        baseLayerURI = _baseLayerURI;
+    }
+
+    /// @dev get array of stringified trait json for bindings
     function _getLayerTraits(uint256 bindings)
         internal
         view
@@ -85,6 +103,7 @@ contract Layerable is ILayerable, OnChainTraits {
         }
     }
 
+    /// @dev get array of stringified trait json for active layers. Prepends "Active" to trait title.
     // eg 'Background' -> 'Active Background'
     function _getActiveLayerTraits(uint256[] calldata activeLayers)
         internal
@@ -95,48 +114,5 @@ contract Layerable is ILayerable, OnChainTraits {
         for (uint256 i; i < activeLayers.length; ++i) {
             activeLayerTraits[i] = getTraitJson(activeLayers[i], 'Active');
         }
-    }
-
-    function getLayerAndActiveTraits(
-        uint256 bindings,
-        uint256[] calldata activeLayers
-    ) public view returns (string memory) {
-        string[] memory layerTraits = _getLayerTraits(bindings);
-        string[] memory activeLayerTraits = _getActiveLayerTraits(activeLayers);
-        return json.arrayOf(layerTraits, activeLayerTraits);
-    }
-
-    // TODO: restrict so other contracts cannot call?
-    function getTokenURI(
-        uint256 layerId,
-        uint256 bindings,
-        bytes32 traitGenerationSeed,
-        uint256[] calldata activeLayers
-    ) public view virtual returns (string memory) {
-        string[] memory properties = new string[](2);
-
-        // return default uri
-        if (traitGenerationSeed == 0) {
-            return defaultURI;
-        }
-        // uint256 bindings = _tokenIdToBoundLayers[_tokenId];
-
-        // if no bindings, format metadata as an individual NFT
-        // check if bindings == 0 or 1; bindable traits will be treated differently
-        if (bindings == 0 || bindings == 0) {
-            // uint256 layerId = getLayerId(_tokenId);
-            properties[0] = json.property('image', getLayerURI(layerId));
-            properties[1] = json.property(
-                'attributes',
-                json.array(getTraitJson(layerId))
-            );
-        } else {
-            properties[0] = json.property('image', getTokenSVG(activeLayers));
-            properties[1] = json.property(
-                'attributes',
-                getLayerTraits(bindings)
-            );
-        }
-        return json.objectOf(properties);
     }
 }

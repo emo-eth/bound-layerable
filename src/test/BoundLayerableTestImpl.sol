@@ -3,11 +3,14 @@ pragma solidity ^0.8.4;
 
 import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
+import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 
 contract BoundLayerableTestImpl is BoundLayerable {
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
-    constructor() BoundLayerable('', '', 'default') {
+    constructor()
+        BoundLayerable('', '', new ImageLayerable('default', msg.sender))
+    {
         layerVariations.push(LayerVariation(4, 4));
         layerVariations.push(LayerVariation(200, 8));
     }

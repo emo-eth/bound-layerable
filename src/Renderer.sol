@@ -3,18 +3,18 @@ pragma solidity ^0.8.11;
 
 import {svg} from './SVG.sol';
 import {utils} from './Utils.sol';
-import {Token} from './test/Token.sol';
+import {TestToken} from './test/TestToken.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721Recipient} from './utils/ERC721Recipient.sol';
 import {LayerType} from './interface/Enums.sol';
 
 contract Renderer is ERC721Recipient {
-    Token test;
+    TestToken test;
     uint256[] distributions;
 
     constructor() {
-        test = new Token('Token', 'test', '');
+        test = new TestToken('Token', 'test', '');
         // todo: set rarities
         // 6 backgrounds
         distributions = [
@@ -118,7 +118,7 @@ contract Renderer is ERC721Recipient {
         // );
         // set active layers - use portrait id, not b
         // test.setActiveLayers(startingTokenId, newPackedLayers);
-        return test.metadataContract().getTokenSVG(layers);
+        return test.metadataContract().getLayeredTokenImageURI(layers);
     }
 
     function example() external returns (string memory) {

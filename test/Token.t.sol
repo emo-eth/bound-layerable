@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {Token} from 'bound-layerable/test/Token.sol';
+import {TestToken} from 'bound-layerable/test/TestToken.sol';
 
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
@@ -10,12 +10,12 @@ import {ERC721Recipient} from './utils/ERC721Recipient.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
 
-contract TokenTest is Test, ERC721Recipient {
-    Token test;
+contract TestTokenTest is Test, ERC721Recipient {
+    TestToken test;
     uint256[] distributions;
 
     function setUp() public virtual {
-        test = new Token('Test', 'test', '');
+        test = new TestToken('Test', 'test', '');
         test.setTraitGenerationSeed(bytes32(uint256(1)));
     }
 

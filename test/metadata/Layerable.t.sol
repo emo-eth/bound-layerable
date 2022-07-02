@@ -2,16 +2,16 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {Layerable} from 'bound-layerable/metadata/Layerable.sol';
+import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {Attribute} from 'bound-layerable/interface/Structs.sol';
 import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 
-contract LayerableImpl is Layerable {
+contract LayerableImpl is ImageLayerable {
     uint256 bindings;
     uint256[] activeLayers;
     bytes32 traitGenerationSeed;
 
-    constructor() Layerable('default', msg.sender) {}
+    constructor() ImageLayerable('default', msg.sender) {}
 
     function setBindings(uint256 _bindings) public {
         bindings = _bindings;
@@ -37,8 +37,8 @@ contract LayerableImpl is Layerable {
             this.getTokenURI(
                 _layerId,
                 bindings,
-                traitGenerationSeed,
-                activeLayers
+                activeLayers,
+                traitGenerationSeed
             );
     }
 }

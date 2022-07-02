@@ -9,7 +9,7 @@ import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
 
-contract Token is Ownable, BoundLayerableTestImpl {
+contract TestToken is Ownable, BoundLayerableTestImpl {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;

@@ -39,9 +39,9 @@ contract BoundLayerable is
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory baseUri
+        ILayerable _metadataContract
     ) ERC721A(_name, _symbol) {
-        metadataContract = new Layerable(baseUri, msg.sender);
+        metadataContract = _metadataContract;
     }
 
     /////////////
@@ -101,8 +101,8 @@ contract BoundLayerable is
             metadataContract.getTokenURI(
                 tokenId,
                 _tokenIdToBoundLayers[tokenId],
-                traitGenerationSeed,
-                _tokenIdToPackedActiveLayers[tokenId]
+                _tokenIdToPackedActiveLayers[tokenId],
+                traitGenerationSeed
             );
     }
 

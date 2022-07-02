@@ -6,9 +6,12 @@ interface ILayerable {
 
     function setDefaultURI(string calldata baseLayerURI) external;
 
-    function getLayerURI(uint256 layerId) external view returns (string memory);
+    function getLayerImageURI(uint256 layerId)
+        external
+        view
+        returns (string memory);
 
-    function getTokenSVG(uint256[] calldata activeLayers)
+    function getLayeredTokenImageURI(uint256[] calldata activeLayers)
         external
         view
         returns (string memory);
@@ -31,7 +34,7 @@ interface ILayerable {
     function getTokenURI(
         uint256 layerId,
         uint256 bindings,
-        bytes32 traitGenerationSeed,
-        uint256[] calldata activeLayers
+        uint256[] calldata activeLayers,
+        bytes32 traitGenerationSeed
     ) external view returns (string memory);
 }
