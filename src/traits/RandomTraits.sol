@@ -133,8 +133,9 @@ contract RandomTraits is Ownable {
     }
 
     function getLayerId(uint256 tokenId, bytes32 seed)
-        public
+        internal
         view
+        virtual
         returns (uint256)
     {
         LayerType layerType = getLayerType(tokenId);
@@ -149,18 +150,19 @@ contract RandomTraits is Ownable {
         uint256 seed,
         uint256 distributions
     ) internal pure returns (uint256) {
-        // iterate over distributions until we find one that our layer seed is *less than*
-        uint256 i;
         unchecked {
+            uint256 i;
+            // iterate over distributions until we find one that our layer seed is *less than*
             for (; i < 32; ) {
                 uint8 distribution = PackedByteUtility.getPackedByteFromLeft(
                     i,
                     distributions
                 );
-                // if distribution is 0, we've reached the end of the list
                 if (distribution == 0) {
                     if (i > 0) {
-                        return i + 1 + 32 * uint256(layerType);
+                        // if distribution is 0, and it's not the first, we've reached the end of the list
+                        // return the previous layerId.
+                        return i + 32 * uint256(layerType);
                     } else {
                         // first distribution should not be 0
                         revert BadDistributions();
@@ -168,12 +170,24 @@ contract RandomTraits is Ownable {
                 }
                 // note: for layers with multiple variations, the same value should be packed multiple times
                 if (seed < distribution) {
+                    if (i == 31 && uint256(layerType) == 7) {
+                        // i is 31 here; math will overflow here if layerType == 7
+                        // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
+                        revert BadDistributions();
+                    }
+                    // layerIds are 1-indexed, so add 1 to i
                     return i + 1 + 32 * uint256(layerType);
                 }
                 ++i;
             }
+            // i is 32 here; math will overflow here if layerType == 7
+            // 32 + 32 * 7 = 256, which is too large for a uint8
+            if (uint256(layerType) == 7) {
+                revert BadDistributions();
+            }
+            // in the case that there are 32 distributions, default to the last id of this type
+            // i == 32
+            return i + 32 * uint256(layerType);
         }
-        // in the case that there are 32 distributions, default to the last id
-        return i + 32 * uint256(layerType);
     }
 }

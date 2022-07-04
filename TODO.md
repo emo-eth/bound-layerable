@@ -8,8 +8,9 @@ TODOs:
 - [ ] Withdrawable
 - [x] Split main Layerable functionality out and make ImageLayerable an example contract
 - [ ] Genericize LayerType
+  - [ ] genericize getLayerType
 - [ ] More tests
-- [ ] burnAndBindSingleAndSetActiveLayers methods
+- [ ] burnAndBindSingleAndSetActiveLayers methods?
 - [ ] MaxMintable etc
 - [ ] natspec comments
   - [x] BoundLayerable

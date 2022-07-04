@@ -30,6 +30,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     function setUp() public {
         test = new BoundLayerableTestImpl();
         test.mint();
+        test.mint();
         test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
@@ -264,29 +265,28 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
     function testburnAndBindSingle() public {
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(6, ((1 << 2) | (1 << 7)));
-        test.burnAndBindSingle(6, 1);
-        assertTrue(test.isBurned(1));
-        assertFalse(test.isBurned(6));
-        uint256 bindings = test.getBoundLayerBitMap(6);
+        emit LayersBoundToToken(7, ((1 << 8) | (1 << 7)));
+        test.burnAndBindSingle(7, 8);
+        assertTrue(test.isBurned(8));
+        assertFalse(test.isBurned(7));
 
-        uint256[] memory boundLayers = test.getBoundLayers(6);
+        uint256[] memory boundLayers = test.getBoundLayers(7);
         assertEq(boundLayers.length, 2);
-        assertEq(boundLayers[0], 2);
-        assertEq(boundLayers[1], 7);
+        assertEq(boundLayers[0], 7);
+        assertEq(boundLayers[1], 8);
 
         // test bind unowned layer to owned
     }
 
     function test_snapshotburnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](6);
-        layers[0] = 0;
+        layers[0] = 6;
         layers[1] = 1;
         layers[2] = 2;
         layers[3] = 3;
         layers[4] = 4;
         layers[5] = 5;
-        test.burnAndBindMultiple(6, layers);
+        test.burnAndBindMultiple(7, layers);
     }
 
     function testburnAndBindMultiple() public {
@@ -294,22 +294,22 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[0] = 1;
         layers[1] = 2;
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(6, ((1 << 2) | (1 << 3) | (1 << 7)));
-        test.burnAndBindMultiple(6, layers);
+        emit LayersBoundToToken(7, ((1 << 1) | (1 << 2) | (1 << 7)));
+        test.burnAndBindMultiple(7, layers);
         assertTrue(test.isBurned(1));
         assertTrue(test.isBurned(2));
-        assertFalse(test.isBurned(6));
-        uint256 bindings = test.getBoundLayerBitMap(6);
+        assertFalse(test.isBurned(7));
+        uint256 bindings = test.getBoundLayerBitMap(7);
         emit log_named_uint('bindings', bindings);
-        uint256[] memory boundLayers = test.getBoundLayers(6);
+        uint256[] memory boundLayers = test.getBoundLayers(7);
         assertEq(boundLayers.length, 3);
-        assertEq(boundLayers[0], 2);
-        assertEq(boundLayers[1], 3);
+        assertEq(boundLayers[0], 1);
+        assertEq(boundLayers[1], 2);
         assertEq(boundLayers[2], 7);
     }
 
     // todo: test this in real-world circumstances where layer-id is compared against trait seed
     function test_snapshotburnAndBindSingle() public {
-        test.burnAndBindSingle(6, 1);
+        test.burnAndBindSingle(7, 1);
     }
 }

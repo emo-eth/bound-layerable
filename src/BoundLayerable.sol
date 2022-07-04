@@ -14,6 +14,7 @@ import {ERC721A} from './token/ERC721A.sol';
 import './interface/Errors.sol';
 import {NOT_0TH_BITMASK} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
+import {LayerType} from './interface/Enums.sol';
 
 contract BoundLayerable is
     ERC721A,
@@ -134,13 +135,14 @@ contract BoundLayerable is
         ) {
             revert NotOwner();
         }
-        uint256 baseLayerId = getLayerId(baseTokenId);
+        bytes32 seed = traitGenerationSeed;
+        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
         if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
 
-        uint256 layerId = getLayerId(layerTokenId);
+        uint256 layerId = getLayerId(layerTokenId, seed);
         if (layerId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBase();
         }
@@ -172,7 +174,8 @@ contract BoundLayerable is
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
-        uint256 baseLayerId = getLayerId(baseTokenId);
+        bytes32 seed = traitGenerationSeed;
+        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
         if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
@@ -194,7 +197,7 @@ contract BoundLayerable is
                 if (ownerOf(baseTokenId) != msg.sender) {
                     revert NotOwner();
                 }
-                uint256 layerId = getLayerId(tokenId);
+                uint256 layerId = getLayerId(tokenId, seed);
                 if (layerId % NUM_TOKENS_PER_SET == 0) {
                     revert CannotBindBase();
                 }
