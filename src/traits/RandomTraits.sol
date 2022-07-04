@@ -12,8 +12,9 @@ contract RandomTraits is Ownable {
 
     bytes32 public traitGenerationSeed;
 
-    // 32 possible traits per layerType  given uint8 distributions
-    // getLayerId will check if traitValue is less than the distribution
+    // 32 possible traits per layerType given uint8 distributions
+    // except final trait, which has 31, because 0 is not a valid layerId
+    // getLayerId will check if traitValue is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
     mapping(LayerType => uint256) layerTypeToDistributions;
