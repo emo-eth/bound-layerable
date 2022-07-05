@@ -269,7 +269,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.getActiveLayers(0);
     }
 
-    function testburnAndBindSingle() public {
+    function testBurnAndBindSingle() public {
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(7, (1 << 8) | (1 << 7));
         test.burnAndBindSingle(7, 8);
@@ -283,7 +283,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         // test bind unowned layer to owned
     }
 
-    function test_snapshotburnAndBindMultiple() public {
+    function test_snapshotBurnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](6);
         layers[0] = 6;
         layers[1] = 1;
@@ -294,7 +294,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(7, layers);
     }
 
-    function testburnAndBindMultiple() public {
+    function testBurnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
@@ -314,7 +314,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     // todo: test this in real-world circumstances where layer-id is compared against trait seed
-    function test_snapshotburnAndBindSingle() public {
+    function test_snapshotBurnAndBindSingle() public {
         test.burnAndBindSingle(7, 1);
     }
 }

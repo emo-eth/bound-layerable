@@ -6,12 +6,8 @@ import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 library json {
     using Strings for uint256;
 
-    function object(string memory _value)
-        internal
-        pure
-        returns (string memory)
-    {
-        return string.concat('{', _value, '}');
+    function object(string memory value) internal pure returns (string memory) {
+        return string.concat('{', value, '}');
     }
 
     function objectOf(string[] memory properties)
@@ -29,8 +25,8 @@ library json {
         return object(result);
     }
 
-    function array(string memory _value) internal pure returns (string memory) {
-        return string.concat('[', _value, ']');
+    function array(string memory value) internal pure returns (string memory) {
+        return string.concat('[', value, ']');
     }
 
     function arrayOf(string[] memory values)
@@ -63,11 +59,11 @@ library json {
         }
     }
 
-    function property(string memory _name, string memory _value)
+    function property(string memory name, string memory value)
         internal
         pure
         returns (string memory)
     {
-        return string.concat('"', _name, '":"', _value, '"');
+        return string.concat('"', name, '":"', value, '"');
     }
 }

@@ -5,8 +5,10 @@ import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
+import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
+import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 
-contract BoundLayerableTestImpl is BoundLayerable {
+contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
     constructor()
@@ -32,6 +34,16 @@ contract BoundLayerableTestImpl is BoundLayerable {
         }
     }
 
+    function getLayerType(uint256 tokenId)
+        public
+        view
+        virtual
+        override(RandomTraits, RandomTraitsImpl)
+        returns (uint8)
+    {
+        return RandomTraitsImpl.getLayerType(tokenId);
+    }
+
     // TODO: add tests for these + access control
     function removeVariations() public onlyOwner {
         delete layerVariations;
@@ -41,27 +53,27 @@ contract BoundLayerableTestImpl is BoundLayerable {
         return layerVariations;
     }
 
-    function layerIsBoundToTokenId(uint256 _boundLayers, uint256 _layer)
+    function layerIsBoundToTokenId(uint256 boundLayers, uint256 layer)
         public
         pure
         virtual
         returns (bool)
     {
-        return _layerIsBoundToTokenId(_boundLayers, _layer);
+        return _layerIsBoundToTokenId(boundLayers, layer);
     }
 
     function checkUnpackedIsSubsetOfBound(
-        uint256 _unpackedLayers,
-        uint256 _boundLayers
+        uint256 unpackedLayers,
+        uint256 boundLayers
     ) public pure virtual {
-        _checkUnpackedIsSubsetOfBound(_unpackedLayers, _boundLayers);
+        _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
     }
 
     function checkForMultipleVariations(
-        uint256 _unpackedLayers,
-        uint256 _boundLayers
+        uint256 unpackedLayers,
+        uint256 boundLayers
     ) public view virtual {
-        _checkForMultipleVariations(_unpackedLayers, _boundLayers);
+        _checkForMultipleVariations(unpackedLayers, boundLayers);
     }
 
     function unpackLayersToBitMapAndCheckForDuplicates(uint256 _packedLayers)
@@ -72,24 +84,20 @@ contract BoundLayerableTestImpl is BoundLayerable {
         return _unpackLayersToBitMapAndCheckForDuplicates(_packedLayers);
     }
 
-    function getActiveLayersRaw(uint256 _tokenId)
-        public
-        view
-        returns (uint256)
-    {
-        return _tokenIdToPackedActiveLayers[_tokenId];
+    function getActiveLayersRaw(uint256 tokenId) public view returns (uint256) {
+        return _tokenIdToPackedActiveLayers[tokenId];
     }
 
-    function getBoundLayerBitMap(uint256 _tokenId)
+    function getBoundLayerBitMap(uint256 tokenId)
         public
         view
         returns (uint256)
     {
-        return _tokenIdToBoundLayers[_tokenId];
+        return _tokenIdToBoundLayers[tokenId];
     }
 
     function mint() public {
-        _setPlaceholderBinding(_nextTokenId() + 6);
+        _setPlaceholderBinding(_nextTokenId());
         super._mint(msg.sender, 7);
     }
 

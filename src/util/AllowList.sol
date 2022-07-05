@@ -13,9 +13,9 @@ contract AllowList is Ownable {
     error NotAllowListed();
 
     ///@notice Checks if msg.sender is included in AllowList, revert otherwise
-    ///@param _proof Merkle proof
-    modifier onlyAllowListed(bytes32[] calldata _proof) {
-        if (!isAllowListed(_proof, msg.sender)) {
+    ///@param proof Merkle proof
+    modifier onlyAllowListed(bytes32[] calldata proof) {
+        if (!isAllowListed(proof, msg.sender)) {
             revert NotAllowListed();
         }
         _;
@@ -32,19 +32,19 @@ contract AllowList is Ownable {
     }
 
     ///@notice Given a Merkle proof, check if an address is AllowListed against the root
-    ///@param _proof Merkle proof
-    ///@param _address address to check against allow list
+    ///@param proof Merkle proof
+    ///@param addr address to check against allow list
     ///@return boolean isAllowListed
-    function isAllowListed(bytes32[] calldata _proof, address _address)
+    function isAllowListed(bytes32[] calldata proof, address addr)
         public
         view
         returns (bool)
     {
         return
             verifyCalldata(
-                _proof,
+                proof,
                 merkleRoot,
-                keccak256(abi.encodePacked(_address))
+                keccak256(abi.encodePacked(addr))
             );
     }
 

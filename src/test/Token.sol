@@ -14,9 +14,11 @@ import {Withdrawable} from '../util/Withdrawable.sol';
 import {MaxMintable} from '../util/MaxMintable.sol';
 import {AllowList} from '../util/AllowList.sol';
 import {ERC721A} from '../token/ERC721A.sol';
+import {RandomTraitsImpl} from '../traits/RandomTraitsImpl.sol';
 
 contract Token is
     BoundLayerable,
+    RandomTraitsImpl,
     MaxMintable,
     AllowList,
     Withdrawable,
@@ -32,7 +34,7 @@ contract Token is
         string memory symbol,
         address vrfCoordinatorAddress,
         uint256 maxNumSets,
-        uint256 numTokensPerSet,
+        uint8 numTokensPerSet,
         uint64 subscriptionId,
         uint256 maxSetsPerWallet,
         bytes32 merkleRoot
@@ -52,8 +54,8 @@ contract Token is
         alsoMetadata = ClaimableImageLayerable(address(metadataContract));
     }
 
-    modifier includesCorrectPayment(uint256 _numSets) {
-        if (msg.value != _numSets * MINT_PRICE) {
+    modifier includesCorrectPayment(uint256 numSets) {
+        if (msg.value != numSets * MINT_PRICE) {
             revert IncorrectPayment();
         }
         _;
@@ -84,20 +86,20 @@ contract Token is
     }
 
     // todo: restrict numminted
-    function mintSets(uint256 _numSets)
+    function mintSets(uint256 numSets)
         public
         payable
-        includesCorrectPayment(_numSets)
+        includesCorrectPayment(numSets)
     {
-        super._mint(msg.sender, 7 * _numSets);
+        super._mint(msg.sender, 7 * numSets);
     }
 
-    function _numberMinted(address owner)
+    function _numberMinted(address _owner)
         internal
         view
         override(ERC721A, MaxMintable)
         returns (uint256)
     {
-        return ERC721A._numberMinted(owner);
+        return ERC721A._numberMinted(_owner);
     }
 }

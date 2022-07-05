@@ -16,8 +16,8 @@ contract TestToken is Ownable, BoundLayerableTestImpl {
 
     // TODO: disable transferring to someone who does not own a base layer?
     constructor(
-        string memory _name,
-        string memory _symbol,
+        string memory name,
+        string memory symbol,
         string memory defaultURI
     ) {}
 

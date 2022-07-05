@@ -37,12 +37,12 @@ contract TestTokenTest is Test, ERC721Recipient {
             _distributions
         );
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND,
+            uint8(LayerType.BACKGROUND),
             packedDistributions
         );
 
         // 1 portrait
-        test.setLayerTypeDistribution(LayerType.PORTRAIT, 255 << 248);
+        test.setLayerTypeDistribution(uint8(LayerType.PORTRAIT), 255 << 248);
 
         // 5 textures
         distributions = [
@@ -57,7 +57,10 @@ contract TestTokenTest is Test, ERC721Recipient {
             _distributions
         );
 
-        test.setLayerTypeDistribution(LayerType.TEXTURE, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.TEXTURE),
+            packedDistributions
+        );
 
         // 8 objects
         distributions = [
@@ -74,7 +77,10 @@ contract TestTokenTest is Test, ERC721Recipient {
         packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
-        test.setLayerTypeDistribution(LayerType.OBJECT, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.OBJECT),
+            packedDistributions
+        );
 
         // 7 borders
         distributions = [
@@ -90,7 +96,10 @@ contract TestTokenTest is Test, ERC721Recipient {
         packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
-        test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.BORDER),
+            packedDistributions
+        );
 
         // test.setBaseLayerURI(
         //     '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
@@ -98,10 +107,10 @@ contract TestTokenTest is Test, ERC721Recipient {
 
         // // do the thing
 
-        uint256 _tokenId = 6;
+        uint256 tokenId = 6;
 
         test.mintSet();
-        uint256 startingTokenId = _tokenId * 7;
+        uint256 startingTokenId = tokenId * 7;
 
         // get layerIds from token IDs
         uint256[] memory layers = new uint256[](7);
@@ -132,7 +141,7 @@ contract TestTokenTest is Test, ERC721Recipient {
         uint256 binding = BitMapUtility.uintsToBitMap(layers);
 
         emit log_named_uint('binding', binding);
-        test.setBoundLayers(_tokenId * 7, binding);
+        test.setBoundLayers(tokenId * 7, binding);
 
         // swap layer ordering
         uint256 temp = layers[0];

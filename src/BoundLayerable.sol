@@ -16,13 +16,11 @@ import {NOT_0TH_BITMASK} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
 import {LayerType} from './interface/Enums.sol';
 
-contract BoundLayerable is RandomTraits, BoundLayerableEvents {
+abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     using BitMapUtility for uint256;
 
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
-    // TODO: consider setting limit of 32 layers, only store one uint256
     mapping(uint256 => uint256) internal _tokenIdToPackedActiveLayers;
-    // mapping(uint256 => uint256) internal _tokenIdToActiveLayersPacked;
 
     LayerVariation[] public layerVariations;
     ILayerable public metadataContract;
@@ -40,7 +38,7 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         string memory symbol,
         address vrfCoordinatorAddress,
         uint256 maxNumSets,
-        uint256 numTokensPerSet,
+        uint8 numTokensPerSet,
         uint64 subscriptionId,
         ILayerable _metadataContract
     )
@@ -82,26 +80,8 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         view
         returns (uint256[] memory)
     {
-        // if (tokenId % NUM_TOKENS_PER_SET != 0) {
-        //     revert OnlyBase();
-        // }
         uint256 activePackedLayers = _tokenIdToPackedActiveLayers[tokenId];
         return PackedByteUtility.unpackByteArray(activePackedLayers);
-        // uint256 length = unpacked.length;
-        // uint256 realLength;
-        // for (uint256 i; i < length; i++) {
-        //     if (unpacked[i] == 0) {
-        //         break;
-        //     }
-        //     unchecked {
-        //         ++realLength;
-        //     }
-        // }
-        // uint256[] memory layers = new uint256[](realLength);
-        // for (uint256 i; i < realLength; ++i) {
-        //     layers[i] = unpacked[i];
-        // }
-        // return layers;
     }
 
     function _tokenURI(uint256 tokenId) internal view returns (string memory) {

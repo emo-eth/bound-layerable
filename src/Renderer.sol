@@ -30,11 +30,11 @@ contract Renderer is ERC721Recipient {
             _distributions
         );
         test.setLayerTypeDistribution(
-            LayerType.BACKGROUND,
+            uint8(LayerType.BACKGROUND),
             packedDistributions
         );
         // 1 portrait
-        test.setLayerTypeDistribution(LayerType.PORTRAIT, 255 << 248);
+        test.setLayerTypeDistribution(uint8(LayerType.PORTRAIT), 255 << 248);
         // 5 textures
         distributions = [
             uint256(51),
@@ -47,7 +47,10 @@ contract Renderer is ERC721Recipient {
         packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
-        test.setLayerTypeDistribution(LayerType.TEXTURE, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.TEXTURE),
+            packedDistributions
+        );
         // 8 objects
         distributions = [
             uint256(31),
@@ -63,7 +66,10 @@ contract Renderer is ERC721Recipient {
         packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
-        test.setLayerTypeDistribution(LayerType.OBJECT, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.OBJECT),
+            packedDistributions
+        );
         // 7 borders
         distributions = [
             uint256(36),
@@ -78,15 +84,18 @@ contract Renderer is ERC721Recipient {
         packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
-        test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.BORDER),
+            packedDistributions
+        );
         test.metadataContract().setBaseLayerURI(
             '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
         );
     }
 
-    function render(uint256 _tokenId) public returns (string memory) {
+    function render(uint256 tokenId) public returns (string memory) {
         test.mintSet();
-        uint256 startingTokenId = _tokenId * 7;
+        uint256 startingTokenId = tokenId * 7;
         // get layerIds from token IDs
         uint256[] memory layers = new uint256[](7);
         for (

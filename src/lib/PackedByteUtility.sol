@@ -28,7 +28,6 @@ library PackedByteUtility {
         pure
         returns (uint256 result)
     {
-        // TODO: investigate structs
         // 9 gas
         assembly {
             result := and(shr(mul(index, 16), packedShorts), 0xffff)

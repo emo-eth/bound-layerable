@@ -15,20 +15,20 @@ contract Withdrawable is Ownable {
     }
 
     ///@notice Withdraw tokens from contract address. OnlyOwner.
-    ///@param _token ERC20 smart contract address
-    function withdrawERC20(address _token) external onlyOwner {
-        ERC20 token = ERC20(_token);
-        uint256 balance = ERC20(_token).balanceOf(address(this));
+    ///@param tokenAddress ERC20 smart contract address
+    function withdrawERC20(address tokenAddress) external onlyOwner {
+        ERC20 token = ERC20(tokenAddress);
+        uint256 balance = ERC20(tokenAddress).balanceOf(address(this));
         SafeTransferLib.safeTransfer(token, msg.sender, balance);
     }
 
     ///@notice Withdraw tokens from contract address. OnlyOwner.
-    ///@param _token ERC721 smart contract address
-    function withdrawERC721(address _token, uint256 tokenId)
+    ///@param tokenAddress ERC721 smart contract address
+    function withdrawERC721(address tokenAddress, uint256 tokenId)
         external
         onlyOwner
     {
-        ERC721 token = ERC721(_token);
+        ERC721 token = ERC721(tokenAddress);
         token.transferFrom(address(this), msg.sender, tokenId);
     }
 }

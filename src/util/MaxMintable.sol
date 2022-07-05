@@ -23,8 +23,8 @@ abstract contract MaxMintable is Ownable {
     }
 
     ///@notice set maxMintsPerWallet. OnlyOwner
-    function setMaxMintsPerWallet(uint256 _maxMints) public onlyOwner {
-        maxMintsPerWallet = _maxMints;
+    function setMaxMintsPerWallet(uint256 maxMints) public onlyOwner {
+        maxMintsPerWallet = maxMints;
     }
 
     function _numberMinted(address _owner) internal virtual returns (uint256);

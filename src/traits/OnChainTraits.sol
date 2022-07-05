@@ -78,12 +78,12 @@ contract OnChainTraits is Ownable {
         return json.object(properties);
     }
 
-    function getTraitJson(uint256 _traitId, string memory qualifier)
+    function getTraitJson(uint256 traitId, string memory qualifier)
         public
         view
         returns (string memory)
     {
-        Attribute memory attribute = traitAttributes[_traitId];
+        Attribute memory attribute = traitAttributes[traitId];
 
         string memory properties = string.concat(
             json.property(
