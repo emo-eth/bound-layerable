@@ -266,33 +266,44 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     /**
      * @notice Unpack bytepacked layerIds and check that there are no duplicates
      * @param bytePackedLayers uint256 of packed layerIds
-     * @return uint256 bitMap of unpacked layerIds
+     * @return bitMap uint256 of unpacked layerIds
      */
     function _unpackLayersToBitMapAndCheckForDuplicates(
         uint256[] calldata bytePackedLayers
-    ) internal virtual returns (uint256) {
-        uint256 unpackedLayers;
-        uint256 packedLayersArrLength = bytePackedLayers.length;
-        unchecked {
-            for (uint256 i; i < packedLayersArrLength; ++i) {
-                uint256 packedLayers = bytePackedLayers[i];
-                for (uint256 j; j < 32; ++j) {
-                    uint256 layer = PackedByteUtility.getPackedByteFromLeft(
-                        j,
-                        packedLayers
-                    );
-                    if (layer == 0) {
-                        break;
+    ) internal virtual returns (uint256 bitMap) {
+        assembly {
+            let bytePackedLayersFinalOffset := add(
+                bytePackedLayers.offset,
+                mul(0x20, bytePackedLayers.length)
+            )
+            for {
+                let i := bytePackedLayers.offset
+            } lt(i, bytePackedLayersFinalOffset) {
+                i := add(0x20, i)
+            } {
+                for {
+                    let j
+                } lt(j, 32) {
+                    j := add(1, j)
+                } {
+                    let layer := byte(j, calldataload(i))
+                    if iszero(layer) {
+                        break
                     }
-                    // todo: see if assembly dropping least significant 1's is more efficient here
-                    if (_layerIsBoundToTokenId(unpackedLayers, layer)) {
-                        revert DuplicateActiveLayers();
+                    let lastBitMap := bitMap
+                    bitMap := or(bitMap, shl(layer, 1))
+                    if eq(lastBitMap, bitMap) {
+                        let free_mem_ptr := mload(0x40)
+                        mstore(
+                            free_mem_ptr,
+                            // revert DuplicateActiveLayers()
+                            0x6411ce7500000000000000000000000000000000000000000000000000000000
+                        )
+                        revert(free_mem_ptr, 4)
                     }
-                    unpackedLayers |= 1 << layer;
                 }
             }
         }
-        return unpackedLayers;
     }
 
     function _checkUnpackedIsSubsetOfBound(
