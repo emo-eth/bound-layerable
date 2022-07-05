@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 
 library json {
     using Strings for uint256;

@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {VRFConsumerBaseV2} from 'chainlink/src/v0.8/VRFConsumerBaseV2.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {

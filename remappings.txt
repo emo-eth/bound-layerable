@@ -1,8 +1,9 @@
-@openzeppelin/=lib/openzeppelin-contracts/
-@rari-capital/solmate/src/=lib/solmate/src/
+openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
+solmate/=lib/solmate/src/
 forge-std/=lib/forge-std/src/
 hot-chain-svg/=lib/hot-chain-svg/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
 erc721a/=lib/ERC721a/contracts/
 bound-layerable/=src/
 chainlink/=lib/chainlink/contracts/
+bound-layerable-test/=test/

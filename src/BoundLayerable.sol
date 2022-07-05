@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
 import {LayerVariation} from './interface/Structs.sol';

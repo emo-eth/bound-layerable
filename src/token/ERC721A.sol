@@ -193,7 +193,12 @@ contract ERC721A is IERC721A {
     /**
      * Returns the number of tokens minted by `owner`.
      */
-    function _numberMinted(address owner) internal view returns (uint256) {
+    function _numberMinted(address owner)
+        internal
+        view
+        virtual
+        returns (uint256)
+    {
         return
             (_packedAddressData[owner] >> BITPOS_NUMBER_MINTED) &
             BITMASK_ADDRESS_DATA_ENTRY;

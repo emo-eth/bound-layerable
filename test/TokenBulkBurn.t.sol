@@ -6,7 +6,7 @@ import {TestToken} from 'bound-layerable/test/TestToken.sol';
 
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
-import {ERC721Recipient} from './utils/ERC721Recipient.sol';
+import {ERC721Recipient} from './util/ERC721Recipient.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
 
 contract TokenImpl is TestToken {

@@ -2,12 +2,17 @@ Features:
 
 - [x] on-chain VRF for reveals
   - [x] batched reveals
-  - [ ] implement
+  - [x] implement
 - [x] separate metadata into separate contract
 - [x] investigate manually binding tokens owned by binder
-- [ ] TwoStepOwnable
-- [ ] Commission/Withdrawable
-- [ ] MaxMintable etc
+- [x] TwoStepOwnable
+  - [ ] implement
+- [x] Commission/Withdrawable
+  - [ ] implement
+- [x] MaxMintable etc
+  - [ ] implement
+- [x] allowlist
+  - [ ] implement
 - [x] BoundLayerable
 - [x] Layerable
 - [ ] decide on Variations
