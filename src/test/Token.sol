@@ -94,12 +94,12 @@ contract Token is
         super._mint(msg.sender, 7 * numSets);
     }
 
-    function _numberMinted(address _owner)
+    function numberMinted(address _owner)
         internal
         view
-        override(ERC721A, MaxMintable)
+        override
         returns (uint256)
     {
-        return ERC721A._numberMinted(_owner);
+        return _numberMinted(_owner);
     }
 }

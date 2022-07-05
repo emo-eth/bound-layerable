@@ -2,7 +2,12 @@
 pragma solidity ^0.8.4;
 
 library PackedByteUtility {
-    // TODO: return uint256s with bitmasking
+    /**
+     * @notice get the byte value of a right-indexed byte within a uint256
+     * @param  index right-indexed location of byte within uint256
+     * @param  packedBytes uint256 of bytes
+     * @return result the byte at right-indexed index within packedBytes
+     */
     function getPackedByteFromRight(uint256 index, uint256 packedBytes)
         internal
         pure
@@ -13,6 +18,12 @@ library PackedByteUtility {
         }
     }
 
+    /**
+     * @notice get the byte value of a left-indexed byte within a uint256
+     * @param  index left-indexed location of byte within uint256
+     * @param  packedBytes uint256 of bytes
+     * @return result the byte at left-indexed index within packedBytes
+     */
     function getPackedByteFromLeft(uint256 index, uint256 packedBytes)
         internal
         pure
@@ -23,28 +34,11 @@ library PackedByteUtility {
         }
     }
 
-    function getPackedShortFromRight(uint256 index, uint256 packedShorts)
-        internal
-        pure
-        returns (uint256 result)
-    {
-        // 9 gas
-        assembly {
-            result := and(shr(mul(index, 16), packedShorts), 0xffff)
-        }
-    }
-
-    function getPackedShortFromLeft(uint256 index, uint256 packedShorts)
-        internal
-        pure
-        returns (uint256 result)
-    {
-        // 12 gas
-        assembly {
-            result := and(shr(mul(sub(16, index), 16), packedShorts), 0xffff)
-        }
-    }
-
+    /**
+     * @notice unpack elements of a packed byte array into a bitmap. Short-circuits at first 0-byte.
+     * @param  packedBytes uint256 of bytes
+     * @return unpacked - 1-indexed bitMap of all byte values contained in packedBytes up until the first 0-byte
+     */
     function unpackBytesToBitMap(uint256 packedBytes)
         internal
         pure
@@ -68,6 +62,99 @@ library PackedByteUtility {
         }
     }
 
+    /**
+     * @notice pack byte values into a uint256. Note: *will not* short-circuit on first 0-byte
+     * @param  arrayOfBytes uint256[] of byte values
+     * @return packed uint256 of packed bytes
+     */
+    function packArrayOfBytes(uint256[] memory arrayOfBytes)
+        internal
+        pure
+        returns (uint256 packed)
+    {
+        assembly {
+            let arrayOfBytesIndexPtr := add(arrayOfBytes, 0x20)
+            let arrayOfBytesLength := mload(arrayOfBytes)
+            if gt(arrayOfBytesLength, 32) {
+                arrayOfBytesLength := 32
+            }
+            let finalI := mul(8, arrayOfBytesLength)
+            let i
+            for {
+
+            } lt(i, finalI) {
+                arrayOfBytesIndexPtr := add(0x20, arrayOfBytesIndexPtr)
+                i := add(8, i)
+            } {
+                packed := or(
+                    packed,
+                    shl(sub(248, i), mload(arrayOfBytesIndexPtr))
+                )
+            }
+        }
+    }
+
+    /**
+     * @notice Unpack a packed uint256 of bytes into a uint256 array of byte values. Short-circuits on first 0-byte.
+     * @param  packedByteArray The packed uint256 of bytes to unpack
+     * @return unpacked uint256[] The unpacked uint256 array of bytes
+     */
+    function unpackByteArray(uint256 packedByteArray)
+        internal
+        pure
+        returns (uint256[] memory unpacked)
+    {
+        assembly {
+            unpacked := mload(0x40)
+            let unpackedIndexPtr := add(0x20, unpacked)
+            let maxUnpackedIndexPtr := add(unpackedIndexPtr, mul(0x20, 32))
+            let numBytes
+            for {
+
+            } lt(unpackedIndexPtr, maxUnpackedIndexPtr) {
+                unpackedIndexPtr := add(0x20, unpackedIndexPtr)
+                numBytes := add(1, numBytes)
+            } {
+                let byteVal := byte(numBytes, packedByteArray)
+                if iszero(byteVal) {
+                    break
+                }
+                mstore(unpackedIndexPtr, byteVal)
+            }
+            // store the number of layers at the pointer to unpacked array
+            mstore(unpacked, numBytes)
+            // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
+            mstore(0x40, add(unpacked, add(0x20, mul(numBytes, 0x20))))
+        }
+    }
+
+    /**
+     * @notice given a uint256 packed array of bytes, pack a byte at an index from the left
+     * @param packedBytes existing packed bytes
+     * @param byteToPack byte to pack into packedBytes
+     * @param index index to pack byte at
+     * @return newPackedBytes with byteToPack at index
+     */
+    function packByteAtIndex(
+        uint256 packedBytes,
+        uint256 byteToPack,
+        uint256 index
+    ) internal pure returns (uint256 newPackedBytes) {
+        // put MAX_INT onto the stack
+        uint256 maxInt = type(uint256).max;
+        assembly {
+            // calculate left-indexed bit offset of byte within packedBytes
+            let byteOffset := sub(248, mul(index, 8))
+            // create a mask to clear the bits we're about to overwrite
+            let mask := xor(maxInt, shl(byteOffset, 0xff))
+            // copy packedBytes to newPackedBytes, clearing the relevant bits
+            newPackedBytes := and(packedBytes, mask)
+            // shift the byte to the offset and OR it into newPackedBytes
+            newPackedBytes := or(newPackedBytes, shl(byteOffset, byteToPack))
+        }
+    }
+
+    /// @dev less efficient logic for packing >32 bytes into >1 uint256
     function packArraysOfBytes(uint256[] memory arrayOfBytes)
         internal
         pure
@@ -99,34 +186,7 @@ library PackedByteUtility {
         return packed;
     }
 
-    function packArrayOfBytes(uint256[] memory arrayOfBytes)
-        internal
-        pure
-        returns (uint256 packed)
-    {
-        assembly {
-            let arrayOfBytesIndexPtr := add(arrayOfBytes, 0x20)
-            let arrayOfBytesLength := mload(arrayOfBytes)
-            if gt(arrayOfBytesLength, 32) {
-                arrayOfBytesLength := 32
-            }
-            let finalI := mul(8, arrayOfBytesLength)
-            let i
-            for {
-
-            } lt(i, finalI) {
-                arrayOfBytesIndexPtr := add(0x20, arrayOfBytesIndexPtr)
-                i := add(8, i)
-            } {
-                packed := or(
-                    packed,
-                    shl(sub(248, i), mload(arrayOfBytesIndexPtr))
-                )
-            }
-        }
-    }
-
-    // TODO: test
+    /// @dev less efficient logic for unpacking >1 uint256s into >32 byte values
     function unpackByteArrays(uint256[] memory packedByteArrays)
         internal
         pure
@@ -158,34 +218,5 @@ library PackedByteUtility {
             }
         }
         return unpacked;
-    }
-
-    function unpackByteArray(uint256 packedByteArrays)
-        internal
-        pure
-        returns (uint256[] memory unpacked)
-    {
-        assembly {
-            unpacked := mload(0x40)
-            let unpackedIndexPtr := add(0x20, unpacked)
-            let maxUnpackedIndexPtr := add(unpackedIndexPtr, mul(0x20, 32))
-            let numBytes
-            for {
-
-            } lt(unpackedIndexPtr, maxUnpackedIndexPtr) {
-                unpackedIndexPtr := add(0x20, unpackedIndexPtr)
-                numBytes := add(1, numBytes)
-            } {
-                let byteVal := byte(numBytes, packedByteArrays)
-                if iszero(byteVal) {
-                    break
-                }
-                mstore(unpackedIndexPtr, byteVal)
-            }
-            // store the number of layers at the pointer to unpacked array
-            mstore(unpacked, numBytes)
-            // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
-            mstore(0x40, add(unpacked, add(0x20, mul(numBytes, 0x20))))
-        }
     }
 }

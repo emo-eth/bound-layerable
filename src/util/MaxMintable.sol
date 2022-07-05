@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 
-///@notice Ownable ERC721A contract with restrictions on how many times an address can mint
+///@notice Ownable contract with restrictions on how many times an address can mint
 abstract contract MaxMintable is Ownable {
     uint256 public maxMintsPerWallet;
 
@@ -15,7 +15,7 @@ abstract contract MaxMintable is Ownable {
 
     modifier checkMaxMintedForWallet(uint256 quantity) {
         // get num minted from ERC721A
-        uint256 numMinted = _numberMinted(msg.sender);
+        uint256 numMinted = numberMinted(msg.sender);
         if (numMinted + quantity > maxMintsPerWallet) {
             revert MaxMintedForWallet();
         }
@@ -27,5 +27,5 @@ abstract contract MaxMintable is Ownable {
         maxMintsPerWallet = maxMints;
     }
 
-    function _numberMinted(address _owner) internal virtual returns (uint256);
+    function numberMinted(address _owner) internal virtual returns (uint256);
 }

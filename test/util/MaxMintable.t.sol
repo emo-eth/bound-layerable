@@ -18,14 +18,14 @@ contract MaxMintableImpl is MaxMintable, ERC721A {
         _mint(msg.sender, quantity);
     }
 
-    function _numberMinted(address _owner)
+    function numberMinted(address _owner)
         internal
         view
         virtual
-        override(ERC721A, MaxMintable)
+        override
         returns (uint256)
     {
-        return ERC721A._numberMinted(_owner);
+        return _numberMinted(_owner);
     }
 }
 

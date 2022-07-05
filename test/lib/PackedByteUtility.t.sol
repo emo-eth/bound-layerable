@@ -5,6 +5,9 @@ import {Test} from 'forge-std/Test.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract PackedByteUtilityTest is Test {
+    using PackedByteUtility for uint256;
+    using PackedByteUtility for uint256[];
+
     function testGetPackedBytesFromRight() public {
         uint256 bitMap = 0xff00000000000000000000000000000000000000000000000000000000000201;
         uint256 expected = 0x1;
@@ -184,5 +187,82 @@ contract PackedByteUtilityTest is Test {
         assertEq(packed.length, 2);
         assertEq(packed[0], (0x1 << 248) | 2);
         assertEq(packed[1], 5 << 248);
+    }
+
+    function testPackByteAtIndex(uint8 byteToPack, uint8 index) public {
+        index %= 32;
+        uint256 packed = PackedByteUtility.packByteAtIndex(
+            type(uint256).max,
+            byteToPack,
+            index
+        );
+        uint256[] memory unpacked = packed.unpackByteArray();
+        if (byteToPack == 0) {
+            assertEq(unpacked.length, index);
+        } else {
+            assertEq(unpacked[index], byteToPack);
+        }
+    }
+
+    function testUnpackBytesToBitmap(uint8[32] memory toPack) public {
+        uint256[] memory generic = new uint256[](32);
+        for (uint8 i = 0; i < 32; i++) {
+            // always pack at least 1, never more than 255
+            generic[i] = (toPack[i] % 255) + 1;
+        }
+        uint256 packed = PackedByteUtility.packArrayOfBytes(generic);
+        emit log_named_uint('packed', packed);
+        uint256 unpacked = PackedByteUtility.unpackBytesToBitMap(packed);
+        emit log_named_uint('unpacked', unpacked);
+
+        for (uint8 i = 0; i < 32; i++) {
+            uint256 toCheck = generic[i];
+            assertEq((unpacked >> toCheck) & 1, 1);
+        }
+    }
+
+    function testPackArrayOfBytes(uint8[32] memory toPack) public {
+        uint256[] memory generic = new uint256[](32);
+        for (uint8 i = 0; i < 32; i++) {
+            // always pack at least 1, never more than 255
+            generic[i] = toPack[i];
+        }
+        uint256 packed = PackedByteUtility.packArrayOfBytes(generic);
+        emit log_named_uint('packed', packed);
+
+        for (uint8 i = 0; i < 32; i++) {
+            assertEq(
+                PackedByteUtility.getPackedByteFromLeft(i, packed),
+                generic[i]
+            );
+        }
+    }
+
+    function testGetPackedByteFromLeft(uint8 toPack, uint8 index) public {
+        index %= 32;
+        uint256 packed = PackedByteUtility.packByteAtIndex(
+            type(uint256).max,
+            toPack,
+            index
+        );
+        uint256 unpacked = PackedByteUtility.getPackedByteFromLeft(
+            index,
+            packed
+        );
+        assertEq(unpacked, toPack);
+    }
+
+    function testGetPackedByteFromRight(uint8 toPack, uint8 index) public {
+        index %= 32;
+        uint256 packed = PackedByteUtility.packByteAtIndex(
+            type(uint256).max,
+            toPack,
+            31 - index
+        );
+        uint256 unpacked = PackedByteUtility.getPackedByteFromRight(
+            index,
+            packed
+        );
+        assertEq(unpacked, toPack);
     }
 }
