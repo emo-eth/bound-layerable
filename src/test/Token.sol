@@ -9,8 +9,19 @@ import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
 import {ClaimableImageLayerable} from './ClaimableImageLayerable.sol';
+import {TwoStepOwnable} from '../util/TwoStepOwnable.sol';
+import {Withdrawable} from '../util/Withdrawable.sol';
+import {MaxMintable} from '../util/MaxMintable.sol';
+import {AllowList} from '../util/AllowList.sol';
+import {ERC721A} from '../token/ERC721A.sol';
 
-contract Token is Ownable, BoundLayerable {
+contract Token is
+    BoundLayerable,
+    MaxMintable,
+    AllowList,
+    Withdrawable,
+    TwoStepOwnable
+{
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     ClaimableImageLayerable alsoMetadata;
@@ -22,7 +33,9 @@ contract Token is Ownable, BoundLayerable {
         address vrfCoordinatorAddress,
         uint256 maxNumSets,
         uint256 numTokensPerSet,
-        uint64 subscriptionId
+        uint64 subscriptionId,
+        uint256 maxSetsPerWallet,
+        bytes32 merkleRoot
     )
         BoundLayerable(
             name,
@@ -33,6 +46,8 @@ contract Token is Ownable, BoundLayerable {
             subscriptionId,
             new ClaimableImageLayerable(msg.sender)
         )
+        AllowList(merkleRoot)
+        MaxMintable(maxSetsPerWallet * numTokensPerSet)
     {
         alsoMetadata = ClaimableImageLayerable(address(metadataContract));
     }
@@ -44,9 +59,12 @@ contract Token is Ownable, BoundLayerable {
         _;
     }
 
-    function claimOwnership() external {
-        _transferOwnership(msg.sender);
-        alsoMetadata.grantOwnership(msg.sender);
+    function transferOwnership(address newOwner)
+        public
+        override(Ownable, TwoStepOwnable)
+        onlyOwner
+    {
+        TwoStepOwnable.transferOwnership(newOwner);
     }
 
     function tokenURI(uint256 tokenId)
@@ -72,5 +90,14 @@ contract Token is Ownable, BoundLayerable {
         includesCorrectPayment(_numSets)
     {
         super._mint(msg.sender, 7 * _numSets);
+    }
+
+    function _numberMinted(address owner)
+        internal
+        view
+        override(ERC721A, MaxMintable)
+        returns (uint256)
+    {
+        return ERC721A._numberMinted(owner);
     }
 }

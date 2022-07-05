@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
-import {ERC721A} from '../token/ERC721A.sol';
 
 ///@notice Ownable ERC721A contract with restrictions on how many times an address can mint
 abstract contract MaxMintable is Ownable {
