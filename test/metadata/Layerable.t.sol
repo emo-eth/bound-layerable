@@ -31,8 +31,6 @@ contract LayerableImpl is ImageLayerable {
         virtual
         returns (string memory)
     {
-        // return '';
-        // todo: unpack to actual layer ids
         return
             this.getTokenURI(
                 _layerId,
