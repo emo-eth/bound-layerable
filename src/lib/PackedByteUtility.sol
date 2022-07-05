@@ -3,27 +3,27 @@ pragma solidity ^0.8.4;
 
 library PackedByteUtility {
     // TODO: return uint256s with bitmasking
-    function getPackedByteFromRight(uint256 _index, uint256 _packedBytes)
+    function getPackedByteFromRight(uint256 index, uint256 packedBytes)
         internal
         pure
-        returns (uint8 result)
+        returns (uint256 result)
     {
         assembly {
-            result := byte(sub(31, _index), _packedBytes)
+            result := byte(sub(31, index), packedBytes)
         }
     }
 
-    function getPackedByteFromLeft(uint256 _index, uint256 _packedBytes)
+    function getPackedByteFromLeft(uint256 index, uint256 packedBytes)
         internal
         pure
-        returns (uint8 result)
+        returns (uint256 result)
     {
         assembly {
-            result := byte(_index, _packedBytes)
+            result := byte(index, packedBytes)
         }
     }
 
-    function getPackedShortFromRight(uint256 _index, uint256 _packedShorts)
+    function getPackedShortFromRight(uint256 index, uint256 packedShorts)
         internal
         pure
         returns (uint256 result)
@@ -31,22 +31,22 @@ library PackedByteUtility {
         // TODO: investigate structs
         // 9 gas
         assembly {
-            result := and(shr(mul(_index, 16), _packedShorts), 0xffff)
+            result := and(shr(mul(index, 16), packedShorts), 0xffff)
         }
     }
 
-    function getPackedShortFromLeft(uint256 _index, uint256 _packedShorts)
+    function getPackedShortFromLeft(uint256 index, uint256 packedShorts)
         internal
         pure
         returns (uint256 result)
     {
         // 12 gas
         assembly {
-            result := and(shr(mul(sub(16, _index), 16), _packedShorts), 0xffff)
+            result := and(shr(mul(sub(16, index), 16), packedShorts), 0xffff)
         }
     }
 
-    function unpackBytesToBitMap(uint256 _packedBytes)
+    function unpackBytesToBitMap(uint256 packedBytes)
         internal
         pure
         returns (uint256 unpacked)
@@ -58,28 +58,30 @@ library PackedByteUtility {
                 i := add(i, 1)
             } {
                 // this is the ID of the layer, eg, 1, 5, 253
-                let layerId := byte(i, _packedBytes)
-                if iszero(layerId) {
+                let byteVal := byte(i, packedBytes)
+                // don't count zero bytes
+                if iszero(byteVal) {
                     break
                 }
-                // layerIds are 1-indexed because we're shifting 1 by the value of the byte
-                unpacked := or(unpacked, shl(layerId, 1))
+                // byteVals are 1-indexed because we're shifting 1 by the value of the byte
+                unpacked := or(unpacked, shl(byteVal, 1))
             }
         }
     }
 
-    // note: this was accidentally marked public, which was causing panics in foundry debugger?
-    function packBytearray(uint256[] memory bytearray)
+    function packArraysOfBytes(uint256[] memory arrayOfBytes)
         internal
         pure
         returns (uint256[] memory)
     {
-        uint256 bytearrayLength = bytearray.length;
-        uint256[] memory packed = new uint256[]((bytearrayLength - 1) / 32 + 1);
+        uint256 arrayOfBytesLength = arrayOfBytes.length;
+        uint256[] memory packed = new uint256[](
+            (arrayOfBytesLength - 1) / 32 + 1
+        );
         uint256 workingWord = 0;
-        for (uint256 i = 0; i < bytearrayLength; ) {
+        for (uint256 i = 0; i < arrayOfBytesLength; ) {
             // OR workingWord with this byte shifted by byte within the word
-            workingWord |= uint256(bytearray[i]) << (8 * (31 - (i % 32)));
+            workingWord |= uint256(arrayOfBytes[i]) << (8 * (31 - (i % 32)));
 
             // if we're on the last byte of the word, store in array
             if (i % 32 == 31) {
@@ -91,11 +93,38 @@ library PackedByteUtility {
                 ++i;
             }
         }
-        if (bytearrayLength % 32 != 0) {
+        if (arrayOfBytesLength % 32 != 0) {
             packed[packed.length - 1] = workingWord;
         }
 
         return packed;
+    }
+
+    function packArrayOfBytes(uint256[] memory arrayOfBytes)
+        internal
+        pure
+        returns (uint256 packed)
+    {
+        assembly {
+            let arrayOfBytesIndexPtr := add(arrayOfBytes, 0x20)
+            let arrayOfBytesLength := mload(arrayOfBytes)
+            if gt(arrayOfBytesLength, 32) {
+                arrayOfBytesLength := 32
+            }
+            let finalI := mul(8, arrayOfBytesLength)
+            let i
+            for {
+
+            } lt(i, finalI) {
+                arrayOfBytesIndexPtr := add(0x20, arrayOfBytesIndexPtr)
+                i := add(8, i)
+            } {
+                packed := or(
+                    packed,
+                    shl(sub(248, i), mload(arrayOfBytesIndexPtr))
+                )
+            }
+        }
     }
 
     // TODO: test
@@ -105,7 +134,6 @@ library PackedByteUtility {
         returns (uint256[] memory)
     {
         uint256 packedByteArraysLength = packedByteArrays.length;
-        // TODO: is uint8 more efficient in memory?
         uint256[] memory unpacked = new uint256[](packedByteArraysLength * 32);
         for (uint256 i = 0; i < packedByteArraysLength; ) {
             uint256 packedByteArray = packedByteArrays[i];
@@ -131,5 +159,34 @@ library PackedByteUtility {
             }
         }
         return unpacked;
+    }
+
+    function unpackByteArray(uint256 packedByteArrays)
+        internal
+        pure
+        returns (uint256[] memory unpacked)
+    {
+        assembly {
+            unpacked := mload(0x40)
+            let unpackedIndexPtr := add(0x20, unpacked)
+            let maxUnpackedIndexPtr := add(unpackedIndexPtr, mul(0x20, 32))
+            let numBytes
+            for {
+
+            } lt(unpackedIndexPtr, maxUnpackedIndexPtr) {
+                unpackedIndexPtr := add(0x20, unpackedIndexPtr)
+                numBytes := add(1, numBytes)
+            } {
+                let byteVal := byte(numBytes, packedByteArrays)
+                if iszero(byteVal) {
+                    break
+                }
+                mstore(unpackedIndexPtr, byteVal)
+            }
+            // store the number of layers at the pointer to unpacked array
+            mstore(unpacked, numBytes)
+            // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
+            mstore(0x40, add(unpacked, add(0x20, mul(numBytes, 0x20))))
+        }
     }
 }

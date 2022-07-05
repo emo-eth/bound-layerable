@@ -98,39 +98,80 @@ contract PackedByteUtilityTest is Test {
         assertEq(actual, expected);
     }
 
-    function testPackBytearray() public {
+    function testPackArrayOfBytes() public {
         uint256[] memory bytearray = new uint256[](1);
         bytearray[0] = 0;
-        uint256[] memory packed = PackedByteUtility.packBytearray(bytearray);
+        uint256 packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, 0x0);
+
+        bytearray[0] = 1;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, 0x1 << 248);
+
+        bytearray[0] = 2;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, 0x2 << 248);
+
+        bytearray[0] = 0xFF;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, 0xFF << 248);
+
+        bytearray = new uint256[](2);
+        bytearray[0] = 1;
+        bytearray[1] = 2;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, (0x1 << 248) | (0x2 << 240));
+
+        bytearray = new uint256[](32);
+        bytearray[0] = 1;
+        bytearray[31] = 2;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, (0x1 << 248) | 2);
+
+        bytearray = new uint256[](33);
+        bytearray[0] = 1;
+        bytearray[31] = 2;
+        bytearray[32] = 5;
+        packed = PackedByteUtility.packArrayOfBytes(bytearray);
+        assertEq(packed, (0x1 << 248) | 2);
+        // assertEq(packed[1], 5 << 248);
+    }
+
+    function testPackArraysOfBytes() public {
+        uint256[] memory bytearray = new uint256[](1);
+        bytearray[0] = 0;
+        uint256[] memory packed = PackedByteUtility.packArraysOfBytes(
+            bytearray
+        );
         assertEq(packed.length, 1);
         assertEq(packed[0], 0x0);
 
         bytearray[0] = 1;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 1);
         assertEq(packed[0], 0x1 << 248);
 
         bytearray[0] = 2;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 1);
         assertEq(packed[0], 0x2 << 248);
 
         bytearray[0] = 0xFF;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 1);
         assertEq(packed[0], 0xFF << 248);
 
         bytearray = new uint256[](2);
         bytearray[0] = 1;
         bytearray[1] = 2;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 1);
         assertEq(packed[0], (0x1 << 248) | (0x2 << 240));
 
         bytearray = new uint256[](32);
         bytearray[0] = 1;
         bytearray[31] = 2;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 1);
 
         assertEq(packed[0], (0x1 << 248) | 2);
@@ -139,7 +180,7 @@ contract PackedByteUtilityTest is Test {
         bytearray[0] = 1;
         bytearray[31] = 2;
         bytearray[32] = 5;
-        packed = PackedByteUtility.packBytearray(bytearray);
+        packed = PackedByteUtility.packArraysOfBytes(bytearray);
         assertEq(packed.length, 2);
         assertEq(packed[0], (0x1 << 248) | 2);
         assertEq(packed[1], 5 << 248);

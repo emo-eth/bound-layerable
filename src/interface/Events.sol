@@ -9,6 +9,6 @@ interface BoundLayerableEvents {
 
     event ActiveLayersChanged(
         uint256 indexed tokenId,
-        uint256[] indexed activeLayersBytearray
+        uint256 indexed activeLayersBytearray
     );
 }

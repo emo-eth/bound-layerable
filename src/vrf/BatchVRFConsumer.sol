@@ -106,7 +106,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
             : length;
         for (uint256 i; i < stop; ) {
             uint256 randomness = randomWords[i];
-            uint256 mask = ((2**32 - 1) << (32 * currBatch));
+            uint256 mask = (2**32 - 1) << (32 * currBatch);
             currSeed = bytes32(uint256(currSeed) | (randomness & mask));
             unchecked {
                 currBatch += 1;

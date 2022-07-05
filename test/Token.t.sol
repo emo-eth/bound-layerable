@@ -33,12 +33,12 @@ contract TestTokenTest is Test, ERC721Recipient {
         ];
 
         uint256[] memory _distributions = distributions;
-        uint256[] memory packedDistributions = PackedByteUtility.packBytearray(
+        uint256 packedDistributions = PackedByteUtility.packArrayOfBytes(
             _distributions
         );
         test.setLayerTypeDistribution(
             LayerType.BACKGROUND,
-            packedDistributions[0]
+            packedDistributions
         );
 
         // 1 portrait
@@ -53,12 +53,11 @@ contract TestTokenTest is Test, ERC721Recipient {
             uint256(255)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packBytearray(_distributions);
-
-        test.setLayerTypeDistribution(
-            LayerType.TEXTURE,
-            packedDistributions[0]
+        packedDistributions = PackedByteUtility.packArrayOfBytes(
+            _distributions
         );
+
+        test.setLayerTypeDistribution(LayerType.TEXTURE, packedDistributions);
 
         // 8 objects
         distributions = [
@@ -72,8 +71,10 @@ contract TestTokenTest is Test, ERC721Recipient {
             uint256(248)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packBytearray(_distributions);
-        test.setLayerTypeDistribution(LayerType.OBJECT, packedDistributions[0]);
+        packedDistributions = PackedByteUtility.packArrayOfBytes(
+            _distributions
+        );
+        test.setLayerTypeDistribution(LayerType.OBJECT, packedDistributions);
 
         // 7 borders
         distributions = [
@@ -86,8 +87,10 @@ contract TestTokenTest is Test, ERC721Recipient {
             uint256(252)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packBytearray(_distributions);
-        test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions[0]);
+        packedDistributions = PackedByteUtility.packArrayOfBytes(
+            _distributions
+        );
+        test.setLayerTypeDistribution(LayerType.BORDER, packedDistributions);
 
         // test.setBaseLayerURI(
         //     '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
@@ -122,9 +125,9 @@ contract TestTokenTest is Test, ERC721Recipient {
         }
 
         // create copy as uint256 bc todo: i need to fix
-        uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
+        uint256 packedLayers = PackedByteUtility.packArrayOfBytes(layers);
 
-        emit log_named_uint('packedLayers', packedLayers[0]);
+        emit log_named_uint('packedLayers', packedLayers);
 
         uint256 binding = BitMapUtility.uintsToBitMap(layers);
 
@@ -135,9 +138,7 @@ contract TestTokenTest is Test, ERC721Recipient {
         uint256 temp = layers[0];
         layers[0] = layers[1];
         layers[1] = temp;
-        uint256[] memory newPackedLayers = PackedByteUtility.packBytearray(
-            layers
-        );
+        uint256 newPackedLayers = PackedByteUtility.packArrayOfBytes(layers);
         // set active layers - use portrait id, not b
         test.setActiveLayers(startingTokenId, newPackedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(startingTokenId);

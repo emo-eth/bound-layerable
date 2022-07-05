@@ -31,10 +31,16 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test = new BoundLayerableTestImpl();
         test.mint();
         test.mint();
+        test.mint();
+        test.setBoundLayers(14, 2**256 - 1);
         test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
+    }
+
+    function test_snapshotSetActiveLayers() public {
+        test.setActiveLayers(14, ((14 << 248) | (15 << 240) | (16 << 232)));
     }
 
     function testLayerIsBoundToTokenId() public {
@@ -184,7 +190,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[1] = 2;
         layers[2] = 3;
         layers[3] = 4;
-        uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
+        uint256 packedLayers = PackedByteUtility.packArrayOfBytes(layers);
 
         // // pass: < 32 length no duplicates
         test.unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
@@ -195,7 +201,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         }
         // // pass: > 32 length no duplicates
         test.unpackLayersToBitMapAndCheckForDuplicates(
-            PackedByteUtility.packBytearray(layers)
+            PackedByteUtility.packArrayOfBytes(layers)
         );
 
         // fail: 32 length; last duplicate
@@ -204,20 +210,20 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
             layers[i] = uint256(i + 1);
         }
         layers[31] = layers[30];
-        packedLayers = PackedByteUtility.packBytearray(layers);
+        packedLayers = PackedByteUtility.packArrayOfBytes(layers);
 
         vm.expectRevert(DuplicateActiveLayers.selector);
         test.unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
 
         // // fail: 33 length; duplicate on uint in array
-        layers = new uint256[](33);
-        for (uint256 i; i < layers.length; ++i) {
-            layers[i] = uint256(i + 5);
-        }
-        layers[32] = layers[31];
-        packedLayers = PackedByteUtility.packBytearray(layers);
-        vm.expectRevert(DuplicateActiveLayers.selector);
-        test.unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
+        // layers = new uint256[](33);
+        // for (uint256 i; i < layers.length; ++i) {
+        //     layers[i] = uint256(i + 5);
+        // }
+        // layers[32] = layers[31];
+        // packedLayers = PackedByteUtility.packArrayOfBytes(layers);
+        // vm.expectRevert(DuplicateActiveLayers.selector);
+        // test.unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
     }
 
     function testSetActiveLayers() public {
@@ -233,10 +239,10 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[1] = 255;
         layers[2] = 4;
         layers[3] = 200;
-        uint256[] memory activeLayers = PackedByteUtility.packBytearray(layers);
+        uint256 activeLayers = PackedByteUtility.packArrayOfBytes(layers);
         test.setActiveLayers(0, activeLayers);
 
-        assertEq(test.getActiveLayersRaw(0)[0], activeLayers[0]);
+        assertEq(test.getActiveLayersRaw(0), activeLayers);
     }
 
     // todo: skip, need way to allocate memory
@@ -244,16 +250,16 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.removeVariations();
         uint256 boundlayers = 2**256 - 1;
         test.setBoundLayers(0, boundlayers);
-        uint256[] memory layers = new uint256[](255);
-        for (uint256 i = 0; i < layers.length; ++i) {
+        uint256[] memory layers = new uint256[](32);
+        for (uint256 i; i < layers.length; ++i) {
             layers[i] = uint256(i + 1);
         }
-        uint256[] memory packedLayers = PackedByteUtility.packBytearray(layers);
+        uint256 packedLayers = PackedByteUtility.packArrayOfBytes(layers);
         test.setActiveLayers(0, packedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(0);
         emit log_named_uint('activeLayers.length', activeLayers.length);
         // emit log_named_uint("activeLayers[255]", activeLayers[255]);
-        assertEq(activeLayers.length, 255);
+        assertEq(activeLayers.length, 32);
         for (uint256 i; i < activeLayers.length; ++i) {
             assertEq(activeLayers[i], i + 1);
         }
@@ -265,7 +271,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
     function testburnAndBindSingle() public {
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, ((1 << 8) | (1 << 7)));
+        emit LayersBoundToToken(7, (1 << 8) | (1 << 7));
         test.burnAndBindSingle(7, 8);
         assertTrue(test.isBurned(8));
         assertFalse(test.isBurned(7));
@@ -274,7 +280,6 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         assertEq(boundLayers.length, 2);
         assertEq(boundLayers[0], 7);
         assertEq(boundLayers[1], 8);
-
         // test bind unowned layer to owned
     }
 
@@ -294,7 +299,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[0] = 1;
         layers[1] = 2;
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, ((1 << 1) | (1 << 2) | (1 << 7)));
+        emit LayersBoundToToken(7, (1 << 1) | (1 << 2) | (1 << 7));
         test.burnAndBindMultiple(7, layers);
         assertTrue(test.isBurned(1));
         assertTrue(test.isBurned(2));

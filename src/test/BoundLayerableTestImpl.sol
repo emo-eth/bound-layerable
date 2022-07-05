@@ -26,7 +26,7 @@ contract BoundLayerableTestImpl is BoundLayerable {
         for (uint256 i; i < 8; ++i) {
             uint256 dist;
             for (uint256 j; j < 32; ++j) {
-                dist |= (1 << (256 - ((j + 1) * 8)));
+                dist |= 1 << (256 - (j + 1) * 8);
             }
             layerTypeToDistributions[getLayerType(i)] = dist;
         }
@@ -64,16 +64,18 @@ contract BoundLayerableTestImpl is BoundLayerable {
         _checkForMultipleVariations(_unpackedLayers, _boundLayers);
     }
 
-    function unpackLayersToBitMapAndCheckForDuplicates(
-        uint256[] calldata _packedLayers
-    ) public virtual returns (uint256) {
+    function unpackLayersToBitMapAndCheckForDuplicates(uint256 _packedLayers)
+        public
+        virtual
+        returns (uint256, uint256)
+    {
         return _unpackLayersToBitMapAndCheckForDuplicates(_packedLayers);
     }
 
     function getActiveLayersRaw(uint256 _tokenId)
         public
         view
-        returns (uint256[] memory)
+        returns (uint256)
     {
         return _tokenIdToPackedActiveLayers[_tokenId];
     }

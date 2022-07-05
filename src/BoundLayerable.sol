@@ -18,9 +18,12 @@ import {LayerType} from './interface/Enums.sol';
 
 contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     using BitMapUtility for uint256;
+
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     // TODO: consider setting limit of 32 layers, only store one uint256
-    mapping(uint256 => uint256[]) internal _tokenIdToPackedActiveLayers;
+    mapping(uint256 => uint256) internal _tokenIdToPackedActiveLayers;
+    // mapping(uint256 => uint256) internal _tokenIdToActiveLayersPacked;
+
     LayerVariation[] public layerVariations;
     ILayerable public metadataContract;
 
@@ -82,27 +85,23 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         // if (tokenId % NUM_TOKENS_PER_SET != 0) {
         //     revert OnlyBase();
         // }
-        uint256[] memory activePackedLayers = _tokenIdToPackedActiveLayers[
-            tokenId
-        ];
-        uint256[] memory unpacked = PackedByteUtility.unpackByteArrays(
-            activePackedLayers
-        );
-        uint256 length = unpacked.length;
-        uint256 realLength;
-        for (uint256 i; i < length; i++) {
-            if (unpacked[i] == 0) {
-                break;
-            }
-            unchecked {
-                ++realLength;
-            }
-        }
-        uint256[] memory layers = new uint256[](realLength);
-        for (uint256 i; i < realLength; ++i) {
-            layers[i] = unpacked[i];
-        }
-        return layers;
+        uint256 activePackedLayers = _tokenIdToPackedActiveLayers[tokenId];
+        return PackedByteUtility.unpackByteArray(activePackedLayers);
+        // uint256 length = unpacked.length;
+        // uint256 realLength;
+        // for (uint256 i; i < length; i++) {
+        //     if (unpacked[i] == 0) {
+        //         break;
+        //     }
+        //     unchecked {
+        //         ++realLength;
+        //     }
+        // }
+        // uint256[] memory layers = new uint256[](realLength);
+        // for (uint256 i; i < realLength; ++i) {
+        //     layers[i] = unpacked[i];
+        // }
+        // return layers;
     }
 
     function _tokenURI(uint256 tokenId) internal view returns (string memory) {
@@ -110,7 +109,9 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             metadataContract.getTokenURI(
                 tokenId,
                 _tokenIdToBoundLayers[tokenId],
-                _tokenIdToPackedActiveLayers[tokenId],
+                PackedByteUtility.unpackByteArray(
+                    _tokenIdToPackedActiveLayers[tokenId]
+                ),
                 traitGenerationSeed
             );
     }
@@ -160,7 +161,7 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         bindings |= baseLayerId.toBitMap();
         // TODO: necessary?
         uint256 layerIdBitMap = layerId.toBitMap();
-        if ((bindings & layerIdBitMap) > 0) {
+        if (bindings & layerIdBitMap > 0) {
             revert LayerAlreadyBound();
         }
 
@@ -210,10 +211,10 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                     revert CannotBindBase();
                 }
                 uint256 layerIdBitMap = layerId.toBitMap();
-                if ((bindings & layerIdBitMap) > 0) {
+                if (bindings & layerIdBitMap > 0) {
                     revert LayerAlreadyBound();
                 }
-                bindings = (bindings | layerIdBitMap);
+                bindings = bindings | layerIdBitMap;
                 // todo: check-effects-interactions?
                 _burn(tokenId);
                 ++i;
@@ -228,10 +229,9 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
      * @param packedLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
      * emits ActiveLayersChanged
      */
-    function setActiveLayers(
-        uint256 baseTokenId,
-        uint256[] calldata packedLayerIds
-    ) external {
+    function setActiveLayers(uint256 baseTokenId, uint256 packedLayerIds)
+        external
+    {
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
@@ -239,17 +239,19 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             revert OnlyBase();
         }
         // unpack layers into a single bitmap and check there are no duplicates
-        uint256 unpackedLayers = _unpackLayersToBitMapAndCheckForDuplicates(
-            packedLayerIds
-        );
+        (
+            uint256 unpackedLayers,
+            uint256 numLayers
+        ) = _unpackLayersToBitMapAndCheckForDuplicates(packedLayerIds);
         uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
         // check new active layers are all bound to baseTokenId
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
         // check active layers do not include multiple variations of the same trait
         _checkForMultipleVariations(boundLayers, unpackedLayers);
-
-        _tokenIdToPackedActiveLayers[baseTokenId] = packedLayerIds;
-        emit ActiveLayersChanged(baseTokenId, packedLayerIds);
+        uint256 maskedPackedLayerIds = packedLayerIds &
+            (type(uint256).max << (256 - (numLayers * 8)));
+        _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
+        emit ActiveLayersChanged(baseTokenId, maskedPackedLayerIds);
     }
 
     function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
@@ -263,44 +265,84 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
 
     // CHECK //
 
+    // /**
+    //  * @notice Unpack bytepacked layerIds and check that there are no duplicates
+    //  * @param bytePackedLayers uint256 of packed layerIds
+    //  * @return bitMap uint256 of unpacked layerIds
+    //  */
+    // function _unpackLayersToBitMapAndCheckForDuplicates(
+    //     uint256[] calldata bytePackedLayers
+    // )
+    //     internal
+    //     virtual
+    //     returns (uint256 bitMap)
+    // {
+    //     assembly {
+    //         let bytePackedLayersFinalOffset := add(
+    //             bytePackedLayers.offset,
+    //             mul(0x20, bytePackedLayers.length)
+    //         )
+    //         for {
+    //             let i := bytePackedLayers.offset
+    //         } lt(i, bytePackedLayersFinalOffset) {
+    //             i := add(0x20, i)
+    //         } {
+    //             for {
+    //                 let j
+    //             } lt(j, 32) {
+    //                 j := add(1, j)
+    //             } {
+    //                 let layer := byte(j, calldataload(i))
+    //                 // TODO: optimize this
+    //                 if iszero(layer) {
+    //                     continue
+    //                 }
+    //                 let lastBitMap := bitMap
+    //                 bitMap := or(bitMap, shl(layer, 1))
+    //                 if eq(lastBitMap, bitMap) {
+    //                     let free_mem_ptr := mload(0x40)
+    //                     mstore(
+    //                         free_mem_ptr,
+    //                         // revert DuplicateActiveLayers()
+    //                         0x6411ce7500000000000000000000000000000000000000000000000000000000
+    //                     )
+    //                     revert(free_mem_ptr, 4)
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
     /**
      * @notice Unpack bytepacked layerIds and check that there are no duplicates
      * @param bytePackedLayers uint256 of packed layerIds
      * @return bitMap uint256 of unpacked layerIds
      */
     function _unpackLayersToBitMapAndCheckForDuplicates(
-        uint256[] calldata bytePackedLayers
-    ) internal virtual returns (uint256 bitMap) {
+        uint256 bytePackedLayers
+    ) internal virtual returns (uint256 bitMap, uint256 numLayers) {
         assembly {
-            let bytePackedLayersFinalOffset := add(
-                bytePackedLayers.offset,
-                mul(0x20, bytePackedLayers.length)
-            )
             for {
-                let i := bytePackedLayers.offset
-            } lt(i, bytePackedLayersFinalOffset) {
-                i := add(0x20, i)
+
+            } lt(numLayers, 32) {
+                numLayers := add(1, numLayers)
             } {
-                for {
-                    let j
-                } lt(j, 32) {
-                    j := add(1, j)
-                } {
-                    let layer := byte(j, calldataload(i))
-                    if iszero(layer) {
-                        break
-                    }
-                    let lastBitMap := bitMap
-                    bitMap := or(bitMap, shl(layer, 1))
-                    if eq(lastBitMap, bitMap) {
-                        let free_mem_ptr := mload(0x40)
-                        mstore(
-                            free_mem_ptr,
-                            // revert DuplicateActiveLayers()
-                            0x6411ce7500000000000000000000000000000000000000000000000000000000
-                        )
-                        revert(free_mem_ptr, 4)
-                    }
+                let layer := byte(numLayers, bytePackedLayers)
+                // TODO: optimize this
+                // TODO: if max 32 layers, can also return length and bitmask before storing
+                if iszero(layer) {
+                    break
+                }
+                let lastBitMap := bitMap
+                bitMap := or(bitMap, shl(layer, 1))
+                if eq(lastBitMap, bitMap) {
+                    let free_mem_ptr := mload(0x40)
+                    mstore(
+                        free_mem_ptr,
+                        // revert DuplicateActiveLayers()
+                        0x6411ce7500000000000000000000000000000000000000000000000000000000
+                    )
+                    revert(free_mem_ptr, 4)
                 }
             }
         }
@@ -311,7 +353,7 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         uint256 boundLayers
     ) internal pure virtual {
         // boundLayers should be superset of unpackedLayers, compare union to boundLayers
-        if ((boundLayers | unpackedLayers) != boundLayers) {
+        if (boundLayers | unpackedLayers != boundLayers) {
             revert LayerNotBoundToTokenId();
         }
     }
@@ -329,8 +371,7 @@ contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             if (_layerIsBoundToTokenId(boundLayers, vLayerId)) {
                 int256 activeVariations = int256(
                     // put variation bytes at the end of the number
-                    (unpackedLayers >> vLayerId) & ((1 << vNumVariations) - 1)
-                    // drop bits above numVariations by &'ing with the same number of 1s
+                    (unpackedLayers >> vLayerId) & ((1 << vNumVariations) - 1) // drop bits above numVariations by &'ing with the same number of 1s
                 );
                 // n&(n-1) drops least significant bit
                 // valid active variation sets are powers of 2 (a single 1) or 0

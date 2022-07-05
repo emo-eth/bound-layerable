@@ -755,7 +755,7 @@ contract ERC721A is IERC721A {
         unchecked {
             // We can directly increment and decrement the balances.
             --_packedAddressData[from]; // Updates: `balance -= 1`.
-            ++_packedAddressData[to]; // Updates: `balance += 1`.
+            ++(_packedAddressData[to]); // Updates: `balance += 1`.
 
             // Updates:
             // - `address` to the next owner.
@@ -849,7 +849,8 @@ contract ERC721A is IERC721A {
             // - `nextInitialized` to `true`.
             _packedOwnerships[tokenId] = _packOwnershipData(
                 from,
-                (BITMASK_BURNED | BITMASK_NEXT_INITIALIZED) |
+                BITMASK_BURNED |
+                    BITMASK_NEXT_INITIALIZED |
                     _nextExtraData(from, address(0), prevOwnershipPacked)
             );
 

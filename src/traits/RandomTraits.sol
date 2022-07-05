@@ -9,6 +9,7 @@ import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 contract RandomTraits is BatchVRFConsumer {
     using Strings for uint256;
+
     // 32 possible traits per layerType given uint8 distributions
     // except final trait, which has 31, because 0 is not a valid layerId
     // getLayerId will check if traitValue is less than the distribution,
@@ -119,7 +120,7 @@ contract RandomTraits is BatchVRFConsumer {
         // iterate over distributions until we find one that our layer seed is *less than*
         uint256 i;
         for (; i < 32; ) {
-            uint8 distribution = PackedByteUtility.getPackedByteFromLeft(
+            uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
                 i,
                 distributions
             );
@@ -166,7 +167,7 @@ contract RandomTraits is BatchVRFConsumer {
             uint256 i;
             // iterate over distributions until we find one that our layer seed is *less than*
             for (; i < 32; ) {
-                uint8 distribution = PackedByteUtility.getPackedByteFromLeft(
+                uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
                     i,
                     distributions
                 );

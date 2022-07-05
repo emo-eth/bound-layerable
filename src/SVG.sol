@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
-import {utils} from "./Utils.sol";
+import {utils} from './Utils.sol';
 
 // Core SVG utilitiy library which helps us construct
 // onchain SVG's with a simple, web-like API.
@@ -12,7 +12,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("g", _props, _children);
+        return el('g', _props, _children);
     }
 
     function path(string memory _props, string memory _children)
@@ -20,7 +20,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("path", _props, _children);
+        return el('path', _props, _children);
     }
 
     function text(string memory _props, string memory _children)
@@ -28,7 +28,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("text", _props, _children);
+        return el('text', _props, _children);
     }
 
     function line(string memory _props, string memory _children)
@@ -36,7 +36,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("line", _props, _children);
+        return el('line', _props, _children);
     }
 
     function circle(string memory _props, string memory _children)
@@ -44,7 +44,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("circle", _props, _children);
+        return el('circle', _props, _children);
     }
 
     function circle(string memory _props)
@@ -52,7 +52,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("circle", _props);
+        return el('circle', _props);
     }
 
     function rect(string memory _props, string memory _children)
@@ -60,15 +60,11 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("rect", _props, _children);
+        return el('rect', _props, _children);
     }
 
-    function rect(string memory _props)
-        internal
-        pure
-        returns (string memory)
-    {
-        return el("rect", _props);
+    function rect(string memory _props) internal pure returns (string memory) {
+        return el('rect', _props);
     }
 
     function filter(string memory _props, string memory _children)
@@ -76,7 +72,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("filter", _props, _children);
+        return el('filter', _props, _children);
     }
 
     function cdata(string memory _content)
@@ -84,7 +80,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return string.concat("<![CDATA[", _content, "]]>");
+        return string.concat('<![CDATA[', _content, ']]>');
     }
 
     /* GRADIENTS */
@@ -93,7 +89,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("radialGradient", _props, _children);
+        return el('radialGradient', _props, _children);
     }
 
     function linearGradient(string memory _props, string memory _children)
@@ -101,28 +97,25 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("linearGradient", _props, _children);
+        return el('linearGradient', _props, _children);
     }
 
     function gradientStop(
         uint256 offset,
         string memory stopColor,
         string memory _props
-    )
-        internal
-        pure
-        returns (string memory)
-    {
-        return el(
-            "stop",
-            string.concat(
-                prop("stop-color", stopColor),
-                " ",
-                prop("offset", string.concat(utils.uint2str(offset), "%")),
-                " ",
-                _props
-            )
-        );
+    ) internal pure returns (string memory) {
+        return
+            el(
+                'stop',
+                string.concat(
+                    prop('stop-color', stopColor),
+                    ' ',
+                    prop('offset', string.concat(utils.uint2str(offset), '%')),
+                    ' ',
+                    _props
+                )
+            );
     }
 
     function animateTransform(string memory _props)
@@ -130,7 +123,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("animateTransform", _props);
+        return el('animateTransform', _props);
     }
 
     function image(string memory _href, string memory _props)
@@ -138,7 +131,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return el("image", string.concat(prop("href", _href), " ", _props));
+        return el('image', string.concat(prop('href', _href), ' ', _props));
     }
 
     /* COMMON */
@@ -147,14 +140,19 @@ library svg {
         string memory _tag,
         string memory _props,
         string memory _children
-    )
-        internal
-        pure
-        returns (string memory)
-    {
-        return string.concat(
-            "<", _tag, " ", _props, ">", _children, "</", _tag, ">"
-        );
+    ) internal pure returns (string memory) {
+        return
+            string.concat(
+                '<',
+                _tag,
+                ' ',
+                _props,
+                '>',
+                _children,
+                '</',
+                _tag,
+                '>'
+            );
     }
 
     // A generic element, can be used to construct any SVG (or HTML) element without children
@@ -163,7 +161,7 @@ library svg {
         pure
         returns (string memory)
     {
-        return string.concat("<", _tag, " ", _props, "/>");
+        return string.concat('<', _tag, ' ', _props, '/>');
     }
 
     // an SVG attribute
@@ -172,6 +170,6 @@ library svg {
         pure
         returns (string memory)
     {
-        return string.concat(_key, "=", '"', _val, '" ');
+        return string.concat(_key, '=', '"', _val, '" ');
     }
 }
