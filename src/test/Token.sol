@@ -16,8 +16,23 @@ contract Token is Ownable, BoundLayerable {
     ClaimableImageLayerable alsoMetadata;
 
     // TODO: disable transferring to someone who does not own a base layer?
-    constructor(string memory _name, string memory _symbol)
-        BoundLayerable(_name, _symbol, new ClaimableImageLayerable(msg.sender))
+    constructor(
+        string memory name,
+        string memory symbol,
+        address vrfCoordinatorAddress,
+        uint256 maxNumSets,
+        uint256 numTokensPerSet,
+        uint64 subscriptionId
+    )
+        BoundLayerable(
+            name,
+            symbol,
+            vrfCoordinatorAddress,
+            maxNumSets,
+            numTokensPerSet,
+            subscriptionId,
+            new ClaimableImageLayerable(msg.sender)
+        )
     {
         alsoMetadata = ClaimableImageLayerable(address(metadataContract));
     }

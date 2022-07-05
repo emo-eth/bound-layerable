@@ -6,11 +6,15 @@ import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
 
+contract RandomTraitsImpl is RandomTraits {
+    constructor() RandomTraits('', '', address(1234), 5555, 7, 1) {}
+}
+
 contract RandomTraitsTest is Test {
     RandomTraits test;
 
     function setUp() public {
-        test = new RandomTraits(7);
+        test = new RandomTraitsImpl();
     }
 
     uint256[] distributions;

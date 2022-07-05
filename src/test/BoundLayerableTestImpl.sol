@@ -10,7 +10,15 @@ contract BoundLayerableTestImpl is BoundLayerable {
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
     constructor()
-        BoundLayerable('', '', new ImageLayerable('default', msg.sender))
+        BoundLayerable(
+            '',
+            '',
+            address(1234),
+            5555,
+            7,
+            1,
+            new ImageLayerable('default', msg.sender)
+        )
     {
         layerVariations.push(LayerVariation(4, 4));
         layerVariations.push(LayerVariation(200, 8));

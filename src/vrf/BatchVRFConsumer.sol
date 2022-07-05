@@ -72,7 +72,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     function rawFulfillRandomWords(
         uint256 requestId,
         uint256[] memory randomWords
-    ) external {
+    ) external onlyOwner {
         if (msg.sender != address(COORDINATOR)) {
             revert OnlyCoordinatorCanFulfill(msg.sender, address(COORDINATOR));
         }

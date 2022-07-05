@@ -1,31 +1,42 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {LayerType} from '../interface/Enums.sol';
 import {BadDistributions, TraitGenerationSeedNotSet} from '../interface/Errors.sol';
+import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
-contract RandomTraits is Ownable {
+contract RandomTraits is BatchVRFConsumer {
     using Strings for uint256;
-
-    bytes32 public traitGenerationSeed;
-
     // 32 possible traits per layerType given uint8 distributions
     // except final trait, which has 31, because 0 is not a valid layerId
     // getLayerId will check if traitValue is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
     mapping(LayerType => uint256) layerTypeToDistributions;
+
     // TODO: investigate more granular rarity distributions by packing shorts into 2 uint256's
     // mapping(LayerType => uint256[2]) layerTypeToShortDistributions;
     // mapping(uint256 => uint256[]) layerTypeToTraitIds;
-    uint256 immutable NUM_TOKENS_PER_SET;
 
-    constructor(uint256 _numTraitTypes) {
-        NUM_TOKENS_PER_SET = _numTraitTypes;
-    }
+    constructor(
+        string memory name,
+        string memory symbol,
+        address vrfCoordinatorAddress,
+        uint256 maxNumSets,
+        uint256 numTokensPerSet,
+        uint64 subscriptionId
+    )
+        BatchVRFConsumer(
+            name,
+            symbol,
+            vrfCoordinatorAddress,
+            maxNumSets,
+            numTokensPerSet,
+            subscriptionId
+        )
+    {}
 
     /////////////
     // SETTERS //

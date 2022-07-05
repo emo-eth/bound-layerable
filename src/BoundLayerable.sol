@@ -16,12 +16,7 @@ import {NOT_0TH_BITMASK} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
 import {LayerType} from './interface/Enums.sol';
 
-contract BoundLayerable is
-    ERC721A,
-    Ownable,
-    RandomTraits(7),
-    BoundLayerableEvents
-{
+contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     using BitMapUtility for uint256;
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     // TODO: consider setting limit of 32 layers, only store one uint256
@@ -38,10 +33,23 @@ contract BoundLayerable is
     }
 
     constructor(
-        string memory _name,
-        string memory _symbol,
+        string memory name,
+        string memory symbol,
+        address vrfCoordinatorAddress,
+        uint256 maxNumSets,
+        uint256 numTokensPerSet,
+        uint64 subscriptionId,
         ILayerable _metadataContract
-    ) ERC721A(_name, _symbol) {
+    )
+        RandomTraits(
+            name,
+            symbol,
+            vrfCoordinatorAddress,
+            maxNumSets,
+            numTokensPerSet,
+            subscriptionId
+        )
+    {
         metadataContract = _metadataContract;
     }
 
@@ -305,11 +313,12 @@ contract BoundLayerable is
         uint256 variationsLength = layerVariations.length;
         for (uint256 i; i < variationsLength; ++i) {
             LayerVariation memory variation = layerVariations[i];
-            if (_layerIsBoundToTokenId(boundLayers, variation.layerId)) {
+            uint256 vLayerId = variation.layerId;
+            uint256 vNumVariations = variation.numVariations;
+            if (_layerIsBoundToTokenId(boundLayers, vLayerId)) {
                 int256 activeVariations = int256(
                     // put variation bytes at the end of the number
-                    (unpackedLayers >> variation.layerId) &
-                        ((1 << variation.numVariations) - 1)
+                    (unpackedLayers >> vLayerId) & ((1 << vNumVariations) - 1)
                     // drop bits above numVariations by &'ing with the same number of 1s
                 );
                 // n&(n-1) drops least significant bit
@@ -335,14 +344,14 @@ contract BoundLayerable is
     // HELPERS //
     /////////////
 
-    function _layerIsBoundToTokenId(uint256 boundLayers, uint256 layer)
+    function _layerIsBoundToTokenId(uint256 bindings, uint256 layer)
         internal
         pure
         virtual
         returns (bool isBound)
     {
         assembly {
-            isBound := and(shr(layer, boundLayers), 1)
+            isBound := and(shr(layer, bindings), 1)
         }
     }
 
