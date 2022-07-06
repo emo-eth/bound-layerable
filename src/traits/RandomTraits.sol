@@ -124,23 +124,24 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @dev If the last packed byte is <255, any seed larger than the last packed byte
      *      will be assigned to the index after the last packed byte, unless the last
      *      packed byte is index 31, in which case, it will default to 31.
+     *      LayerId is calculated like: index + 1 + 32 * layerType
      *
      * examples:
      * LayerSeed: 0x00
      * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
-     * Calculated index: 0
+     * Calculated index: 0 (LayerId: 0 + 1 + 32 * layerType)
      *
      * LayerSeed: 0x01
      * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
-     * Calculated index: 1
+     * Calculated index: 1 (LayerId: 1 + 1 + 32 * layerType)
      *
      * LayerSeed: 0xFF
      * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
-     * Calculated index: 7
+     * Calculated index: 7 (LayerId: 7 + 1 + 32 * layerType)
      *
      * LayerSeed: 0xFF
      * Distributions: [01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20]
-     * Calculated index: 31
+     * Calculated index: 31 (LayerId: 31 + 1 + 32 * layerType)
      */
     function getLayerId(
         uint8 layerType,
