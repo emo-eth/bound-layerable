@@ -17,10 +17,6 @@ abstract contract RandomTraits is BatchVRFConsumer {
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
     mapping(uint8 => uint256) layerTypeToDistributions;
 
-    // TODO: investigate more granular rarity distributions by packing shorts into 2 uint256's
-    // mapping(LayerType => uint256[2]) layerTypeToShortDistributions;
-    // mapping(uint256 => uint256[]) layerTypeToTraitIds;
-
     constructor(
         string memory name,
         string memory symbol,
@@ -42,14 +38,6 @@ abstract contract RandomTraits is BatchVRFConsumer {
     /////////////
     // SETTERS //
     /////////////
-
-    // TODO: remove
-    function setTraitGenerationSeed(bytes32 _traitGenerationSeed)
-        public
-        onlyOwner
-    {
-        traitGenerationSeed = _traitGenerationSeed;
-    }
 
     /**
      * @notice Set the probability distribution for up to 32 different layer traitIds
@@ -113,8 +101,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
         uint256 i;
         for (; i < 32; ) {
             uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
-                i,
-                distributions
+                distributions,
+                i
             );
             // if distribution is 0, we've reached the end of the list
             if (distribution == 0) {
@@ -160,8 +148,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
             // iterate over distributions until we find one that our layer seed is *less than*
             for (; i < 32; ) {
                 uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
-                    i,
-                    distributions
+                    distributions,
+                    i
                 );
                 if (distribution == 0) {
                     if (i > 0) {

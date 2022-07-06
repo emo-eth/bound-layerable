@@ -8,7 +8,7 @@ library PackedByteUtility {
      * @param  packedBytes uint256 of bytes
      * @return result the byte at right-indexed index within packedBytes
      */
-    function getPackedByteFromRight(uint256 index, uint256 packedBytes)
+    function getPackedByteFromRight(uint256 packedBytes, uint256 index)
         internal
         pure
         returns (uint256 result)
@@ -24,7 +24,7 @@ library PackedByteUtility {
      * @param  packedBytes uint256 of bytes
      * @return result the byte at left-indexed index within packedBytes
      */
-    function getPackedByteFromLeft(uint256 index, uint256 packedBytes)
+    function getPackedByteFromLeft(uint256 packedBytes, uint256 index)
         internal
         pure
         returns (uint256 result)

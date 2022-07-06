@@ -11,60 +11,60 @@ contract PackedByteUtilityTest is Test {
     function testGetPackedBytesFromRight() public {
         uint256 bitMap = 0xff00000000000000000000000000000000000000000000000000000000000201;
         uint256 expected = 0x1;
-        uint256 actual = PackedByteUtility.getPackedByteFromRight(0, bitMap);
+        uint256 actual = PackedByteUtility.getPackedByteFromRight(bitMap, 0);
         assertEq(actual, expected);
         expected = 0x2;
-        actual = PackedByteUtility.getPackedByteFromRight(1, bitMap);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMap, 1);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromRight(2, bitMap);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMap, 2);
         assertEq(actual, expected);
         expected = 0xff;
-        actual = PackedByteUtility.getPackedByteFromRight(31, bitMap);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMap, 31);
         assertEq(actual, expected);
 
         uint256 bitMapShort = 0x311;
         expected = 0x11;
-        actual = PackedByteUtility.getPackedByteFromRight(0, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMapShort, 0);
         assertEq(actual, expected);
         expected = 0x3;
-        actual = PackedByteUtility.getPackedByteFromRight(1, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMapShort, 1);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromRight(2, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMapShort, 2);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromRight(31, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromRight(bitMapShort, 31);
     }
 
     function testGetPackedBytesFromLeft() public {
         uint256 bitMap = 0x02010000000000000000000000000000000000000000000000000000000000ff;
         uint256 expected = 0x2;
-        uint256 actual = PackedByteUtility.getPackedByteFromLeft(0, bitMap);
+        uint256 actual = PackedByteUtility.getPackedByteFromLeft(bitMap, 0);
 
         assertEq(actual, expected);
         expected = 0x1;
-        actual = PackedByteUtility.getPackedByteFromLeft(1, bitMap);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMap, 1);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromLeft(2, bitMap);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMap, 2);
         assertEq(actual, expected);
         expected = 0xff;
-        actual = PackedByteUtility.getPackedByteFromLeft(31, bitMap);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMap, 31);
         assertEq(actual, expected);
 
         uint256 bitMapShort = 0x0311000000000000000000000000000000000000000000000000000000000000;
         expected = 0x3;
-        actual = PackedByteUtility.getPackedByteFromLeft(0, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMapShort, 0);
         assertEq(actual, expected);
         expected = 0x11;
-        actual = PackedByteUtility.getPackedByteFromLeft(1, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMapShort, 1);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromLeft(2, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMapShort, 2);
         assertEq(actual, expected);
         expected = 0x0;
-        actual = PackedByteUtility.getPackedByteFromLeft(31, bitMapShort);
+        actual = PackedByteUtility.getPackedByteFromLeft(bitMapShort, 31);
     }
 
     function testUnpackBytes() public {
@@ -232,7 +232,7 @@ contract PackedByteUtilityTest is Test {
 
         for (uint8 i = 0; i < 32; i++) {
             assertEq(
-                PackedByteUtility.getPackedByteFromLeft(i, packed),
+                PackedByteUtility.getPackedByteFromLeft(packed, i),
                 generic[i]
             );
         }
@@ -246,8 +246,8 @@ contract PackedByteUtilityTest is Test {
             index
         );
         uint256 unpacked = PackedByteUtility.getPackedByteFromLeft(
-            index,
-            packed
+            packed,
+            index
         );
         assertEq(unpacked, toPack);
     }
@@ -260,8 +260,8 @@ contract PackedByteUtilityTest is Test {
             31 - index
         );
         uint256 unpacked = PackedByteUtility.getPackedByteFromRight(
-            index,
-            packed
+            packed,
+            index
         );
         assertEq(unpacked, toPack);
     }
