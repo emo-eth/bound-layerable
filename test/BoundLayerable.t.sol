@@ -37,6 +37,12 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
+        vm.startPrank(address(1));
+        test.mint();
+        for (uint256 i = 0; i < 7; i++) {
+            test.transferFrom(address(1), address(this), i + 21);
+        }
+        vm.stopPrank();
     }
 
     function test_snapshotSetActiveLayers() public {
@@ -294,6 +300,21 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(7, layers);
     }
 
+    function test_snapshotBurnAndBindSingleTransferred() public {
+        test.burnAndBindSingle(7, 22);
+    }
+
+    function test_snapshotBurnAndBindMultipleTransferred() public {
+        uint256[] memory layers = new uint256[](6);
+        layers[0] = 22;
+        layers[1] = 23;
+        layers[2] = 24;
+        layers[3] = 25;
+        layers[4] = 26;
+        layers[5] = 27;
+        test.burnAndBindMultiple(7, layers);
+    }
+
     function testBurnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
@@ -313,7 +334,6 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         assertEq(boundLayers[2], 7);
     }
 
-    // todo: test this in real-world circumstances where layer-id is compared against trait seed
     function test_snapshotBurnAndBindSingle() public {
         test.burnAndBindSingle(7, 1);
     }

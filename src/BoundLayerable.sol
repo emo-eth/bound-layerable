@@ -308,13 +308,14 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 numLayers := add(1, numLayers)
             } {
                 let layer := byte(numLayers, bytePackedLayers)
-                // TODO: optimize this
-                // TODO: if max 32 layers, can also return length and bitmask before storing
                 if iszero(layer) {
                     break
                 }
+                // put copy of bitmap on stack
                 let lastBitMap := bitMap
+                // OR layer into bitmap
                 bitMap := or(bitMap, shl(layer, 1))
+                // check equality - if equal, layer is a duplicate
                 if eq(lastBitMap, bitMap) {
                     let free_mem_ptr := mload(0x40)
                     mstore(

@@ -34,6 +34,10 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
         }
     }
 
+    function setTraitGenerationSeed(bytes32 _seed) public {
+        traitGenerationSeed = _seed;
+    }
+
     function getLayerType(uint256 tokenId)
         public
         view
