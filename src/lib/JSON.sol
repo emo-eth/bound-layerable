@@ -10,6 +10,18 @@ library json {
         return string.concat('{', value, '}');
     }
 
+    function array(string memory value) internal pure returns (string memory) {
+        return string.concat('[', value, ']');
+    }
+
+    function property(string memory name, string memory value)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string.concat('"', name, '":"', value, '"');
+    }
+
     function objectOf(string[] memory properties)
         internal
         pure
@@ -25,16 +37,12 @@ library json {
         return object(result);
     }
 
-    function array(string memory value) internal pure returns (string memory) {
-        return string.concat('[', value, ']');
-    }
-
     function arrayOf(string[] memory values)
         internal
         pure
         returns (string memory)
     {
-        return array(_join(values));
+        return array(_commaJoin(values));
     }
 
     function arrayOf(string[] memory values1, string[] memory values2)
@@ -42,10 +50,28 @@ library json {
         pure
         returns (string memory)
     {
-        return array(string.concat(_join(values1), _join(values2)));
+        if (values1.length == 0) {
+            return arrayOf(values2);
+        } else if (values2.length == 0) {
+            return arrayOf(values1);
+        }
+        return
+            array(string.concat(_commaJoin(values1), ',', _commaJoin(values2)));
     }
 
-    function _join(string[] memory values)
+    function quote(string memory str) internal pure returns (string memory) {
+        return string.concat('"', str, '"');
+    }
+
+    function _commaJoin(string[] memory values)
+        internal
+        pure
+        returns (string memory result)
+    {
+        return _join(values, ',');
+    }
+
+    function _join(string[] memory values, string memory separator)
         internal
         pure
         returns (string memory result)
@@ -55,15 +81,7 @@ library json {
         }
         result = values[0];
         for (uint256 i = 1; i < values.length; ++i) {
-            result = string.concat(result, ',', values[i]);
+            result = string.concat(result, separator, values[i]);
         }
-    }
-
-    function property(string memory name, string memory value)
-        internal
-        pure
-        returns (string memory)
-    {
-        return string.concat('"', name, '":"', value, '"');
     }
 }
