@@ -134,16 +134,16 @@ contract RandomTraitsTest is Test {
     function testGetLayerIdBoundsDirect(
         uint8 layerSeed,
         uint8 layerType,
-        uint8 numDistributions
+        uint8 numDistributions,
+        uint8 increment
     ) public {
         layerType = uint8(bound(layerType, 0, 7));
         numDistributions = uint8(bound(numDistributions, 1, 32));
-        emit log_named_uint('layerSeed', layerSeed);
-        emit log_named_uint('layerType', layerType);
-        emit log_named_uint('numDistributions', numDistributions);
+        increment = uint8(bound(increment, 1, 8));
+
         for (uint256 i = 0; i < numDistributions; ++i) {
             // ~ evenly split distributions
-            uint256 num = (i + 1) * 8;
+            uint256 num = (i + 1) * increment;
             if (num == 256) {
                 num == 255;
             }
@@ -157,8 +157,8 @@ contract RandomTraitsTest is Test {
         // since it will try to assign layerId to 256
         bool willRevert = layerType == 7 &&
             numDistributions > 30 &&
-            layerSeed >= 248;
-
+            // if gte this value, will be assigned to index 32 and overflow
+            layerSeed >= 31 * uint256(increment);
         uint256 layerId;
         if (willRevert) {
             vm.expectRevert(abi.encodeWithSelector(BadDistributions.selector));
@@ -178,6 +178,16 @@ contract RandomTraitsTest is Test {
             assertGt(layerId, 0 + layerTypeOffset);
             assertLt(layerId, 33 + layerTypeOffset);
             assertLt(layerId, 256);
+
+            uint256 bin = uint256(layerSeed) / uint256(increment) + 1;
+            if (bin > numDistributions) {
+                if (numDistributions == 32) {
+                    bin = 32;
+                } else {
+                    bin = numDistributions + 1;
+                }
+            }
+            assertEq(layerId, bin + layerTypeOffset);
         }
     }
 
