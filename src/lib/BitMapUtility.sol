@@ -90,13 +90,11 @@ library BitMapUtility {
         returns (uint256[] memory unpacked)
     {
         assembly {
-            // TODO: test this
             if iszero(bitMap) {
                 let freePtr := mload(0x40)
                 mstore(0x40, add(freePtr, 0x20))
                 return(freePtr, 0x20)
             }
-            // TODO: call internal fn
             function lsb(x) -> leastSignificantBit {
                 if iszero(and(x, _128_MASK)) {
                     leastSignificantBit := add(leastSignificantBit, 128)
@@ -168,16 +166,20 @@ library BitMapUtility {
         returns (uint256 bitMap)
     {
         assembly {
+            // get pointer to first index of array
             let uintsIndexPtr := add(uints, 0x20)
+            // get pointer to first word after final index of array
             let finalUintsIndexPtr := add(
                 uintsIndexPtr,
                 mul(0x20, mload(uints))
             )
+            // loop until we reach the end of the array
             for {
 
             } lt(uintsIndexPtr, finalUintsIndexPtr) {
                 uintsIndexPtr := add(uintsIndexPtr, 0x20)
             } {
+                // set the bit at left-index 'uint' to 1
                 bitMap := or(bitMap, shl(mload(uintsIndexPtr), 1))
             }
         }

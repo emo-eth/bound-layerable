@@ -71,48 +71,6 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         assertEq(test.getBoundLayerBitMap(1), 0);
     }
 
-    // function testSetBoundLayersBulk() public {
-    //     uint256[] memory tokenIds = new uint256[](4);
-    //     tokenIds[0] = 1;
-    //     tokenIds[1] = 2;
-    //     tokenIds[2] = 3;
-    //     tokenIds[3] = 4;
-    //     uint256[] memory layerBindingBitMap = new uint256[](4);
-    //     layerBindingBitMap[0] = 1 << 255;
-    //     layerBindingBitMap[1] = 3 << 254;
-    //     // 0th bit shouldn't be set
-    //     layerBindingBitMap[2] = (3 << 254) | 1;
-    //     layerBindingBitMap[3] = (3 << 254) | 2;
-
-    //     test.setBoundLayersBulk(tokenIds, layerBindingBitMap);
-    //     assertEq(test.getBoundLayerBitMap(1), 1 << 255);
-    //     assertEq(test.getBoundLayerBitMap(2), 3 << 254);
-    //     //0th bit shouldn't be set
-    //     assertEq(test.getBoundLayerBitMap(3), 3 << 254);
-    //     assertEq(test.getBoundLayerBitMap(4), (3 << 254) | 2);
-    // }
-
-    // function testSetBoundLayersBulk_unequalLengths() public {
-    //     uint256[] memory tokenIds = new uint256[](4);
-    //     tokenIds[0] = 1;
-    //     tokenIds[1] = 2;
-    //     tokenIds[2] = 3;
-    //     tokenIds[3] = 4;
-    //     uint256[] memory layerBindingBitMap = new uint256[](3);
-    //     layerBindingBitMap[0] = 1 << 255;
-    //     layerBindingBitMap[1] = 3 << 254;
-    //     layerBindingBitMap[2] = (3 << 254) | 2;
-
-    //     vm.expectRevert(
-    //         abi.encodePacked(
-    //             ArrayLengthMismatch.selector,
-    //             uint256(4),
-    //             uint256(3)
-    //         )
-    //     );
-    //     test.setBoundLayersBulk(tokenIds, layerBindingBitMap);
-    // }
-
     function testCheckUnpackedIsSubsetOfBound() public {
         // pass: bound is superset of unpacked
         uint256 boundLayers = (0xFF << 248) | 2;

@@ -64,9 +64,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         view
         returns (uint256[] memory)
     {
-        // if (tokenId % NUM_TOKENS_PER_SET != 0) {
-        //     revert OnlyBase();
-        // }
         // TODO: test doesn't return 0
         return
             BitMapUtility.unpackBitMap(

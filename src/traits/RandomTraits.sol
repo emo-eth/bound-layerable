@@ -11,8 +11,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
     using Strings for uint256;
 
     // 32 possible traits per layerType given uint8 distributions
-    // except final trait type, which has 31, because 0 is not a valid layerId
-    // getLayerId will check if traitValue is less than the distribution,
+    // except final trait type, which has 31, because 0 is not a valid layerId.
+    // Function getLayerId will check if layerSeed is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
     mapping(uint8 => uint256) layerTypeToPackedDistributions;
@@ -85,16 +85,16 @@ abstract contract RandomTraits is BatchVRFConsumer {
         returns (uint8 layerType);
 
     /**
-     * @notice Get the layerId for a given tokenId by hashing tokenId with the random seed
-     * and comparing the final byte against the appropriate distributions
+     * @notice Get the layerId for a given tokenId by hashing tokenId with its layer type and random seed,
+     * and then comparing the final byte against the appropriate distributions
      */
     function getLayerId(uint256 tokenId) public view virtual returns (uint256) {
-        uint8 layerType = getLayerType(tokenId);
-        uint256 layerSeed = getLayerSeed(tokenId, layerType);
-        uint256 distributions = layerTypeToPackedDistributions[layerType];
-        return getLayerId(layerType, layerSeed, distributions);
+        return getLayerId(tokenId, traitGenerationSeed);
     }
 
+    /**
+     * @dev perform fewer SLOADs by passing seed as parameter
+     */
     function getLayerId(uint256 tokenId, bytes32 seed)
         internal
         view
@@ -107,9 +107,37 @@ abstract contract RandomTraits is BatchVRFConsumer {
         return getLayerId(layerType, layerSeed, distributions);
     }
 
+    /**
+     * @notice calculate the layerId for a given layerType, seed, and distributions.
+     * @param layerType of layer
+     * @param layerSeed uint256 random seed for layer (in practice will be truncated to 8 bits)
+     * @param distributions uint256 packed distributions of layerIds
+     * @return layerId limited to 8 bits
+     *
+     * @dev If the last packed byte is <255, any seed larger than the last packed byte
+     *      will be assigned to the index after the last packed byte, unless the last
+     *      packed byte is index 31, in which case, it will default to 31.
+     *
+     * examples:
+     * LayerSeed: 0x00
+     * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
+     * Calculated index: 0
+     *
+     * LayerSeed: 0x01
+     * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
+     * Calculated index: 1
+     *
+     * LayerSeed: 0xFF
+     * Distributions: [01 02 03 04 05 06 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
+     * Calculated index: 7
+     *
+     * LayerSeed: 0xFF
+     * Distributions: [01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20]
+     * Calculated index: 31
+     */
     function getLayerId(
         uint8 layerType,
-        uint256 seed,
+        uint256 layerSeed,
         uint256 distributions
     ) internal pure returns (uint256 layerId) {
         assembly {
@@ -119,11 +147,12 @@ abstract contract RandomTraits is BatchVRFConsumer {
                     freeMem,
                     0x326fd31d00000000000000000000000000000000000000000000000000000000
                 )
-                revert(freeMem, 0x20)
+                revert(freeMem, 0x4)
             }
 
+            // declare i outside of loop in case final distribution val is less than seed
             let i
-            // iterate over distributions until we find one that our layer seed is *less than*
+            // iterate over distribution values until we find one that our layer seed is less than
             for {
 
             } lt(i, 32) {
@@ -140,7 +169,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
                     // first element should never be 0; distributions are invalid
                     revertWithBadDistributions()
                 }
-                if lt(seed, dist) {
+                if lt(layerSeed, dist) {
                     // if i is 31 here, math will overflow here if layerType == 7
                     // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
                     if and(eq(i, 31), eq(layerType, 7)) {

@@ -193,12 +193,7 @@ contract ERC721A is IERC721A {
     /**
      * Returns the number of tokens minted by `owner`.
      */
-    function _numberMinted(address owner)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
+    function _numberMinted(address owner) internal view returns (uint256) {
         return
             (_packedAddressData[owner] >> BITPOS_NUMBER_MINTED) &
             BITMASK_ADDRESS_DATA_ENTRY;
@@ -755,7 +750,7 @@ contract ERC721A is IERC721A {
         unchecked {
             // We can directly increment and decrement the balances.
             --_packedAddressData[from]; // Updates: `balance -= 1`.
-            ++(_packedAddressData[to]); // Updates: `balance += 1`.
+            ++_packedAddressData[to]; // Updates: `balance += 1`.
 
             // Updates:
             // - `address` to the next owner.
@@ -849,8 +844,7 @@ contract ERC721A is IERC721A {
             // - `nextInitialized` to `true`.
             _packedOwnerships[tokenId] = _packOwnershipData(
                 from,
-                BITMASK_BURNED |
-                    BITMASK_NEXT_INITIALIZED |
+                (BITMASK_BURNED | BITMASK_NEXT_INITIALIZED) |
                     _nextExtraData(from, address(0), prevOwnershipPacked)
             );
 
