@@ -5,7 +5,7 @@ import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
 import {LayerType} from '../interface/Enums.sol';
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
-import {BadDistributions, TraitGenerationSeedNotSet} from '../interface/Errors.sol';
+import {BadDistributions, TraitGenerationSeedNotSet, InvalidLayerType} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 abstract contract RandomTraits is BatchVRFConsumer {
@@ -49,8 +49,12 @@ abstract contract RandomTraits is BatchVRFConsumer {
      */
     function setLayerTypeDistribution(uint8 layerType, uint256 distribution)
         public
+        virtual
         onlyOwner
     {
+        if (layerType > 7) {
+            revert InvalidLayerType();
+        }
         layerTypeToPackedDistributions[layerType] = distribution;
     }
 
