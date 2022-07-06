@@ -20,12 +20,23 @@ uint256 constant _2_MASK = 2**2 - 1;
 uint256 constant _1_MASK = 2**1 - 1;
 
 library BitMapUtility {
+    /**
+     * @notice Convert a byte value into a bitmap, where the bit at position val is set to 1, and all others 0
+     * @param  val byte value to convert to bitmap
+     * @return bitmap of val
+     */
     function toBitMap(uint256 val) internal pure returns (uint256 bitmap) {
         assembly {
             bitmap := shl(val, 1)
         }
     }
 
+    /**
+     * @notice get the intersection of two bitMaps by ANDing them together
+     * @param  target first bitmap
+     * @param  test second bitmap
+     * @return result bitmap with only bits active in both bitmaps set to 1
+     */
     function intersect(uint256 target, uint256 test)
         internal
         pure
@@ -36,6 +47,28 @@ library BitMapUtility {
         }
     }
 
+    /**
+     * @notice check if bitmap has byteVal set to 1
+     * @param  target first bitmap
+     * @param  byteVal bit position to check in target
+     * @return result true if bitmap contains byteVal
+     */
+    function contains(uint256 target, uint256 byteVal)
+        internal
+        pure
+        returns (bool result)
+    {
+        assembly {
+            result := and(shr(byteVal, target), 1)
+        }
+    }
+
+    /**
+     * @notice check if union of two bitmaps is equal to the first
+     * @param  superset first bitmap
+     * @param  subset second bitmap
+     * @return result true if superset is a superset of subset, false otherwise
+     */
     function isSupersetOf(uint256 superset, uint256 subset)
         internal
         pure
@@ -46,6 +79,11 @@ library BitMapUtility {
         }
     }
 
+    /**
+     * @notice unpack a bitmap into an array of included byte values
+     * @param  bitMap bitMap to unpack into byte values
+     * @return unpacked array of byte values included in bitMap, sorted from smallest to largest
+     */
     function unpackBitMap(uint256 bitMap)
         internal
         pure
@@ -119,6 +157,11 @@ library BitMapUtility {
         }
     }
 
+    /**
+     * @notice pack an array of byte values into a bitmap
+     * @param  uints array of byte values to pack into bitmap
+     * @return bitMap of byte values
+     */
     function uintsToBitMap(uint256[] memory uints)
         internal
         pure
@@ -140,11 +183,13 @@ library BitMapUtility {
         }
     }
 
-    /// from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol, ported to pure assembly
-    /// @notice Finds the zero-based index of the first one in the binary representation of x.
-    /// @dev See the note on msb in the "Find First Set" Wikipedia article https://en.wikipedia.org/wiki/Find_first_set
-    /// @param x The uint256 number for which to find the index of the most significant bit.
-    /// @return mostSignificantBit The index of the most significant bit as an uint256.
+    /**
+     * @notice Finds the zero-based index of the first one (right-indexed) in the binary representation of x.
+     * @dev See the note on msb in the "Find First Set" Wikipedia article https://en.wikipedia.org/wiki/Find_first_set
+     * @param x The uint256 number for which to find the index of the most significant bit.
+     * @return mostSignificantBit The index of the most significant bit as an uint256.
+     * from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol, ported to pure assembly
+     */
     function msb(uint256 x) internal pure returns (uint256 mostSignificantBit) {
         assembly {
             if iszero(lt(x, _2_128)) {
@@ -182,6 +227,11 @@ library BitMapUtility {
         }
     }
 
+    /**
+     * @notice Finds the zero-based index of the first one (left-indexed) in the binary representation of x
+     * @param x The uint256 number for which to find the index of the least significant bit.
+     * @return leastSignificantBit The index of the least significant bit as an uint256.
+     */
     function lsb(uint256 x)
         internal
         pure

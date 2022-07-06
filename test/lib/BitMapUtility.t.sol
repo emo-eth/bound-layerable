@@ -32,19 +32,18 @@ contract BitMapUtilityTest is Test {
     }
 
     function testUnpackBitMap(uint8 numBits) public {
-        // TODO: update for 0
-        vm.assume(numBits > 0);
         uint256[] memory bits = new uint256[](numBits);
         for (uint8 i = 0; i < numBits; ++i) {
             bits[i] = i;
         }
         uint256 bitMap = BitMapUtility.uintsToBitMap(bits);
 
-        if (numBits == 1) {
-            assertEq(bitMap, 1);
+        if (numBits == 0) {
+            assertEq(bitMap, 0);
         } else {
             assertEq(bitMap, (1 << numBits) - 1);
         }
+
         uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, numBits);
 
@@ -84,6 +83,7 @@ contract BitMapUtilityTest is Test {
         if (msb == 255) {
             bitMask = 2**256 - 1;
         } else {
+            // subtract 1 from 2**(msb+1) to get bitmask for all including and below msb
             bitMask = (1 << (msb + 1)) - 1;
         }
 
@@ -101,8 +101,11 @@ contract BitMapUtilityTest is Test {
     }
 
     function testLsb(uint8 lsb, uint256 extraBits) public {
-        vm.assume(lsb != 0);
+        vm.assume(!(lsb == 0 && extraBits == 0));
 
+        // set lsb to active
+        // OR with extraBits
+        // truncate bits below LSB by shifting and then shifting back
         uint256 bitMap = (((1 << lsb) | extraBits) >> lsb) << lsb;
 
         uint256 retrievedLsb = BitMapUtility.lsb(bitMap);
@@ -123,5 +126,22 @@ contract BitMapUtilityTest is Test {
             thing := 0xf0
         }
         assertTrue(thing);
+    }
+
+    function testContains(uint8 byteVal) public {
+        assertTrue(byteVal.toBitMap().contains(byteVal));
+    }
+
+    function testUintsToBitMap(uint8[256] memory bits) public {
+        uint256[] memory castBits = new uint256[](bits.length);
+        for (uint256 i = 0; i < bits.length; ++i) {
+            castBits[i] = bits[i];
+        }
+
+        uint256 bitMap = BitMapUtility.uintsToBitMap(castBits);
+
+        for (uint256 i = 0; i < bits.length; ++i) {
+            assertTrue(bitMap.contains(bits[i]));
+        }
     }
 }
