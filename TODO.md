@@ -27,8 +27,10 @@ Optimizations:
 
 Cleanup:
 - [ ] natspec comments
-  - [ ] BoundLayerable
-- [ ] remove leading underscores where not necessary to disambiguate
+  - [x] BoundLayerable
+  - [x] PackedByteUtility
+  - [x] BitMapUtility
+- [x] remove leading underscores where not necessary to disambiguate
 - [x] Split main Layerable functionality out and make ImageLayerable an example contract
 - [x] rename bitField to bitMap
 - [ ] more helper contracts?
@@ -36,7 +38,11 @@ Cleanup:
 
 Tests:
 - [ ] test that switch to uint256s over uint8s doesn't allow anything weird
-- [ ] PackedByteUtility
+- [x] PackedByteUtility
+- [x] BitMapUtility
+- [ ] BoundLayerable
+- [ ] RandomTraits
+- [ ] 
 - [ ] modifiers
 
 Integration/e2e tests:

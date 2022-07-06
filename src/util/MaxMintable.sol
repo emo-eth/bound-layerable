@@ -27,5 +27,5 @@ abstract contract MaxMintable is Ownable {
         maxMintsPerWallet = maxMints;
     }
 
-    function numberMinted(address _owner) internal virtual returns (uint256);
+    function numberMinted(address minter) internal virtual returns (uint256);
 }

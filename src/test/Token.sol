@@ -94,12 +94,12 @@ contract Token is
         super._mint(msg.sender, 7 * numSets);
     }
 
-    function numberMinted(address _owner)
+    function numberMinted(address minter)
         internal
         view
         override
         returns (uint256)
     {
-        return _numberMinted(_owner);
+        return _numberMinted(minter);
     }
 }

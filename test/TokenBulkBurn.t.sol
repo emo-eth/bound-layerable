@@ -16,12 +16,7 @@ contract TokenImpl is TestToken {
         string memory idk
     ) TestToken(name, sym, idk) {}
 
-    function setBoundLayersBulkNoCalldataOverhead()
-        public
-    // uint256[] calldata _tokenId,
-    // uint256[] calldata _layers
-    // onlyOwner
-    {
+    function setBoundLayersBulkNoCalldataOverhead() public {
         // TODO: check tokenIds are valid?
 
         for (uint256 i; i < 5555; ) {

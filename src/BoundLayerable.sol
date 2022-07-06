@@ -194,7 +194,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 if (bindings & layerIdBitMap > 0) {
                     revert LayerAlreadyBound();
                 }
-                bindings = bindings | layerIdBitMap;
+                bindings |= layerIdBitMap;
                 // todo: check-effects-interactions?
                 _burn(tokenId);
                 ++i;
@@ -244,54 +244,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     }
 
     // CHECK //
-
-    // /**
-    //  * @notice Unpack bytepacked layerIds and check that there are no duplicates
-    //  * @param bytePackedLayers uint256 of packed layerIds
-    //  * @return bitMap uint256 of unpacked layerIds
-    //  */
-    // function _unpackLayersToBitMapAndCheckForDuplicates(
-    //     uint256[] calldata bytePackedLayers
-    // )
-    //     internal
-    //     virtual
-    //     returns (uint256 bitMap)
-    // {
-    //     assembly {
-    //         let bytePackedLayersFinalOffset := add(
-    //             bytePackedLayers.offset,
-    //             mul(0x20, bytePackedLayers.length)
-    //         )
-    //         for {
-    //             let i := bytePackedLayers.offset
-    //         } lt(i, bytePackedLayersFinalOffset) {
-    //             i := add(0x20, i)
-    //         } {
-    //             for {
-    //                 let j
-    //             } lt(j, 32) {
-    //                 j := add(1, j)
-    //             } {
-    //                 let layer := byte(j, calldataload(i))
-    //                 // TODO: optimize this
-    //                 if iszero(layer) {
-    //                     continue
-    //                 }
-    //                 let lastBitMap := bitMap
-    //                 bitMap := or(bitMap, shl(layer, 1))
-    //                 if eq(lastBitMap, bitMap) {
-    //                     let free_mem_ptr := mload(0x40)
-    //                     mstore(
-    //                         free_mem_ptr,
-    //                         // revert DuplicateActiveLayers()
-    //                         0x6411ce7500000000000000000000000000000000000000000000000000000000
-    //                     )
-    //                     revert(free_mem_ptr, 4)
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 
     /**
      * @notice Unpack bytepacked layerIds and check that there are no duplicates

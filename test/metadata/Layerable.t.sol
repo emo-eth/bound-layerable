@@ -25,7 +25,7 @@ contract LayerableImpl is ImageLayerable {
         traitGenerationSeed = _traitGenerationSeed;
     }
 
-    function tokenURI(uint256 _layerId)
+    function tokenURI(uint256 layerId)
         public
         view
         virtual
@@ -33,7 +33,7 @@ contract LayerableImpl is ImageLayerable {
     {
         return
             this.getTokenURI(
-                _layerId,
+                layerId,
                 bindings,
                 activeLayers,
                 traitGenerationSeed

@@ -17,8 +17,8 @@ contract Token20 is ERC20 {
         _mint(msg.sender, 100 * 10**18);
     }
 
-    function mint(uint256 _amount) public {
-        _mint(msg.sender, _amount);
+    function mint(uint256 amount) public {
+        _mint(msg.sender, amount);
     }
 }
 
@@ -27,8 +27,8 @@ contract Token721 is ERC721 {
         _mint(msg.sender, 0);
     }
 
-    function mint(uint256 _amount) public {
-        _mint(msg.sender, _amount);
+    function mint(uint256 amount) public {
+        _mint(msg.sender, amount);
     }
 
     function tokenURI(uint256) public pure override returns (string memory) {

@@ -74,11 +74,11 @@ contract TestToken is Ownable, BoundLayerableTestImpl {
     }
 
     // todo: restrict numminted
-    function mintSets(uint256 _numSets)
+    function mintSets(uint256 numSets)
         public
         payable
-        includesCorrectPayment(_numSets)
+        includesCorrectPayment(numSets)
     {
-        super._mint(msg.sender, 7 * _numSets);
+        super._mint(msg.sender, 7 * numSets);
     }
 }

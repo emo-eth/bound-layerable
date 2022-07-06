@@ -10,7 +10,7 @@ import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, 
 
 library Helpers {
     function generateVariationMask(
-        uint256 _layers,
+        uint256 layers,
         LayerVariation memory variation
     ) internal pure returns (uint256) {
         for (
@@ -18,9 +18,9 @@ library Helpers {
             i < variation.layerId + variation.numVariations;
             i++
         ) {
-            _layers |= 1 << i;
+            layers |= 1 << i;
         }
-        return _layers;
+        return layers;
     }
 }
 

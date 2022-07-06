@@ -30,12 +30,12 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
             for (uint256 j; j < 32; ++j) {
                 dist |= 1 << (256 - (j + 1) * 8);
             }
-            layerTypeToDistributions[getLayerType(i)] = dist;
+            layerTypeToPackedDistributions[getLayerType(i)] = dist;
         }
     }
 
-    function setTraitGenerationSeed(bytes32 _seed) public {
-        traitGenerationSeed = _seed;
+    function setTraitGenerationSeed(bytes32 seed) public {
+        traitGenerationSeed = seed;
     }
 
     function getLayerType(uint256 tokenId)
@@ -80,12 +80,12 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
         _checkForMultipleVariations(unpackedLayers, boundLayers);
     }
 
-    function unpackLayersToBitMapAndCheckForDuplicates(uint256 _packedLayers)
+    function unpackLayersToBitMapAndCheckForDuplicates(uint256 packedLayers)
         public
         virtual
         returns (uint256, uint256)
     {
-        return _unpackLayersToBitMapAndCheckForDuplicates(_packedLayers);
+        return _unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
     }
 
     function getActiveLayersRaw(uint256 tokenId) public view returns (uint256) {

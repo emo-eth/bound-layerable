@@ -10,8 +10,8 @@ import {RandomTraitsImpl as RandomTraitsImplLayer} from 'bound-layerable/traits/
 contract RandomTraitsImpl is RandomTraitsImplLayer {
     constructor() RandomTraits('', '', address(1234), 5555, 7, 1) {}
 
-    function setTraitGenerationSeed(bytes32 _seed) public {
-        traitGenerationSeed = _seed;
+    function setTraitGenerationSeed(bytes32 seed) public {
+        traitGenerationSeed = seed;
     }
 }
 

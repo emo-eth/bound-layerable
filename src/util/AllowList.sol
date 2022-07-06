@@ -21,14 +21,14 @@ contract AllowList is Ownable {
         _;
     }
 
-    constructor(bytes32 _merkleRoot) {
-        merkleRoot = _merkleRoot;
+    constructor(bytes32 newMerkleRoot) {
+        merkleRoot = newMerkleRoot;
     }
 
     ///@notice set the Merkle root in the contract. OnlyOwner.
-    ///@param _merkleRoot the new Merkle root
-    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
-        merkleRoot = _merkleRoot;
+    ///@param newMerkleRoot the new Merkle root
+    function setMerkleRoot(bytes32 newMerkleRoot) public onlyOwner {
+        merkleRoot = newMerkleRoot;
     }
 
     ///@notice Given a Merkle proof, check if an address is AllowListed against the root
