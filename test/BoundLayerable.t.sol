@@ -6,7 +6,7 @@ import {BoundLayerableTestImpl} from 'bound-layerable/test/BoundLayerableTestImp
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
-import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers, TraitGenerationSeedNotSet} from 'bound-layerable/interface/Errors.sol';
 
 contract BoundLayerableTest is Test, BoundLayerableEvents {
     BoundLayerableTestImpl test;
@@ -156,5 +156,20 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         assertEq(boundLayers[0], 1);
         assertEq(boundLayers[1], 2);
         assertEq(boundLayers[2], 7);
+    }
+
+    function testBurnAndBindSingleTraitGenerationSeedNotSet() public {
+        test.setTraitGenerationSeed(bytes32(uint256(0)));
+        vm.expectRevert(TraitGenerationSeedNotSet.selector);
+        test.burnAndBindSingle(7, 8);
+    }
+
+    function testBurnAndBindMultipleTraitGenerationSeedNotSet() public {
+        uint256[] memory layers = new uint256[](2);
+        layers[0] = 1;
+        layers[1] = 2;
+        test.setTraitGenerationSeed(bytes32(uint256(0)));
+        vm.expectRevert(TraitGenerationSeedNotSet.selector);
+        test.burnAndBindMultiple(7, layers);
     }
 }

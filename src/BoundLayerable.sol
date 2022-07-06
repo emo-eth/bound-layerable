@@ -24,14 +24,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
 
     ILayerable public metadataContract;
 
-    // TODO: incorporate modifier, compare gas
-    modifier onlyBase(uint256 tokenId) {
-        if (tokenId % NUM_TOKENS_PER_SET != 0) {
-            revert OnlyBase();
-        }
-        _;
-    }
-
     constructor(
         string memory name,
         string memory symbol,
@@ -115,19 +107,27 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         public
         virtual
     {
+        // check ownership
         if (
             ownerOf(baseTokenId) != msg.sender ||
             ownerOf(layerTokenId) != msg.sender
         ) {
             revert NotOwner();
         }
-        bytes32 seed = traitGenerationSeed;
-        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
+        // check seed
+        bytes32 seed = traitGenerationSeed;
+        if (traitGenerationSeed == bytes32(uint256(0))) {
+            revert TraitGenerationSeedNotSet();
+        }
+
+        // check base
+        uint256 baseLayerId = getLayerId(baseTokenId, seed);
         if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
 
+        // check layer
         uint256 layerId = getLayerId(layerTokenId, seed);
         if (layerId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBase();
@@ -156,43 +156,53 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         uint256 baseTokenId,
         uint256[] calldata layerTokenIds
     ) public virtual {
-        // todo: modifier for these?
+        // check owner
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
-        bytes32 seed = traitGenerationSeed;
-        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
+        // check seed
+        bytes32 seed = traitGenerationSeed;
+        if (traitGenerationSeed == bytes32(uint256(0))) {
+            revert TraitGenerationSeedNotSet();
+        }
+
+        // check base
+        uint256 baseLayerId = getLayerId(baseTokenId, seed);
         if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
+
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
         // todo: try to batch with arrays by LayerType, fetching distribution for type,
-        // and looping over arrays of LayerType, to avoid duplicate lookups of distributions
-        // todo: iterate once over array, delegating to LayerType arrays
-        // then iterate over types + arrays
-        // todo: look at most efficient way to code in assembly
+
         unchecked {
             // todo: revisit if via_ir = true
             uint256 length = layerTokenIds.length;
             uint256 i;
             for (; i < length; ) {
                 uint256 tokenId = layerTokenIds[i];
+
+                // check owner of layer
                 if (ownerOf(tokenId) != msg.sender) {
                     revert NotOwner();
                 }
+
+                // check layer
                 uint256 layerId = getLayerId(tokenId, seed);
                 if (layerId % NUM_TOKENS_PER_SET == 0) {
                     revert CannotBindBase();
                 }
+
+                // check for duplicates
                 uint256 layerIdBitMap = layerId.toBitMap();
                 if (bindings & layerIdBitMap > 0) {
                     revert LayerAlreadyBound();
                 }
+
                 bindings |= layerIdBitMap;
-                // todo: check-effects-interactions?
                 _burn(tokenId);
                 ++i;
             }
@@ -210,19 +220,24 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         external
         virtual
     {
+        // check owner
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
+
+        // check base
         if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
+
         // unpack layers into a single bitmap and check there are no duplicates
         (
             uint256 unpackedLayers,
             uint256 numLayers
         ) = _unpackLayersToBitMapAndCheckForDuplicates(packedLayerIds);
-        uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
+
         // check new active layers are all bound to baseTokenId
+        uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // clear all bytes after last non-zero bit on packedLayerIds,
@@ -234,6 +249,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 packedLayerIds &
                 (type(uint256).max << (256 - (numLayers * 8)));
         }
+
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
         emit ActiveLayersChanged(baseTokenId, maskedPackedLayerIds);
     }

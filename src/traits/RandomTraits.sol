@@ -58,11 +58,19 @@ abstract contract RandomTraits is BatchVRFConsumer {
         layerTypeToPackedDistributions[layerType] = distribution;
     }
 
+    /**
+     * @notice calculate the 8-bit seed for a layer by hashing the traitGenerationSeed, tokenId, and layerType together
+     * and truncating to 8 bits
+     * @param tokenId tokenId to get seed for
+     * @param layerType layer type to get seed for
+     * @param seed traitGenerationSeed
+     * @return layerSeed - 8-bit seed for the given tokenId and layerType
+     */
     function getLayerSeed(
         uint256 tokenId,
         uint8 layerType,
         bytes32 seed
-    ) internal pure returns (uint8 resultHash) {
+    ) internal pure returns (uint8 layerSeed) {
         assembly {
             // store seed in first slot of scratch memory
             mstore(0x00, seed)
@@ -70,7 +78,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
             // tokenIds are sequential and MAX_NUM_SETS * NUM_TOKENS_PER_SET is guaranteed to be < 2**248
             let combinedIdType := or(shl(8, tokenId), layerType)
             mstore(0x20, combinedIdType)
-            resultHash := keccak256(0x00, 0x40)
+            layerSeed := keccak256(0x00, 0x40)
         }
     }
 

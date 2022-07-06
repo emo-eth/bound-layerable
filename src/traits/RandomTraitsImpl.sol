@@ -17,10 +17,8 @@ abstract contract RandomTraitsImpl is RandomTraits {
         uint256 numTokensPerSet = NUM_TOKENS_PER_SET;
         assembly {
             layerType := mod(tokenId, numTokensPerSet)
-            if gt(layerType, 4) {
-                layerType := sub(layerType, 2)
-                // todo: update impl
-                // layerType := 5
+            if gt(layerType, 5) {
+                layerType := 5
             }
         }
     }

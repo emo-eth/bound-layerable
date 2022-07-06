@@ -15,5 +15,6 @@ enum LayerType {
     BACKGROUND,
     TEXTURE,
     OBJECT,
+    OBJECT2,
     BORDER
 }

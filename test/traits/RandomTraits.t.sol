@@ -24,6 +24,14 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
     {
         return layerTypeToPackedDistributions[layerType];
     }
+
+    function getLayerSeedPub(
+        uint256 tokenId,
+        uint8 layerType,
+        bytes32 seed
+    ) public pure returns (uint8) {
+        return getLayerSeed(tokenId, layerType, seed);
+    }
 }
 
 contract RandomTraitsTest is Test {
@@ -55,6 +63,29 @@ contract RandomTraitsTest is Test {
         vm.startPrank(notOwner);
         vm.expectRevert('Ownable: caller is not the owner');
         test.setLayerTypeDistribution(0, 1);
+    }
+
+    function testGetLayerSeedShifts() public {
+        uint256 validTokenId = 1;
+        // test that we are correctly packing values by providing a tokenId that will be truncated to 248 bits
+        uint256 truncatedTokenId = 2**248 + 1;
+        bytes32 seed = bytes32(uint256(1));
+        bytes32 seed2 = bytes32(uint256(2));
+        uint8 layerType = 1;
+        uint8 layerType2 = 2;
+
+        assertEq(
+            test.getLayerSeedPub(truncatedTokenId, layerType, seed),
+            test.getLayerSeedPub(validTokenId, layerType, seed)
+        );
+        assertFalse(
+            test.getLayerSeedPub(truncatedTokenId, layerType, seed) ==
+                test.getLayerSeedPub(validTokenId, layerType, seed2)
+        );
+        assertFalse(
+            test.getLayerSeedPub(truncatedTokenId, layerType, seed) ==
+                test.getLayerSeedPub(validTokenId, layerType2, seed)
+        );
     }
 
     function testGetLayerIdBounds(bytes32 traitGenerationSeed) public {
@@ -110,17 +141,17 @@ contract RandomTraitsTest is Test {
         assertEq(uint256(test.getLayerType(3)), 3);
         assertEq(uint256(test.getLayerType(10)), 3);
 
-        // % 7 == 4 should be border
+        // % 7 == 4 should be object2
         assertEq(uint256(test.getLayerType(4)), 4);
         assertEq(uint256(test.getLayerType(11)), 4);
 
-        // % 7 == 5 should be object
-        assertEq(uint256(test.getLayerType(5)), 3);
-        assertEq(uint256(test.getLayerType(12)), 3);
+        // % 7 == 5 should be border
+        assertEq(uint256(test.getLayerType(5)), 5);
+        assertEq(uint256(test.getLayerType(12)), 5);
 
         // % 7 == 6 should be border
-        assertEq(uint256(test.getLayerType(6)), 4);
-        assertEq(uint256(test.getLayerType(13)), 4);
+        assertEq(uint256(test.getLayerType(6)), 5);
+        assertEq(uint256(test.getLayerType(13)), 5);
     }
 
     // function testGetLayerId() public {
