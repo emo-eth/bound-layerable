@@ -134,8 +134,8 @@ library BitMapUtility {
             }
             // store the number of layers at the pointer to unpacked array
             mstore(unpacked, numLayers)
-            // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
-            mstore(0x40, add(unpacked, add(0x20, mul(numLayers, 0x20))))
+            // update free mem pointer to first free slot after unpacked array
+            mstore(0x40, unpackedIndexPtr)
         }
     }
 

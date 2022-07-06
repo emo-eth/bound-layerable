@@ -70,7 +70,7 @@ contract BitMapUtilityTest is Test {
         }
     }
 
-    function testUnpackOopsAllOnes() public {
+    function testUnpackBitMapOopsAllOnes() public {
         uint256 bitMap = (1 << 255) - 1;
         uint256[] memory unpacked = BitMapUtility.unpackBitMap(bitMap);
         assertEq(unpacked.length, 255);
