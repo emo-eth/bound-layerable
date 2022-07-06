@@ -227,8 +227,13 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
 
         // clear all bytes after last non-zero bit on packedLayerIds,
         // since unpacking to bitmap short-circuits on first zero byte
-        uint256 maskedPackedLayerIds = packedLayerIds &
-            (type(uint256).max << (256 - (numLayers * 8)));
+        uint256 maskedPackedLayerIds;
+        // num layers can never be >32, so 256 - (numLayers * 8) can never negative-oveflow
+        unchecked {
+            maskedPackedLayerIds =
+                packedLayerIds &
+                (type(uint256).max << (256 - (numLayers * 8)));
+        }
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
         emit ActiveLayersChanged(baseTokenId, maskedPackedLayerIds);
     }

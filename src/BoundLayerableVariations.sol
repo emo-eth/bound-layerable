@@ -74,6 +74,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
             revert OnlyBase();
         }
         // unpack layers into a single bitmap and check there are no duplicates
+        // also get the number of layers in the bitmap
         (
             uint256 unpackedLayers,
             uint256 numLayers
@@ -83,8 +84,13 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         _checkUnpackedIsSubsetOfBound(unpackedLayers, bindings);
         // check active layers do not include multiple variations of the same trait
         // _checkForMultipleVariations(bindings, unpackedLayers);
-        uint256 maskedPackedLayerIds = packedLayerIds &
-            (type(uint256).max << (256 - (numLayers * 8)));
+        uint256 maskedPackedLayerIds;
+        // num layers can never be >32, so 256 - (numLayers * 8) can never negative-oveflow
+        unchecked {
+            maskedPackedLayerIds =
+                packedLayerIds &
+                (type(uint256).max << (256 - (numLayers * 8)));
+        }
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
         emit ActiveLayersChanged(baseTokenId, maskedPackedLayerIds);
     }
@@ -168,6 +174,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
 
     function getActiveVariation(uint256 variationId)
         internal
+        view
         returns (uint256)
     {
         if (variationId < 256) {
