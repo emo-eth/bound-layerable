@@ -11,11 +11,11 @@ abstract contract RandomTraits is BatchVRFConsumer {
     using Strings for uint256;
 
     // 32 possible traits per layerType given uint8 distributions
-    // except final trait, which has 31, because 0 is not a valid layerId
+    // except final trait type, which has 31, because 0 is not a valid layerId
     // getLayerId will check if traitValue is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
-    mapping(uint8 => uint256) layerTypeToDistributions;
+    mapping(uint8 => uint256) layerTypeToPackedDistributions;
 
     constructor(
         string memory name,
@@ -50,14 +50,14 @@ abstract contract RandomTraits is BatchVRFConsumer {
         public
         onlyOwner
     {
-        layerTypeToDistributions[layerType] = distribution;
+        layerTypeToPackedDistributions[layerType] = distribution;
     }
 
     /// @notice Get the random seed for a given tokenId by hashing it with the traitGenerationSeed
     function getLayerSeed(uint256 tokenId, uint8 layerType)
-        public
+        internal
         view
-        returns (uint256)
+        returns (uint8)
     {
         // TODO: revisit this optimization if via_ir is enabled
         bytes32 seed = traitGenerationSeed;
@@ -71,8 +71,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
         uint256 tokenId,
         uint8 layerType,
         bytes32 seed
-    ) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encode(seed, tokenId, layerType)));
+    ) internal pure returns (uint8) {
+        return uint8(uint256(keccak256(abi.encode(seed, tokenId, layerType))));
     }
 
     /**
@@ -88,41 +88,11 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @notice Get the layerId for a given tokenId by hashing tokenId with the random seed
      * and comparing the final byte against the appropriate distributions
      */
-    function getLayerId(uint256 _tokenId)
-        public
-        view
-        virtual
-        returns (uint256)
-    {
-        uint8 layerType = getLayerType(_tokenId);
-        uint256 layerSeed = getLayerSeed(_tokenId, layerType) & 0xff;
-        uint256 distributions = layerTypeToDistributions[layerType];
-        // iterate over distributions until we find one that our layer seed is *less than*
-        uint256 i;
-        for (; i < 32; ) {
-            uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
-                distributions,
-                i
-            );
-            // if distribution is 0, we've reached the end of the list
-            if (distribution == 0) {
-                if (i > 0) {
-                    return i + 1 + 32 * uint256(layerType);
-                } else {
-                    // first distribution should not be 0
-                    revert BadDistributions();
-                }
-            }
-            // note: for layers with multiple variations, the same value should be packed multiple times
-            if (layerSeed < distribution) {
-                return i + 1 + 32 * uint256(layerType);
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        // in the case that there are 32 distributions, default to the last id
-        return i + 32 * uint256(layerType);
+    function getLayerId(uint256 tokenId) public view virtual returns (uint256) {
+        uint8 layerType = getLayerType(tokenId);
+        uint256 layerSeed = getLayerSeed(tokenId, layerType);
+        uint256 distributions = layerTypeToPackedDistributions[layerType];
+        return getLayerId(layerType, layerSeed, distributions);
     }
 
     function getLayerId(uint256 tokenId, bytes32 seed)
@@ -132,8 +102,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
         returns (uint256)
     {
         uint8 layerType = getLayerType(tokenId);
-        uint256 layerSeed = getLayerSeed(tokenId, layerType, seed) & 0xff;
-        uint256 distributions = layerTypeToDistributions[layerType];
+        uint256 layerSeed = getLayerSeed(tokenId, layerType, seed);
+        uint256 distributions = layerTypeToPackedDistributions[layerType];
         return getLayerId(layerType, layerSeed, distributions);
     }
 
@@ -164,51 +134,32 @@ abstract contract RandomTraits is BatchVRFConsumer {
                     if gt(i, 0) {
                         // if distribution is 0, and it's not the first, we've reached the end of the list
                         // return the previous layerId.
-                        layerId := add(i, mul(32, layerType))
+                        layerId := add(add(1, i), mul(32, layerType))
                         break
                     }
-                    // otherwise distributions are invalid; first element should never be 0
-                    // revert with BadDistributions()
+                    // first element should never be 0; distributions are invalid
                     revertWithBadDistributions()
-                    // let freeMem := mload(0x40)
-                    // mstore(
-                    //     freeMem,
-                    //     0x326fd31d00000000000000000000000000000000000000000000000000000000
-                    // )
-                    // revert(freeMem, 0x20)
                 }
                 if lt(seed, dist) {
                     // if i is 31 here, math will overflow here if layerType == 7
                     // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
                     if and(eq(i, 31), eq(layerType, 7)) {
-                        // revert with BadDistributions()
                         revertWithBadDistributions()
-                        // let freeMem := mload(0x40)
-                        // mstore(
-                        //     freeMem,
-                        //     0x326fd31d00000000000000000000000000000000000000000000000000000000
-                        // )
-                        // revert(freeMem, 0x20)
                     }
-                    // layerIds are 1-indexed, so add 1 to i
 
+                    // layerIds are 1-indexed, so add 1 to i
                     layerId := add(add(1, i), mul(32, layerType))
                     break
                 }
             }
-
+            // if i is 32, we've reached the end of the list and should default to the last id
             if eq(i, 32) {
-                // if i is 32 here, math will overflow here if layerType == 7
+                // math will overflow here if layerType == 7
                 // 32 + 32 * 7 = 256, which is too large for a uint8
-                if eq(layerId, 7) {
+                if eq(layerType, 7) {
                     revertWithBadDistributions()
-                    // let freeMem := mload(0x40)
-                    // mstore(
-                    //     freeMem,
-                    //     0x326fd31d00000000000000000000000000000000000000000000000000000000
-                    // )
-                    // revert(freeMem, 0x20)
                 }
+                // return previous layerId
                 layerId := add(i, mul(32, layerType))
             }
         }
