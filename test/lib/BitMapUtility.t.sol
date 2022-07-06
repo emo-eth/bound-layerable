@@ -22,13 +22,14 @@ contract BitMapUtilityTest is Test {
     {
         badSuperset &= subset;
         if (badSuperset == subset) {
-            if (badSuperset != type(uint256).max) {
-                badSuperset += 1;
+            if (subset != type(uint256).max) {
+                subset += 1;
             } else {
-                badSuperset -= 1;
+                badSuperset = subset - 1;
             }
         }
         assertTrue(badSuperset != subset);
+        assertFalse(badSuperset.isSupersetOf(subset));
     }
 
     function testUnpackBitMap(uint8 numBits) public {

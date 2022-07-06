@@ -12,7 +12,7 @@ import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721A} from './token/ERC721A.sol';
 
 import './interface/Errors.sol';
-import {NOT_0TH_BITMASK} from './interface/Constants.sol';
+import {NOT_0TH_BITMASK, DUPLICATE_ACTIVE_LAYERS_SIGNATURE, LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
 import {LayerType} from './interface/Enums.sol';
 
@@ -224,7 +224,9 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
         // check new active layers are all bound to baseTokenId
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
-        // check active layers do not include multiple variations of the same trait
+
+        // clear all bytes after last non-zero bit on packedLayerIds,
+        // since unpacking to bitmap short-circuits on first zero byte
         uint256 maskedPackedLayerIds = packedLayerIds &
             (type(uint256).max << (256 - (numLayers * 8)));
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
@@ -270,7 +272,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                     mstore(
                         free_mem_ptr,
                         // revert DuplicateActiveLayers()
-                        0x6411ce7500000000000000000000000000000000000000000000000000000000
+                        DUPLICATE_ACTIVE_LAYERS_SIGNATURE
                     )
                     revert(free_mem_ptr, 4)
                 }
@@ -278,13 +280,22 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         }
     }
 
-    function _checkUnpackedIsSubsetOfBound(
-        uint256 unpackedLayers,
-        uint256 boundLayers
-    ) internal pure virtual {
-        // boundLayers should be superset of unpackedLayers, compare union to boundLayers
-        if (boundLayers | unpackedLayers != boundLayers) {
-            revert LayerNotBoundToTokenId();
+    function _checkUnpackedIsSubsetOfBound(uint256 subset, uint256 superset)
+        internal
+        pure
+        virtual
+    {
+        // superset should be superset of subset, compare union to superset
+        assembly {
+            if iszero(eq(or(superset, subset), superset)) {
+                let freeMemPtr := mload(0x40)
+                mstore(
+                    freeMemPtr,
+                    // revert LayerNotBoundToTokenId()
+                    LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE
+                )
+                revert(freeMemPtr, 4)
+            }
         }
     }
 
@@ -298,17 +309,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     /////////////
     // HELPERS //
     /////////////
-
-    function _layerIsBoundToTokenId(uint256 bindings, uint256 layer)
-        internal
-        pure
-        virtual
-        returns (bool isBound)
-    {
-        assembly {
-            isBound := and(shr(layer, bindings), 1)
-        }
-    }
 
     /// @dev set 0th bit to 1 in order to make first binding cost cheaper for user
     function _setPlaceholderBinding(uint256 tokenId) internal {

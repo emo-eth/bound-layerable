@@ -9,11 +9,14 @@ import {LayerType} from 'bound-layerable/interface/Enums.sol';
 import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 
-contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
+contract BoundLayerableVariationsTestImpl is
+    BoundLayerableVariations,
+    RandomTraitsImpl
+{
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
     constructor()
-        BoundLayerable(
+        BoundLayerableVariations(
             '',
             '',
             address(1234),
@@ -23,6 +26,8 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
             new ImageLayerable('default', msg.sender)
         )
     {
+        layerVariations.push(LayerVariation(4, 4));
+        layerVariations.push(LayerVariation(200, 8));
         traitGenerationSeed = bytes32(uint256(1));
         for (uint256 i; i < 8; ++i) {
             uint256 dist;
@@ -47,11 +52,27 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
         return RandomTraitsImpl.getLayerType(tokenId);
     }
 
+    // TODO: add tests for these + access control
+    function removeVariations() public onlyOwner {
+        delete layerVariations;
+    }
+
+    function getVariations() public view returns (LayerVariation[] memory) {
+        return layerVariations;
+    }
+
     function checkUnpackedIsSubsetOfBound(
         uint256 unpackedLayers,
         uint256 boundLayers
     ) public pure virtual {
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+    }
+
+    function checkForMultipleVariations(
+        uint256 unpackedLayers,
+        uint256 boundLayers
+    ) public view virtual {
+        _checkForMultipleVariations(unpackedLayers, boundLayers);
     }
 
     function unpackLayersToBitMapAndCheckForDuplicates(uint256 packedLayers)

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BoundLayerableVariationsTestImpl} from 'bound-layerable/test/BoundLayerableTestImpl.sol';
+import {BoundLayerableVariationsTestImpl} from 'bound-layerable/test/BoundLayerableVariationsTestImpl.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
@@ -47,28 +47,6 @@ contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
 
     function test_snapshotSetActiveLayers() public {
         test.setActiveLayers(14, ((14 << 248) | (15 << 240) | (16 << 232)));
-    }
-
-    function testLayerIsBoundToTokenId() public {
-        assertFalse(test.layerIsBoundToTokenId(0, 0));
-        // technically true - should never happen
-        // TODO: SAFEGUARD
-        assertTrue(test.layerIsBoundToTokenId(0x1, 0));
-
-        assertTrue(test.layerIsBoundToTokenId(0x2, 1));
-        assertTrue(test.layerIsBoundToTokenId(0x4, 2));
-        assertTrue(test.layerIsBoundToTokenId(0xFF << 248, 255));
-        assertTrue(test.layerIsBoundToTokenId((0xFF << 248) | 2, 1));
-    }
-
-    function testSetBoundLayers() public {
-        test.setBoundLayers(0, (0xFF << 248) | 2);
-        assertEq(test.getBoundLayerBitMap(0), (0xFF << 248) | 2);
-        test.setBoundLayers(0, 14);
-        assertEq(test.getBoundLayerBitMap(0), 14);
-        test.setBoundLayers(0, 1);
-        // test we do not set 0th bit
-        assertEq(test.getBoundLayerBitMap(1), 0);
     }
 
     function testCheckUnpackedIsSubsetOfBound() public {

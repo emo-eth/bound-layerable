@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
 import {LayerType} from '../interface/Enums.sol';
+import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
 import {BadDistributions, TraitGenerationSeedNotSet} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
@@ -143,10 +144,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
         assembly {
             function revertWithBadDistributions() {
                 let freeMem := mload(0x40)
-                mstore(
-                    freeMem,
-                    0x326fd31d00000000000000000000000000000000000000000000000000000000
-                )
+                mstore(freeMem, BAD_DISTRIBUTIONS_SIGNATURE)
                 revert(freeMem, 0x4)
             }
 

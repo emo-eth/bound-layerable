@@ -5,7 +5,7 @@ import {LayerVariation} from './interface/Structs.sol';
 import {ILayerable} from './metadata/ILayerable.sol';
 import {BoundLayerable} from './BoundLayerable.sol';
 import './interface/Errors.sol';
-import {NOT_0TH_BITMASK} from './interface/Constants.sol';
+import {NOT_0TH_BITMASK, MULTIPLE_VARIATIONS_ENABLED_SIGNATURE} from './interface/Constants.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 
@@ -280,7 +280,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
                         mstore(
                             freeMemPtr,
                             // revert MultipleVariationsEnabled()
-                            0x4d2e939600000000000000000000000000000000000000000000000000000000
+                            MULTIPLE_VARIATIONS_ENABLED_SIGNATURE
                         )
                         revert(freeMemPtr, 0x4)
                     }
