@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import '../interface/Constants.sol';
+
 library PackedByteUtility {
     /**
      * @notice get the byte value of a right-indexed byte within a uint256
@@ -140,13 +142,11 @@ library PackedByteUtility {
         uint256 byteToPack,
         uint256 index
     ) internal pure returns (uint256 newPackedBytes) {
-        // put MAX_INT onto the stack
-        uint256 maxInt = type(uint256).max;
         assembly {
             // calculate left-indexed bit offset of byte within packedBytes
             let byteOffset := sub(248, mul(index, 8))
             // create a mask to clear the bits we're about to overwrite
-            let mask := xor(maxInt, shl(byteOffset, 0xff))
+            let mask := xor(MAX_INT, shl(byteOffset, 0xff))
             // copy packedBytes to newPackedBytes, clearing the relevant bits
             newPackedBytes := and(packedBytes, mask)
             // shift the byte to the offset and OR it into newPackedBytes

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 uint256 constant NOT_0TH_BITMASK = ~uint256(1);
-uint256 constant MAX_INT = type(uint256).max;
+uint256 constant MAX_INT = 2**256 - 1;
 uint256 constant _2_128 = 2**128;
 uint256 constant _2_64 = 2**64;
 uint256 constant _2_32 = 2**32;
