@@ -137,50 +137,80 @@ abstract contract RandomTraits is BatchVRFConsumer {
         return getLayerId(layerType, layerSeed, distributions);
     }
 
-    // lays groundwork for batching layer types
     function getLayerId(
         uint8 layerType,
         uint256 seed,
         uint256 distributions
-    ) internal pure returns (uint256) {
-        unchecked {
-            uint256 i;
+    ) internal pure returns (uint256 layerId) {
+        assembly {
+            function revertWithBadDistributions() {
+                let freeMem := mload(0x40)
+                mstore(
+                    freeMem,
+                    0x326fd31d00000000000000000000000000000000000000000000000000000000
+                )
+                revert(freeMem, 0x20)
+            }
+
+            let i
             // iterate over distributions until we find one that our layer seed is *less than*
-            for (; i < 32; ) {
-                uint256 distribution = PackedByteUtility.getPackedByteFromLeft(
-                    distributions,
-                    i
-                );
-                if (distribution == 0) {
-                    if (i > 0) {
+            for {
+
+            } lt(i, 32) {
+                i := add(1, i)
+            } {
+                let dist := byte(i, distributions)
+                if iszero(dist) {
+                    if gt(i, 0) {
                         // if distribution is 0, and it's not the first, we've reached the end of the list
                         // return the previous layerId.
-                        return i + 32 * uint256(layerType);
-                    } else {
-                        // first distribution should not be 0
-                        revert BadDistributions();
+                        layerId := add(i, mul(32, layerType))
+                        break
                     }
+                    // otherwise distributions are invalid; first element should never be 0
+                    // revert with BadDistributions()
+                    revertWithBadDistributions()
+                    // let freeMem := mload(0x40)
+                    // mstore(
+                    //     freeMem,
+                    //     0x326fd31d00000000000000000000000000000000000000000000000000000000
+                    // )
+                    // revert(freeMem, 0x20)
                 }
-                // note: for layers with multiple variations, the same value should be packed multiple times
-                if (seed < distribution) {
-                    if (i == 31 && uint256(layerType) == 7) {
-                        // i is 31 here; math will overflow here if layerType == 7
-                        // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
-                        revert BadDistributions();
+                if lt(seed, dist) {
+                    // if i is 31 here, math will overflow here if layerType == 7
+                    // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
+                    if and(eq(i, 31), eq(layerType, 7)) {
+                        // revert with BadDistributions()
+                        revertWithBadDistributions()
+                        // let freeMem := mload(0x40)
+                        // mstore(
+                        //     freeMem,
+                        //     0x326fd31d00000000000000000000000000000000000000000000000000000000
+                        // )
+                        // revert(freeMem, 0x20)
                     }
                     // layerIds are 1-indexed, so add 1 to i
-                    return i + 1 + 32 * uint256(layerType);
+
+                    layerId := add(add(1, i), mul(32, layerType))
+                    break
                 }
-                ++i;
             }
-            // i is 32 here; math will overflow here if layerType == 7
-            // 32 + 32 * 7 = 256, which is too large for a uint8
-            if (uint256(layerType) == 7) {
-                revert BadDistributions();
+
+            if eq(i, 32) {
+                // if i is 32 here, math will overflow here if layerType == 7
+                // 32 + 32 * 7 = 256, which is too large for a uint8
+                if eq(layerId, 7) {
+                    revertWithBadDistributions()
+                    // let freeMem := mload(0x40)
+                    // mstore(
+                    //     freeMem,
+                    //     0x326fd31d00000000000000000000000000000000000000000000000000000000
+                    // )
+                    // revert(freeMem, 0x20)
+                }
+                layerId := add(i, mul(32, layerType))
             }
-            // in the case that there are 32 distributions, default to the last id of this type
-            // i == 32
-            return i + 32 * uint256(layerType);
         }
     }
 }
