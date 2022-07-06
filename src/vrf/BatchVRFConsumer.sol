@@ -15,7 +15,8 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     VRFCoordinatorV2Interface immutable COORDINATOR;
 
     // token config
-    uint256 immutable MAX_NUM_SETS;
+    // use uint240 to ensure tokenId can never be > 2**248 for efficient hashing
+    uint240 immutable MAX_NUM_SETS;
     uint8 immutable NUM_TOKENS_PER_SET;
 
     bytes32 public traitGenerationSeed;
@@ -29,7 +30,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         string memory name,
         string memory symbol,
         address vrfCoordinatorAddress,
-        uint256 maxNumSets,
+        uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId
     ) ERC721A(name, symbol) {

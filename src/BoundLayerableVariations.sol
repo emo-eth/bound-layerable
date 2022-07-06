@@ -28,7 +28,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         string memory name,
         string memory symbol,
         address vrfCoordinatorAddress,
-        uint256 maxNumSets,
+        uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
         ILayerable _metadataContract

@@ -33,7 +33,7 @@ contract Token is
         string memory name,
         string memory symbol,
         address vrfCoordinatorAddress,
-        uint256 maxNumSets,
+        uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
         uint256 maxSetsPerWallet,
