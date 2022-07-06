@@ -22,7 +22,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
     mapping(uint256 => uint256) internal _tokenIdToPackedActiveLayers;
 
-    LayerVariation[] public layerVariations;
     ILayerable public metadataContract;
 
     // TODO: incorporate modifier, compare gas
@@ -114,6 +113,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
      */
     function burnAndBindSingle(uint256 baseTokenId, uint256 layerTokenId)
         public
+        virtual
     {
         if (
             ownerOf(baseTokenId) != msg.sender ||
@@ -155,7 +155,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     function burnAndBindMultiple(
         uint256 baseTokenId,
         uint256[] calldata layerTokenIds
-    ) public {
+    ) public virtual {
         // todo: modifier for these?
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
@@ -180,7 +180,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             uint256 i;
             for (; i < length; ) {
                 uint256 tokenId = layerTokenIds[i];
-                if (ownerOf(baseTokenId) != msg.sender) {
+                if (ownerOf(tokenId) != msg.sender) {
                     revert NotOwner();
                 }
                 uint256 layerId = getLayerId(tokenId, seed);
@@ -208,6 +208,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
      */
     function setActiveLayers(uint256 baseTokenId, uint256 packedLayerIds)
         external
+        virtual
     {
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
@@ -224,7 +225,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         // check new active layers are all bound to baseTokenId
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
         // check active layers do not include multiple variations of the same trait
-        _checkForMultipleVariations(boundLayers, unpackedLayers);
         uint256 maskedPackedLayerIds = packedLayerIds &
             (type(uint256).max << (256 - (numLayers * 8)));
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
@@ -285,33 +285,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         // boundLayers should be superset of unpackedLayers, compare union to boundLayers
         if (boundLayers | unpackedLayers != boundLayers) {
             revert LayerNotBoundToTokenId();
-        }
-    }
-
-    // TODO: remove?
-    function _checkForMultipleVariations(
-        uint256 boundLayers,
-        uint256 unpackedLayers
-    ) internal view {
-        uint256 variationsLength = layerVariations.length;
-        for (uint256 i; i < variationsLength; ++i) {
-            LayerVariation memory variation = layerVariations[i];
-            uint256 vLayerId = variation.layerId;
-            uint256 vNumVariations = variation.numVariations;
-            if (_layerIsBoundToTokenId(boundLayers, vLayerId)) {
-                int256 activeVariations = int256(
-                    // put variation bytes at the end of the number
-                    (unpackedLayers >> vLayerId) & ((1 << vNumVariations) - 1) // drop bits above numVariations by &'ing with the same number of 1s
-                );
-                // n&(n-1) drops least significant bit
-                // valid active variation sets are powers of 2 (a single 1) or 0
-                uint256 zeroIfOneOrNoneActive = uint256(
-                    activeVariations & (activeVariations - 1)
-                );
-                if (zeroIfOneOrNoneActive != 0) {
-                    revert MultipleVariationsEnabled();
-                }
-            }
         }
     }
 

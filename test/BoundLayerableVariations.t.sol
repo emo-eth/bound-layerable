@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BoundLayerableTestImpl} from 'bound-layerable/test/BoundLayerableTestImpl.sol';
+import {BoundLayerableVariationsTestImpl} from 'bound-layerable/test/BoundLayerableTestImpl.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
@@ -24,11 +24,11 @@ library Helpers {
     }
 }
 
-contract BoundLayerableTest is Test, BoundLayerableEvents {
-    BoundLayerableTestImpl test;
+contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
+    BoundLayerableVariationsTestImpl test;
 
     function setUp() public {
-        test = new BoundLayerableTestImpl();
+        test = new BoundLayerableVariationsTestImpl();
         test.mint();
         test.mint();
         test.mint();
@@ -95,6 +95,59 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
     }
 
+    function testCheckForMultipleVariations() public {
+        uint256 boundLayers = 0;
+        LayerVariation[] memory variations = test.getVariations();
+        // pass: no variations
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
+        boundLayers = Helpers.generateVariationMask(0, variations[1]);
+        boundLayers |= 255;
+        boundLayers |= 42;
+
+        uint256 unpackedLayers = 0;
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: one of each variation
+        unpackedLayers = (1 << 200) | (1 << 4);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: different variations
+        unpackedLayers = (1 << 201) | (1 << 5);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // pass: variations plus other layers
+        unpackedLayers = (1 << 208) | (1 << 12) | (1 << 42) | (1 << 255);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple variations
+        unpackedLayers = (1 << 200) | (1 << 201) | (1 << 42) | (1 << 255);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple multiple variations (same variation)
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 42) |
+            (1 << 255);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+
+        // revert: multiple multiple variations (different variations)
+        unpackedLayers =
+            (1 << 200) |
+            (1 << 201) |
+            (1 << 202) |
+            (1 << 4) |
+            (1 << 5) |
+            (1 << 12) |
+            (1 << 42) |
+            (1 << 255);
+        vm.expectRevert(MultipleVariationsEnabled.selector);
+        test.checkForMultipleVariations(boundLayers, unpackedLayers);
+    }
+
     function testUnpackLayersToBitMapAndCheckForDuplicates() public {
         uint256[] memory layers = new uint256[](4);
         layers[0] = 1;
@@ -139,14 +192,9 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
     function testSetActiveLayers() public {
         uint256 boundLayers = 0;
-        boundLayers = Helpers.generateVariationMask(
-            boundLayers,
-            LayerVariation(4, 4)
-        );
-        boundLayers = Helpers.generateVariationMask(
-            boundLayers,
-            LayerVariation(200, 8)
-        );
+        LayerVariation[] memory variations = test.getVariations();
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[0]);
+        boundLayers = Helpers.generateVariationMask(boundLayers, variations[1]);
         boundLayers |= 1 << 255;
         boundLayers |= 1 << 42;
         test.setBoundLayers(0, boundLayers);
@@ -163,7 +211,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
     // todo: skip, need way to allocate memory
     function testGetActiveLayers() public {
-        // test.removeVariations();
+        test.removeVariations();
         uint256 boundlayers = 2**256 - 1;
         test.setBoundLayers(0, boundlayers);
         uint256[] memory layers = new uint256[](32);
