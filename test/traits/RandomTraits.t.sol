@@ -32,6 +32,14 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
     ) public pure returns (uint8) {
         return getLayerSeed(tokenId, layerType, seed);
     }
+
+    function getLayerIdPub(
+        uint8 layerType,
+        uint256 layerSeed,
+        uint256 distributions
+    ) public pure returns (uint256) {
+        return getLayerId(layerType, layerSeed, distributions);
+    }
 }
 
 contract RandomTraitsTest is Test {
@@ -121,6 +129,56 @@ contract RandomTraitsTest is Test {
         uint256 layerId = test.getLayerId(0);
         assertGt(layerId, 0);
         assertLt(layerId, 33);
+    }
+
+    function testGetLayerIdBoundsDirect(
+        uint8 layerSeed,
+        uint8 layerType,
+        uint8 numDistributions
+    ) public {
+        layerType = uint8(bound(layerType, 0, 7));
+        numDistributions = uint8(bound(numDistributions, 1, 32));
+        emit log_named_uint('layerSeed', layerSeed);
+        emit log_named_uint('layerType', layerType);
+        emit log_named_uint('numDistributions', numDistributions);
+        for (uint256 i = 0; i < numDistributions; ++i) {
+            // ~ evenly split distributions
+            uint256 num = (i + 1) * 8;
+            if (num == 256) {
+                num == 255;
+            }
+            distributions.push(num);
+        }
+        uint256 distributionPacked = PackedByteUtility.packArrayOfBytes(
+            distributions
+        );
+
+        // test will revert if it's the last layer type and ends at an index higher than 31
+        // since it will try to assign layerId to 256
+        bool willRevert = layerType == 7 &&
+            numDistributions > 30 &&
+            layerSeed >= 248;
+
+        uint256 layerId;
+        if (willRevert) {
+            vm.expectRevert(abi.encodeWithSelector(BadDistributions.selector));
+            test.getLayerIdPub(
+                layerType,
+                uint256(layerSeed),
+                distributionPacked
+            );
+        } else {
+            layerId = test.getLayerIdPub(
+                layerType,
+                uint256(layerSeed),
+                distributionPacked
+            );
+
+            uint256 layerTypeOffset = uint256(layerType) * 32;
+            assertGt(layerId, 0 + layerTypeOffset);
+            assertLt(layerId, 33 + layerTypeOffset);
+            assertLt(layerId, 256);
+        }
     }
 
     function testGetLayerType() public {

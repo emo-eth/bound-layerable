@@ -151,7 +151,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
             function revertWithBadDistributions() {
                 let freeMem := mload(0x40)
                 mstore(freeMem, BAD_DISTRIBUTIONS_SIGNATURE)
-                revert(freeMem, 0x4)
+                revert(freeMem, 4)
             }
 
             // declare i outside of loop in case final distribution val is less than seed
@@ -165,8 +165,16 @@ abstract contract RandomTraits is BatchVRFConsumer {
                 let dist := byte(i, distributions)
                 if iszero(dist) {
                     if gt(i, 0) {
+                        // if we've reached end of distributions, check layer type != 7
+                        // otherwise if layerSeed is less than the last distribution,
+                        // the layerId calculation will evaluate to 256 (overflow)
+                        if eq(i, 31) {
+                            if eq(layerType, 7) {
+                                revertWithBadDistributions()
+                            }
+                        }
                         // if distribution is 0, and it's not the first, we've reached the end of the list
-                        // return the previous layerId.
+                        // return i + 1 + 32 * layerType
                         layerId := add(add(1, i), mul(32, layerType))
                         break
                     }
