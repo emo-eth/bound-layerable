@@ -120,14 +120,6 @@ contract BitMapUtilityTest is Test {
         BitMapUtility.msb(randomBits);
     }
 
-    function testThing() public {
-        bool thing;
-        assembly {
-            thing := 0xf0
-        }
-        assertTrue(thing);
-    }
-
     function testContains(uint8 byteVal) public {
         assertTrue(byteVal.toBitMap().contains(byteVal));
     }
