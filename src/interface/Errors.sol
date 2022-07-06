@@ -14,3 +14,4 @@ error TraitGenerationSeedNotSet();
 error LayerAlreadyBound();
 error CannotBindBase();
 error OnlyBase();
+error InvalidLayerType();

@@ -5,24 +5,57 @@ import {Test} from 'forge-std/Test.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
-import {RandomTraitsImpl as RandomTraitsImplLayer} from 'bound-layerable/traits/RandomTraitsImpl.sol';
+import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
+import {BadDistributions, TraitGenerationSeedNotSet, InvalidLayerType} from 'bound-layerable/interface/Errors.sol';
 
-contract RandomTraitsImpl is RandomTraitsImplLayer {
-    constructor() RandomTraits('', '', address(1234), 5555, 7, 1) {}
+contract RandomTraitsTestImpl is RandomTraitsImpl {
+    constructor(uint8 numTokensPerSet)
+        RandomTraits('', '', address(1234), 5555, numTokensPerSet, 1)
+    {}
 
     function setTraitGenerationSeed(bytes32 seed) public {
         traitGenerationSeed = seed;
     }
+
+    function getLayerTypeDistributions(uint8 layerType)
+        public
+        view
+        returns (uint256)
+    {
+        return layerTypeToPackedDistributions[layerType];
+    }
 }
 
 contract RandomTraitsTest is Test {
-    RandomTraitsImpl test;
+    RandomTraitsTestImpl test;
+    uint256[] distributions;
 
     function setUp() public {
-        test = new RandomTraitsImpl();
+        test = new RandomTraitsTestImpl(7);
     }
 
-    uint256[] distributions;
+    function testSetLayerTypeDistribution(uint8 layerType, uint256 distribution)
+        public
+    {
+        layerType = uint8(bound(layerType, 0, 7));
+        test.setLayerTypeDistribution(layerType, distribution);
+        assertEq(test.getLayerTypeDistributions(layerType), distribution);
+    }
+
+    function testSetLayerTypeDistributionInvalidLayerType(uint8 layerType)
+        public
+    {
+        layerType = uint8(bound(layerType, 8, 255));
+        vm.expectRevert(abi.encodeWithSelector(InvalidLayerType.selector));
+        test.setLayerTypeDistribution(layerType, 0);
+    }
+
+    function testSetLayerTypeDistributionNotOwner(address notOwner) public {
+        vm.assume(notOwner != address(this));
+        vm.startPrank(notOwner);
+        vm.expectRevert('Ownable: caller is not the owner');
+        test.setLayerTypeDistribution(0, 1);
+    }
 
     function testGetLayerIdBounds(bytes32 traitGenerationSeed) public {
         vm.assume(traitGenerationSeed != 0);
@@ -34,6 +67,29 @@ contract RandomTraitsTest is Test {
         );
         uint256 layerId = test.getLayerId(0);
         assertTrue(layerId == 1 || layerId == 2);
+    }
+
+    function testGetLayerIdBounds(
+        bytes32 traitGenerationSeed,
+        uint8 numDistributions
+    ) public {
+        vm.assume(traitGenerationSeed != 0);
+        numDistributions = uint8(bound(numDistributions, 1, 32));
+        for (uint256 i = 0; i < numDistributions; ++i) {
+            // ~ evenly split distributions
+            uint256 num = (i + 1) * 8;
+            if (num == 256) {
+                num == 255;
+            }
+            distributions.push(num);
+        }
+        test.setLayerTypeDistribution(
+            uint8(LayerType.PORTRAIT),
+            PackedByteUtility.packArrayOfBytes(distributions)
+        );
+        uint256 layerId = test.getLayerId(0);
+        assertGt(layerId, 0);
+        assertLt(layerId, 33);
     }
 
     function testGetLayerType() public {

@@ -19,6 +19,8 @@ abstract contract RandomTraitsImpl is RandomTraits {
             layerType := mod(tokenId, numTokensPerSet)
             if gt(layerType, 4) {
                 layerType := sub(layerType, 2)
+                // todo: update impl
+                // layerType := 5
             }
         }
     }
