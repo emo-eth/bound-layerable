@@ -21,6 +21,8 @@ contract BatchVRFConsumer is ERC721A, Ownable {
 
     bytes32 public traitGenerationSeed;
     uint256 revealBatch;
+    // allow unsafe revealing of an uncompleted batch, ie, in the case of a perpetually stalled mint
+    bool forceUnsafeReveal;
 
     error MaxRandomness();
     error OnlyCoordinatorCanFulfill(address have, address want);
@@ -40,31 +42,52 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         SUBSCRIPTION_ID = subscriptionId;
     }
 
+    function setForceUnsafeReveal(bool force) public onlyOwner {
+        forceUnsafeReveal = force;
+    }
+
     function requestRandomWords(bytes32 keyHash)
         external
         onlyOwner
         returns (uint256)
     {
-        uint256 inProgressBatch = _nextTokenId() /
-            ((MAX_NUM_SETS * NUM_TOKENS_PER_SET) / 8);
-        if (inProgressBatch == 0) {
+        uint256 nextTokenId_ = nextTokenId();
+        uint256 numCompletedBatches = getRandomnessBatchForTokenId(
+            nextTokenId_
+        );
+        // if equal, next batch has not started minting yet
+        bool batchIsInProgress = nextTokenId_ >
+            ((numCompletedBatches * (NUM_TOKENS_PER_SET * MAX_NUM_SETS)) / 8) &&
+            numCompletedBatches != 8;
+
+        uint32 _revealBatch = uint32(revealBatch);
+        if (_revealBatch >= 8) {
+            revert MaxRandomness();
+        }
+        if (_revealBatch > numCompletedBatches || (!batchIsInProgress)) {
+            revert UnsafeReveal();
+        }
+        uint32 numToBatch = uint32(numCompletedBatches) - _revealBatch;
+
+        if (
+            (inProgressBatch == 0 || inProgressBatch == _revealBatch) &&
+            !forceUnsafeReveal
+        ) {
             // should not reveal a batch while it's in the process of minting
             revert UnsafeReveal();
         }
-        if (inProgressBatch == MAX_BATCH) {
-            revert MaxRandomness();
+        if (numBatches > 0) {
+            // Will revert if subscription is not set and funded.
+            return
+                COORDINATOR.requestRandomWords(
+                    keyHash,
+                    SUBSCRIPTION_ID,
+                    NUM_CONFIRMATIONS,
+                    CALLBACK_GAS_LIMIT,
+                    numBatches
+                );
         }
-        // get the number of batches to reveal, and number of random words to request
-        uint32 numBatches = uint32(inProgressBatch - 1) - uint32(revealBatch);
-        // Will revert if subscription is not set and funded.
-        return
-            COORDINATOR.requestRandomWords(
-                keyHash,
-                SUBSCRIPTION_ID,
-                NUM_CONFIRMATIONS,
-                CALLBACK_GAS_LIMIT,
-                numBatches
-            );
+        return 0;
     }
 
     // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
@@ -98,7 +121,16 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         internal
         virtual
     {
+        uint256 inProgressBatch = getRandomnessBatchForTokenId(nextTokenId());
         uint256 currBatch = revealBatch;
+        if (
+            (inProgressBatch == 0 || (currBatch >= inProgressBatch)) &&
+            !forceUnsafeReveal
+        ) {
+            // should not reveal a batch while it's in the process of minting
+            revert UnsafeReveal();
+        }
+
         bytes32 currSeed = traitGenerationSeed;
         uint256 length = randomWords.length;
         uint256 maxRemainingBatches = MAX_BATCH - currBatch;
@@ -116,5 +148,25 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         }
         traitGenerationSeed = currSeed;
         revealBatch = currBatch;
+    }
+
+    function nextTokenId() internal virtual returns (uint256) {
+        return _nextTokenId();
+    }
+
+    function getRandomnessBatchForTokenId(uint256 tokenId)
+        internal
+        virtual
+        returns (uint256 batchNumber)
+    {
+        // place immutable values onto stack
+        uint256 maxNumSets = MAX_NUM_SETS;
+        uint256 numTokensPerSet = NUM_TOKENS_PER_SET;
+        assembly {
+            batchNumber := div(
+                tokenId,
+                div(mul(maxNumSets, numTokensPerSet), 8)
+            )
+        }
     }
 }
