@@ -18,9 +18,10 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     // use uint240 to ensure tokenId can never be > 2**248 for efficient hashing
     uint240 immutable MAX_NUM_SETS;
     uint8 immutable NUM_TOKENS_PER_SET;
+    uint248 immutable NUM_TOKENS_PER_RANDOM_BATCH;
 
     bytes32 public traitGenerationSeed;
-    uint256 revealBatch;
+    uint248 revealBatch;
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a perpetually stalled mint
     bool forceUnsafeReveal;
 
@@ -40,6 +41,9 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         MAX_NUM_SETS = maxNumSets;
         NUM_TOKENS_PER_SET = numTokensPerSet;
         SUBSCRIPTION_ID = subscriptionId;
+        NUM_TOKENS_PER_RANDOM_BATCH =
+            (uint248(MAX_NUM_SETS) * uint248(NUM_TOKENS_PER_SET)) /
+            uint248(MAX_BATCH);
     }
 
     function setForceUnsafeReveal(bool force) public onlyOwner {
@@ -51,43 +55,17 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         onlyOwner
         returns (uint256)
     {
-        uint256 nextTokenId_ = nextTokenId();
-        uint256 numCompletedBatches = getRandomnessBatchForTokenId(
-            nextTokenId_
-        );
-        // if equal, next batch has not started minting yet
-        bool batchIsInProgress = nextTokenId_ >
-            ((numCompletedBatches * (NUM_TOKENS_PER_SET * MAX_NUM_SETS)) / 8) &&
-            numCompletedBatches != 8;
+        (uint32 numBatches, ) = _checkAndReturnNumBatches();
 
-        uint32 _revealBatch = uint32(revealBatch);
-        if (_revealBatch >= 8) {
-            revert MaxRandomness();
-        }
-        if (_revealBatch > numCompletedBatches || (!batchIsInProgress)) {
-            revert UnsafeReveal();
-        }
-        uint32 numToBatch = uint32(numCompletedBatches) - _revealBatch;
-
-        if (
-            (inProgressBatch == 0 || inProgressBatch == _revealBatch) &&
-            !forceUnsafeReveal
-        ) {
-            // should not reveal a batch while it's in the process of minting
-            revert UnsafeReveal();
-        }
-        if (numBatches > 0) {
-            // Will revert if subscription is not set and funded.
-            return
-                COORDINATOR.requestRandomWords(
-                    keyHash,
-                    SUBSCRIPTION_ID,
-                    NUM_CONFIRMATIONS,
-                    CALLBACK_GAS_LIMIT,
-                    numBatches
-                );
-        }
-        return 0;
+        // Will revert if subscription is not set and funded.
+        return
+            COORDINATOR.requestRandomWords(
+                keyHash,
+                SUBSCRIPTION_ID,
+                NUM_CONFIRMATIONS,
+                CALLBACK_GAS_LIMIT,
+                numBatches
+            );
     }
 
     // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
@@ -121,52 +99,71 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         internal
         virtual
     {
-        uint256 inProgressBatch = getRandomnessBatchForTokenId(nextTokenId());
-        uint256 currBatch = revealBatch;
+        (uint32 numBatches, uint32 _revealBatch) = _checkAndReturnNumBatches();
+        uint256 length = randomWords.length;
+        uint256 stop = length > numBatches ? numBatches : length;
+        bytes32 currSeed = traitGenerationSeed;
+        for (uint256 i; i < stop; ) {
+            uint256 randomness = randomWords[i];
+            currSeed = _writeRandomBatch(currSeed, _revealBatch, randomness);
+            unchecked {
+                _revealBatch += 1;
+                ++i;
+            }
+        }
+        traitGenerationSeed = currSeed;
+        revealBatch = _revealBatch;
+    }
+
+    function _checkAndReturnNumBatches() internal returns (uint32, uint32) {
+        // get next unminted token ID
+        uint256 nextTokenId_ = nextTokenId();
+        // get number of fully completed batches
+        uint256 numCompletedBatches = nextTokenId_ /
+            NUM_TOKENS_PER_RANDOM_BATCH;
+
+        uint32 _revealBatch = uint32(revealBatch);
+        // reveal is complete if _revealBatch is >= 8
+        if (_revealBatch >= 8) {
+            revert MaxRandomness();
+        }
+
+        // if equal, next batch has not started minting yet
+        bool batchIsInProgress = nextTokenId_ >
+            numCompletedBatches * NUM_TOKENS_PER_RANDOM_BATCH &&
+            numCompletedBatches != 8;
+
+        if (_revealBatch > numCompletedBatches || (!batchIsInProgress)) {
+            revert UnsafeReveal();
+        }
+
         if (
-            (inProgressBatch == 0 || (currBatch >= inProgressBatch)) &&
+            (numCompletedBatches == 0 || _revealBatch == numCompletedBatches) &&
+            batchIsInProgress &&
             !forceUnsafeReveal
         ) {
             // should not reveal a batch while it's in the process of minting
             revert UnsafeReveal();
         }
-
-        bytes32 currSeed = traitGenerationSeed;
-        uint256 length = randomWords.length;
-        uint256 maxRemainingBatches = MAX_BATCH - currBatch;
-        uint256 stop = length > maxRemainingBatches
-            ? maxRemainingBatches
-            : length;
-        for (uint256 i; i < stop; ) {
-            uint256 randomness = randomWords[i];
-            uint256 mask = (2**32 - 1) << (32 * currBatch);
-            currSeed = bytes32(uint256(currSeed) | (randomness & mask));
-            unchecked {
-                currBatch += 1;
-                ++i;
-            }
+        // number of batches to reveal
+        uint32 numBatches = uint32(numCompletedBatches - _revealBatch);
+        // increment if batch is in progress
+        if (batchIsInProgress) {
+            ++numBatches;
         }
-        traitGenerationSeed = currSeed;
-        revealBatch = currBatch;
+        return (numBatches, _revealBatch);
+    }
+
+    function _writeRandomBatch(
+        bytes32 seed,
+        uint32 batch,
+        uint256 randomness
+    ) internal pure returns (bytes32) {
+        uint256 mask = (2**32 - 1) << (32 * batch);
+        return bytes32(uint256(seed) | (randomness & mask));
     }
 
     function nextTokenId() internal virtual returns (uint256) {
         return _nextTokenId();
-    }
-
-    function getRandomnessBatchForTokenId(uint256 tokenId)
-        internal
-        virtual
-        returns (uint256 batchNumber)
-    {
-        // place immutable values onto stack
-        uint256 maxNumSets = MAX_NUM_SETS;
-        uint256 numTokensPerSet = NUM_TOKENS_PER_SET;
-        assembly {
-            batchNumber := div(
-                tokenId,
-                div(mul(maxNumSets, numTokensPerSet), 8)
-            )
-        }
     }
 }

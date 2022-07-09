@@ -32,7 +32,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         setNextTokenIdWithBatch(numSets);
     }
 
-    function setRevealBatch(uint256 batch) public {
+    function setRevealBatch(uint32 batch) public {
         revealBatch = batch;
     }
 
@@ -42,6 +42,18 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
 
     function setNextTokenIdWithBatch(uint256 numSets) public {
         fakeNextTokenId = numSets * uint256(NUM_TOKENS_PER_SET);
+    }
+
+    function checkAndReturnNumBatches() public returns (uint32, uint32) {
+        return _checkAndReturnNumBatches();
+    }
+
+    function writeRandomBatch(
+        bytes32 seed,
+        uint32 batch,
+        uint256 randomness
+    ) public pure returns (bytes32) {
+        return _writeRandomBatch(seed, batch, randomness);
     }
 }
 
