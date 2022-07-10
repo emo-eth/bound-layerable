@@ -5,7 +5,7 @@ import {VRFConsumerBaseV2} from 'chainlink/src/v0.8/VRFConsumerBaseV2.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
-import {_32_MASK} from 'bound-layerable/interface/Constants.sol';
+import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {
     // VRF config
@@ -30,6 +30,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     error MaxRandomness();
     error OnlyCoordinatorCanFulfill(address have, address want);
     error UnsafeReveal();
+    error BatchNotRevealed();
 
     constructor(
         string memory name,
@@ -88,6 +89,11 @@ contract BatchVRFConsumer is ERC721A, Ownable {
                 ),
                 _32_MASK
             )
+            if eq(randomness, 0) {
+                let freeMem := mload(0x40)
+                mstore(freeMem, BATCH_NOT_REVEALED_SIGNATURE)
+                revert(freeMem, 4)
+            }
         }
     }
 
@@ -97,7 +103,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     function rawFulfillRandomWords(
         uint256 requestId,
         uint256[] memory randomWords
-    ) external onlyOwner {
+    ) external {
         if (msg.sender != address(COORDINATOR)) {
             revert OnlyCoordinatorCanFulfill(msg.sender, address(COORDINATOR));
         }

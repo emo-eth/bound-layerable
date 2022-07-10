@@ -44,6 +44,10 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         revealBatch = batch;
     }
 
+    function getRevealBatch() public view returns (uint256) {
+        return revealBatch;
+    }
+
     function nextTokenId() internal virtual override returns (uint256) {
         return fakeNextTokenId;
     }
@@ -62,6 +66,27 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         uint256 randomness
     ) public pure returns (bytes32) {
         return _writeRandomBatch(seed, batch, randomness);
+    }
+
+    function getRandomnessForTokenIdPub(uint256 tokenId)
+        public
+        view
+        returns (uint256 randomness)
+    {
+        return getRandomnessForTokenId(tokenId);
+    }
+
+    function getRandomnessForBatchId(uint256 batchId)
+        public
+        view
+        returns (uint256 randomness)
+    {
+        return
+            getRandomnessForTokenIdPub(batchId * NUM_TOKENS_PER_RANDOM_BATCH);
+    }
+
+    function setTraitGenerationSeed(bytes32 seed) public {
+        traitGenerationSeed = seed;
     }
 }
 
@@ -86,7 +111,13 @@ contract BatchVRFConsumerTest is Test {
         test.setForceUnsafeReveal(false);
     }
 
-    function testRequestRandomWords1() public {
+    function testRequestRandomWords_onlyOwner(address addr) public {
+        vm.startPrank(addr);
+        vm.expectRevert('Ownable: caller is not the owner');
+        test.requestRandomWords(bytes32(uint256(1)));
+    }
+
+    function testRequestRandomWords() public {
         test.mintSets(uint256(8000) / 8 + 1);
         vm.mockCall(
             address(this),
@@ -319,5 +350,62 @@ contract BatchVRFConsumerTest is Test {
             assertEq(numMissingBatches, expectedNumMissing);
             assertEq(_revealBatch, revealBatch);
         }
+    }
+
+    function testRawFulfillRandomWords_onlyCoordinator(address _addr) public {
+        vm.assume(_addr != address(this));
+        vm.startPrank(_addr);
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                'OnlyCoordinatorCanFulfill(address,address)',
+                _addr,
+                address(this)
+            )
+        );
+        test.rawFulfillRandomWords(1, new uint256[](2));
+    }
+
+    function testFulfillRandomWords(uint8 length) public {
+        length = uint8(bound(length, 0, 8));
+        test.setRevealBatch(3);
+        test.mintSets(8000);
+        uint256[] memory randomWords = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            unchecked {
+                randomWords[i] = (i + 1) << (32 * (i + 3));
+            }
+        }
+        test.rawFulfillRandomWords(1, randomWords);
+        uint256 expectedEndBatch = length > 5 ? 8 : 3 + length;
+        assertEq(test.getRevealBatch(), expectedEndBatch);
+        for (uint8 i = 0; i < length; i++) {
+            if (i > 4) {
+                vm.expectRevert(
+                    abi.encodeWithSelector(
+                        BatchVRFConsumer.BatchNotRevealed.selector
+                    )
+                );
+            }
+            unchecked {
+                assertEq(
+                    test.getRandomnessForBatchId(i + 3),
+                    randomWords[i] >> (32 * (i + 3))
+                );
+            }
+        }
+    }
+
+    function testGetRandomnessForTokenId(uint256 tokenId) public {
+        tokenId = bound(tokenId, 0, 8000 - 1);
+        uint256 randomness;
+        for (uint256 i = 0; i < 8; i++) {
+            randomness |= (i + 1) << (32 * i);
+        }
+        test.setTraitGenerationSeed(bytes32(randomness));
+        uint256 tokenRandomness = test.getRandomnessForTokenIdPub(tokenId);
+        assertEq(
+            tokenRandomness,
+            (tokenId / test.getNumTokensPerRandomBatch()) + 1
+        );
     }
 }
