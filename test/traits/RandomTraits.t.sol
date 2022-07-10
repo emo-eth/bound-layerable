@@ -6,7 +6,7 @@ import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
 import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
-import {BadDistributions, TraitGenerationSeedNotSet, InvalidLayerType} from 'bound-layerable/interface/Errors.sol';
+import {BadDistributions, InvalidLayerType} from 'bound-layerable/interface/Errors.sol';
 
 contract RandomTraitsTestImpl is RandomTraitsImpl {
     constructor(uint8 numTokensPerSet)

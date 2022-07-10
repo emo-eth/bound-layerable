@@ -17,7 +17,7 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.mint();
         test.mint();
         test.setBoundLayers(14, 2**256 - 1);
-        test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
+        test.setTraitGenerationSeed(bytes32(uint256(2**256 - 1)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
@@ -41,11 +41,12 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         layers[3] = 3;
         layers[4] = 4;
         layers[5] = 5;
-        test.burnAndBindMultiple(7, layers);
+
+        test.burnAndBindMultiple(0, layers);
     }
 
     function test_snapshotBurnAndBindSingleTransferred() public {
-        test.burnAndBindSingle(7, 22);
+        test.burnAndBindSingle(0, 22);
     }
 
     function test_snapshotBurnAndBindMultipleTransferred() public {
@@ -56,10 +57,10 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         layers[3] = 25;
         layers[4] = 26;
         layers[5] = 27;
-        test.burnAndBindMultiple(7, layers);
+        test.burnAndBindMultiple(21, layers);
     }
 
     function test_snapshotBurnAndBindSingle() public {
-        test.burnAndBindSingle(7, 1);
+        test.burnAndBindSingle(0, 1);
     }
 }

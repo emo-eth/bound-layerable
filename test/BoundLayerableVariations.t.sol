@@ -213,27 +213,28 @@ contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
 
     function testBurnAndBindSingle() public {
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 8) | (1 << 7));
+        emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
         test.burnAndBindSingle(7, 8);
         assertTrue(test.isBurned(8));
         assertFalse(test.isBurned(7));
 
         uint256[] memory boundLayers = test.getBoundLayers(7);
         assertEq(boundLayers.length, 2);
-        assertEq(boundLayers[0], 7);
-        assertEq(boundLayers[1], 8);
+        assertEq(boundLayers[0], 8);
+        assertEq(boundLayers[1], 9);
         // test bind unowned layer to owned
     }
 
     function test_snapshotBurnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](6);
-        layers[0] = 6;
-        layers[1] = 1;
+        layers[0] = 1;
+        layers[1] = 6;
         layers[2] = 2;
         layers[3] = 3;
         layers[4] = 4;
         layers[5] = 5;
-        test.burnAndBindMultiple(7, layers);
+
+        test.burnAndBindMultiple(0, layers);
     }
 
     function test_snapshotBurnAndBindSingleTransferred() public {
@@ -248,7 +249,8 @@ contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
         layers[3] = 25;
         layers[4] = 26;
         layers[5] = 27;
-        test.burnAndBindMultiple(7, layers);
+
+        test.burnAndBindMultiple(21, layers);
     }
 
     function testBurnAndBindMultiple() public {
@@ -256,7 +258,7 @@ contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
         layers[0] = 1;
         layers[1] = 2;
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 1) | (1 << 2) | (1 << 7));
+        emit LayersBoundToToken(7, (1 << 2) | (1 << 3) | (1 << 8));
         test.burnAndBindMultiple(7, layers);
         assertTrue(test.isBurned(1));
         assertTrue(test.isBurned(2));
@@ -265,9 +267,9 @@ contract BoundLayerableVariationsTest is Test, BoundLayerableEvents {
         emit log_named_uint('bindings', bindings);
         uint256[] memory boundLayers = test.getBoundLayers(7);
         assertEq(boundLayers.length, 3);
-        assertEq(boundLayers[0], 1);
-        assertEq(boundLayers[1], 2);
-        assertEq(boundLayers[2], 7);
+        assertEq(boundLayers[0], 2);
+        assertEq(boundLayers[1], 3);
+        assertEq(boundLayers[2], 8);
     }
 
     function test_snapshotBurnAndBindSingle() public {

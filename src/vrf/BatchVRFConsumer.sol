@@ -74,7 +74,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     function getRandomnessForTokenId(uint256 tokenId)
         internal
         view
-        returns (uint256 randomness)
+        returns (bytes32 randomness)
     {
         return getRandomnessForTokenIdFromSeed(tokenId, traitGenerationSeed);
     }
@@ -82,7 +82,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     function getRandomnessForTokenIdFromSeed(uint256 tokenId, bytes32 seed)
         internal
         view
-        returns (uint256 randomness)
+        returns (bytes32 randomness)
     {
         // put immutable variable onto stack
         uint256 numTokensPerRandomBatch = NUM_TOKENS_PER_RANDOM_BATCH;

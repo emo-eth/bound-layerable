@@ -6,7 +6,8 @@ import {BoundLayerableTestImpl} from 'bound-layerable/test/BoundLayerableTestImp
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
-import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers, TraitGenerationSeedNotSet} from 'bound-layerable/interface/Errors.sol';
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
+import {MAX_INT} from 'bound-layerable/interface/Constants.sol';
 
 contract BoundLayerableTest is Test, BoundLayerableEvents {
     BoundLayerableTestImpl test;
@@ -17,7 +18,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.mint();
         test.mint();
         test.setBoundLayers(14, 2**256 - 1);
-        test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
+        test.setTraitGenerationSeed(bytes32(uint256(2**256 - 1)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
@@ -126,50 +127,51 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     function testBurnAndBindSingle() public {
+        test.setTraitGenerationSeed(bytes32(MAX_INT));
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 8) | (1 << 7));
+        emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
         test.burnAndBindSingle(7, 8);
         assertTrue(test.isBurned(8));
         assertFalse(test.isBurned(7));
 
         uint256[] memory boundLayers = test.getBoundLayers(7);
         assertEq(boundLayers.length, 2);
-        assertEq(boundLayers[0], 7);
-        assertEq(boundLayers[1], 8);
-        // test bind unowned layer to owned
+        assertEq(boundLayers[0], 8);
+        assertEq(boundLayers[1], 9);
+        // TODO: test bind unowned layer to owned, all restrictions
     }
 
     function testBurnAndBindMultiple() public {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
-        layers[1] = 2;
+        layers[1] = 6;
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 1) | (1 << 2) | (1 << 7));
-        test.burnAndBindMultiple(7, layers);
+        emit LayersBoundToToken(0, (1 << 1) | (1 << 2) | (1 << 7));
+        test.burnAndBindMultiple(0, layers);
+        assertTrue(test.isBurned(6));
         assertTrue(test.isBurned(1));
-        assertTrue(test.isBurned(2));
-        assertFalse(test.isBurned(7));
-        uint256 bindings = test.getBoundLayerBitMap(7);
+        assertFalse(test.isBurned(0));
+        uint256 bindings = test.getBoundLayerBitMap(0);
         emit log_named_uint('bindings', bindings);
-        uint256[] memory boundLayers = test.getBoundLayers(7);
+        uint256[] memory boundLayers = test.getBoundLayers(0);
         assertEq(boundLayers.length, 3);
         assertEq(boundLayers[0], 1);
         assertEq(boundLayers[1], 2);
         assertEq(boundLayers[2], 7);
     }
 
-    function testBurnAndBindSingleTraitGenerationSeedNotSet() public {
+    function testBurnAndBindSingleBatchNotRevealed() public {
         test.setTraitGenerationSeed(bytes32(uint256(0)));
-        vm.expectRevert(TraitGenerationSeedNotSet.selector);
-        test.burnAndBindSingle(7, 8);
+        vm.expectRevert(abi.encodeWithSignature('BatchNotRevealed()'));
+        test.burnAndBindSingle(6, 7);
     }
 
-    function testBurnAndBindMultipleTraitGenerationSeedNotSet() public {
+    function testBurnAndBindMultipleBatchNotRevealed() public {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
         test.setTraitGenerationSeed(bytes32(uint256(0)));
-        vm.expectRevert(TraitGenerationSeedNotSet.selector);
+        vm.expectRevert(abi.encodeWithSignature('BatchNotRevealed()'));
         test.burnAndBindMultiple(7, layers);
     }
 }

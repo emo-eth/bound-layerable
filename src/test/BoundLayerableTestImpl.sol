@@ -86,7 +86,7 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
         returns (uint256)
     {
         super.getLayerId(tokenId);
-        return tokenId;
+        return tokenId + 1;
     }
 
     function getLayerId(uint256 tokenId, bytes32 seed)
@@ -96,7 +96,7 @@ contract BoundLayerableTestImpl is BoundLayerable, RandomTraitsImpl {
         returns (uint256)
     {
         super.getLayerId(tokenId, seed);
-        return tokenId;
+        return tokenId + 1;
     }
 
     function isBurned(uint256 tokenId) public view returns (bool) {

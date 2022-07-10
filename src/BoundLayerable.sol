@@ -116,22 +116,27 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         }
 
         // check seed
-        bytes32 seed = traitGenerationSeed;
-        if (traitGenerationSeed == bytes32(uint256(0))) {
-            revert TraitGenerationSeedNotSet();
-        }
+        bytes32 traitSeed = traitGenerationSeed;
+        bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
+            baseTokenId,
+            traitSeed
+        );
 
         // check base
-        uint256 baseLayerId = getLayerId(baseTokenId, seed);
-        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
+        uint256 baseLayerId = getLayerId(baseTokenId, baseSeed);
 
+        bytes32 layerSeed = getRandomnessForTokenIdFromSeed(
+            layerTokenId,
+            traitSeed
+        );
         // check layer
-        uint256 layerId = getLayerId(layerTokenId, seed);
-        if (layerId % NUM_TOKENS_PER_SET == 0) {
+        if (layerTokenId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBase();
         }
+        uint256 layerId = getLayerId(layerTokenId, layerSeed);
 
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
         // always bind baseLayer, since it won't be set automatically
@@ -161,17 +166,18 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             revert NotOwner();
         }
 
-        // check seed
-        bytes32 seed = traitGenerationSeed;
-        if (traitGenerationSeed == bytes32(uint256(0))) {
-            revert TraitGenerationSeedNotSet();
-        }
-
         // check base
-        uint256 baseLayerId = getLayerId(baseTokenId, seed);
-        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
+        // check seed
+        bytes32 traitSeed = traitGenerationSeed;
+
+        bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
+            baseTokenId,
+            traitSeed
+        );
+        uint256 baseLayerId = getLayerId(baseTokenId, baseSeed);
 
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind baseLayer, since it won't be set automatically
@@ -191,10 +197,14 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 }
 
                 // check layer
-                uint256 layerId = getLayerId(tokenId, seed);
-                if (layerId % NUM_TOKENS_PER_SET == 0) {
+                if (tokenId % NUM_TOKENS_PER_SET == 0) {
                     revert CannotBindBase();
                 }
+                bytes32 layerSeed = getRandomnessForTokenIdFromSeed(
+                    tokenId,
+                    traitSeed
+                );
+                uint256 layerId = getLayerId(tokenId, layerSeed);
 
                 // check for duplicates
                 uint256 layerIdBitMap = layerId.toBitMap();

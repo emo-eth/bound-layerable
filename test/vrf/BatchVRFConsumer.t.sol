@@ -72,7 +72,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     function getRandomnessForTokenIdPub(uint256 tokenId)
         public
         view
-        returns (uint256 randomness)
+        returns (bytes32 randomness)
     {
         return getRandomnessForTokenId(tokenId);
     }
@@ -80,7 +80,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     function getRandomnessForBatchId(uint256 batchId)
         public
         view
-        returns (uint256 randomness)
+        returns (bytes32)
     {
         return
             getRandomnessForTokenIdPub(batchId * NUM_TOKENS_PER_RANDOM_BATCH);
@@ -93,7 +93,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     function getRandomnessForTokenIdFromSeedPub(uint256 tokenId, bytes32 seed)
         public
         view
-        returns (uint256)
+        returns (bytes32)
     {
         return getRandomnessForTokenIdFromSeed(tokenId, seed);
     }
@@ -399,7 +399,7 @@ contract BatchVRFConsumerTest is Test {
             }
             unchecked {
                 assertEq(
-                    test.getRandomnessForBatchId(i + 3),
+                    uint256(test.getRandomnessForBatchId(i + 3)),
                     randomWords[i] >> (32 * (i + 3))
                 );
             }
@@ -413,9 +413,9 @@ contract BatchVRFConsumerTest is Test {
             randomness |= (i + 1) << (32 * i);
         }
         test.setTraitGenerationSeed(bytes32(randomness));
-        uint256 tokenRandomness = test.getRandomnessForTokenIdPub(tokenId);
+        bytes32 tokenRandomness = test.getRandomnessForTokenIdPub(tokenId);
         assertEq(
-            tokenRandomness,
+            uint256(tokenRandomness),
             (tokenId / test.getNumTokensPerRandomBatch()) + 1
         );
     }

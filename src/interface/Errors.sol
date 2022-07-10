@@ -10,7 +10,7 @@ error MultipleVariationsEnabled();
 error InvalidLayer(uint256 layer);
 error BadDistributions();
 error NotOwner();
-error TraitGenerationSeedNotSet();
+error BatchNotRevealed();
 error LayerAlreadyBound();
 error CannotBindBase();
 error OnlyBase();

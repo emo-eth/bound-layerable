@@ -148,16 +148,16 @@ abstract contract BoundLayerableVariations is BoundLayerable {
             revert NotOwner();
         }
         bytes32 seed = traitGenerationSeed;
-        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
-        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
+        uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
-        uint256 layerId = getLayerId(layerTokenId, seed);
-        if (layerId % NUM_TOKENS_PER_SET == 0) {
+        if (layerTokenId % NUM_TOKENS_PER_SET == 0) {
             revert CannotBindBase();
         }
+        uint256 layerId = getLayerId(layerTokenId, seed);
 
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
         // always bind baseLayer, since it won't be set automatically
@@ -213,12 +213,13 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
+            revert OnlyBase();
+        }
+
         bytes32 seed = traitGenerationSeed;
         uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
-        if (baseLayerId % NUM_TOKENS_PER_SET != 0) {
-            revert OnlyBase();
-        }
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
@@ -236,10 +237,11 @@ abstract contract BoundLayerableVariations is BoundLayerable {
                 if (ownerOf(tokenId) != msg.sender) {
                     revert NotOwner();
                 }
-                uint256 layerId = getLayerId(tokenId, seed);
-                if (layerId % NUM_TOKENS_PER_SET == 0) {
+                if (tokenId % NUM_TOKENS_PER_SET == 0) {
                     revert CannotBindBase();
                 }
+                uint256 layerId = getLayerId(tokenId, seed);
+
                 uint256 layerIdBitMap = layerId.toBitMap();
                 if (bindings & layerIdBitMap > 0) {
                     revert LayerAlreadyBound();
