@@ -28,8 +28,16 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         )
     {}
 
+    function getNumTokensPerRandomBatch() public view returns (uint256) {
+        return NUM_TOKENS_PER_RANDOM_BATCH;
+    }
+
     function mintSets(uint256 numSets) public {
         setNextTokenIdWithBatch(numSets);
+    }
+
+    function setNextTokenId(uint256 nextTokenId_) public {
+        fakeNextTokenId = nextTokenId_;
     }
 
     function setRevealBatch(uint32 batch) public {
@@ -65,7 +73,7 @@ contract BatchVRFConsumerTest is Test {
             'test',
             'test',
             address(this),
-            5555,
+            8000,
             7,
             1
         );
@@ -78,8 +86,8 @@ contract BatchVRFConsumerTest is Test {
         test.setForceUnsafeReveal(false);
     }
 
-    function testRequestRandomWords() public {
-        test.mintSets(uint256(5555) / 8 + 1);
+    function testRequestRandomWords1() public {
+        test.mintSets(uint256(8000) / 8 + 1);
         vm.mockCall(
             address(this),
             abi.encodeWithSelector(
@@ -112,7 +120,7 @@ contract BatchVRFConsumerTest is Test {
             revealedBatches -= 1;
         }
 
-        uint256 numSets = (uint256(5555) * completedBatches) / 8 + 1;
+        uint256 numSets = (uint256(8000) * completedBatches) / 8 + 1;
         test.mintSets(numSets);
         test.setRevealBatch(revealedBatches);
 
@@ -134,7 +142,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testRequestRandomWordsAllSomeBatched() public {
-        test.mintSets(5555);
+        test.mintSets(8000);
         vm.mockCall(
             address(this),
             abi.encodeWithSelector(
@@ -153,7 +161,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testRequestRandomWordsAllNoneBatched() public {
-        test.mintSets(5555);
+        test.mintSets(8000);
         test.setRevealBatch(2);
         vm.mockCall(
             address(this),
@@ -173,7 +181,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testRequestRandomWordsSomeNoneBatched() public {
-        test.mintSets((uint256(5555) * 3) / 8 + 1);
+        test.mintSets((uint256(8000) * 3) / 8 + 1);
         vm.mockCall(
             address(this),
             abi.encodeWithSelector(
@@ -192,7 +200,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testRequestRandomWordsSomeSomeBatched() public {
-        test.mintSets((uint256(5555) * 3) / 8 + 1);
+        test.mintSets((uint256(8000) * 3) / 8 + 1);
         test.setRevealBatch(1);
         vm.mockCall(
             address(this),
@@ -229,14 +237,87 @@ contract BatchVRFConsumerTest is Test {
             ),
             abi.encode(10)
         );
+        test.setNextTokenId(1);
         test.setForceUnsafeReveal(true);
         test.requestRandomWords(bytes32(uint256(1)));
     }
 
     function testRequestMaxRandomness() public {
-        test.mintSets(5555);
+        test.mintSets(8000);
         test.setRevealBatch(8);
         vm.expectRevert(abi.encodeWithSignature('MaxRandomness()'));
         test.requestRandomWords(bytes32(uint256(1)));
+    }
+
+    function testWriteRandomBatch(
+        bool emptySeed,
+        uint8 batch,
+        uint256 randomness
+    ) public {
+        // bound batch to [0,7]
+        batch = uint8(bound(batch, 0, 7));
+        bytes32 seed;
+        // test that writing overwrites any previous randomness by supplying all 1's
+        if (!emptySeed) {
+            seed = bytes32(~uint256(0));
+        }
+        bytes32 newSeed = test.writeRandomBatch(seed, batch, randomness);
+        // calculate bits to shift based on batch number
+        uint256 shift = 32 * batch;
+        // create mask for last 32 bits once shifted
+        uint256 batchMask = 2**32 - 1;
+        // get 32-bit randomness that should have been written
+        uint256 maskedRandomness = (randomness >> shift) & batchMask;
+        uint256 maskedSeed = (uint256(newSeed) >> shift) & batchMask;
+        assertEq(maskedRandomness, maskedSeed);
+    }
+
+    function testCheckAndReturnNumBatches(
+        uint8 numCompletedBatches,
+        uint8 revealBatch,
+        bool force
+    ) public {
+        numCompletedBatches = uint8(bound(numCompletedBatches, 0, 8));
+        revealBatch = uint8(bound(revealBatch, 0, 8));
+
+        test.setRevealBatch(revealBatch);
+
+        uint256 numTokensToMint = test.getNumTokensPerRandomBatch() *
+            uint256(numCompletedBatches);
+
+        if (force) {
+            numTokensToMint++;
+            test.setForceUnsafeReveal(force);
+        }
+        test.setNextTokenId(numTokensToMint);
+
+        bool maxRandomness = revealBatch == 8;
+        bool revealAheadOfCompleted = revealBatch > numCompletedBatches;
+        bool inProgressNoForce = revealBatch == numCompletedBatches && !force;
+
+        if (maxRandomness) {
+            vm.expectRevert(
+                abi.encodeWithSelector(BatchVRFConsumer.MaxRandomness.selector)
+            );
+        } else if (revealAheadOfCompleted) {
+            vm.expectRevert(BatchVRFConsumer.UnsafeReveal.selector);
+        } else if (inProgressNoForce) {
+            vm.expectRevert(BatchVRFConsumer.UnsafeReveal.selector);
+        }
+        (uint32 numMissingBatches, uint32 _revealBatch) = test
+            .checkAndReturnNumBatches();
+
+        bool shouldHaveReverted = maxRandomness ||
+            revealAheadOfCompleted ||
+            inProgressNoForce;
+
+        if (!shouldHaveReverted) {
+            uint256 expectedNumMissing = numCompletedBatches - revealBatch;
+            if (force && numCompletedBatches != 8) {
+                expectedNumMissing++;
+            }
+            assertEq(numMissingBatches, expectedNumMissing);
+            assertEq(_revealBatch, revealBatch);
+        }
     }
 }

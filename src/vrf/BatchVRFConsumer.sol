@@ -5,12 +5,14 @@ import {VRFConsumerBaseV2} from 'chainlink/src/v0.8/VRFConsumerBaseV2.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
+import {_32_MASK} from 'bound-layerable/interface/Constants.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {
     // VRF config
-    uint256 constant MAX_BATCH = 8;
+    uint8 constant MAX_BATCH = 8;
     uint16 constant NUM_CONFIRMATIONS = 7;
     uint32 constant CALLBACK_GAS_LIMIT = 100_000;
+    // todo: mutable?
     uint64 immutable SUBSCRIPTION_ID;
     VRFCoordinatorV2Interface immutable COORDINATOR;
 
@@ -66,6 +68,27 @@ contract BatchVRFConsumer is ERC721A, Ownable {
                 CALLBACK_GAS_LIMIT,
                 numBatches
             );
+    }
+
+    function getRandomnessForTokenId(uint256 tokenId)
+        internal
+        view
+        returns (uint256 randomness)
+    {
+        // put immutable variable onto stack
+        uint256 numTokensPerRandomBatch = NUM_TOKENS_PER_RANDOM_BATCH;
+        assembly {
+            // use mask to get last 32 bits of shifted traitGenerationSeed
+            randomness := and(
+                // shift traitGenerationSeed right by batchNum * 32 bits
+                shr(
+                    // get batch number of token, multiply by 32
+                    mul(div(tokenId, numTokensPerRandomBatch), 32),
+                    sload(traitGenerationSeed.slot)
+                ),
+                _32_MASK
+            )
+        }
     }
 
     // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF
@@ -124,34 +147,33 @@ contract BatchVRFConsumer is ERC721A, Ownable {
 
         uint32 _revealBatch = uint32(revealBatch);
         // reveal is complete if _revealBatch is >= 8
-        if (_revealBatch >= 8) {
+        if (_revealBatch >= MAX_BATCH) {
             revert MaxRandomness();
         }
 
         // if equal, next batch has not started minting yet
         bool batchIsInProgress = nextTokenId_ >
             numCompletedBatches * NUM_TOKENS_PER_RANDOM_BATCH &&
-            numCompletedBatches != 8;
-
-        if (_revealBatch > numCompletedBatches || (!batchIsInProgress)) {
-            revert UnsafeReveal();
-        }
+            numCompletedBatches != MAX_BATCH;
+        bool batchInProgressAlreadyRevealed = _revealBatch >
+            numCompletedBatches;
+        uint32 numMissingBatches = batchInProgressAlreadyRevealed
+            ? 0
+            : uint32(numCompletedBatches) - _revealBatch;
 
         if (
-            (numCompletedBatches == 0 || _revealBatch == numCompletedBatches) &&
-            batchIsInProgress &&
-            !forceUnsafeReveal
+            batchInProgressAlreadyRevealed ||
+            (numMissingBatches == 0 && !batchIsInProgress)
         ) {
-            // should not reveal a batch while it's in the process of minting
             revert UnsafeReveal();
         }
-        // number of batches to reveal
-        uint32 numBatches = uint32(numCompletedBatches - _revealBatch);
         // increment if batch is in progress
-        if (batchIsInProgress) {
-            ++numBatches;
+
+        if (batchIsInProgress && forceUnsafeReveal) {
+            ++numMissingBatches;
         }
-        return (numBatches, _revealBatch);
+
+        return (numMissingBatches, _revealBatch);
     }
 
     function _writeRandomBatch(
@@ -159,8 +181,9 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         uint32 batch,
         uint256 randomness
     ) internal pure returns (bytes32) {
-        uint256 mask = (2**32 - 1) << (32 * batch);
-        return bytes32(uint256(seed) | (randomness & mask));
+        uint256 writeMask = uint256(_32_MASK) << (32 * batch);
+        uint256 clearMask = ~writeMask;
+        return bytes32((uint256(seed) & clearMask) | (randomness & writeMask));
     }
 
     function nextTokenId() internal virtual returns (uint256) {
