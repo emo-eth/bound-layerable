@@ -6,6 +6,7 @@ import {Test} from 'forge-std/Test.sol';
 import {BatchVRFConsumer} from 'bound-layerable/vrf/BatchVRFConsumer.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
+import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
     uint256 fakeNextTokenId;
@@ -88,6 +89,16 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     function setTraitGenerationSeed(bytes32 seed) public {
         traitGenerationSeed = seed;
     }
+
+    function getRandomnessForTokenIdFromSeedPub(uint256 tokenId, bytes32 seed)
+        public
+        view
+        returns (uint256)
+    {
+        return getRandomnessForTokenIdFromSeed(tokenId, seed);
+    }
+
+    function noOp() public pure {}
 }
 
 contract BatchVRFConsumerTest is Test {
@@ -407,5 +418,9 @@ contract BatchVRFConsumerTest is Test {
             tokenRandomness,
             (tokenId / test.getNumTokensPerRandomBatch()) + 1
         );
+    }
+
+    function test_snapshotGetRandomnessForTokenIdFromSeed() public view {
+        test.getRandomnessForTokenIdFromSeedPub(uint256(1), bytes32(MAX_INT));
     }
 }
