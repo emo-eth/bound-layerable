@@ -14,7 +14,7 @@ contract OnChainTraits is Ownable {
 
     mapping(uint256 => Attribute) public traitAttributes;
 
-    function setAttribute(uint256 traitId, Attribute memory attribute)
+    function setAttribute(uint256 traitId, Attribute calldata attribute)
         public
         onlyOwner
     {
@@ -22,8 +22,8 @@ contract OnChainTraits is Ownable {
     }
 
     function setAttributes(
-        uint256[] memory traitIds,
-        Attribute[] memory attributes
+        uint256[] calldata traitIds,
+        Attribute[] calldata attributes
     ) public onlyOwner {
         if (traitIds.length != attributes.length) {
             revert ArrayLengthMismatch(traitIds.length, attributes.length);

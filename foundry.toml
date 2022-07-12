@@ -5,5 +5,9 @@ libs = ['lib']
 fuzz_runs = 5000
 solc_version = '0.8.15'
 optimizer_runs = 1_000_000
+optimizer = true
 # via_ir = true
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+
+[ir]
+via_ir = true

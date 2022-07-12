@@ -86,6 +86,8 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     {
         // put immutable variable onto stack
         uint256 numTokensPerRandomBatch = NUM_TOKENS_PER_RANDOM_BATCH;
+
+        /// @solidity memory-safe-assembly
         assembly {
             // use mask to get last 32 bits of shifted traitGenerationSeed
             randomness := and(
@@ -98,9 +100,8 @@ contract BatchVRFConsumer is ERC721A, Ownable {
                 _32_MASK
             )
             if eq(randomness, 0) {
-                let freeMem := mload(0x40)
-                mstore(freeMem, BATCH_NOT_REVEALED_SIGNATURE)
-                revert(freeMem, 4)
+                mstore(0, BATCH_NOT_REVEALED_SIGNATURE)
+                revert(0, 4)
             }
         }
     }

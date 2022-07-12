@@ -2,17 +2,17 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BoundLayerableTestImpl} from 'bound-layerable/test/BoundLayerableTestImpl.sol';
+import {BoundLayerableSnapshotImpl} from 'bound-layerable/test/BoundLayerableSnapshotImpl.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
 import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
 
 contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
-    BoundLayerableTestImpl test;
+    BoundLayerableSnapshotImpl test;
 
     function setUp() public {
-        test = new BoundLayerableTestImpl();
+        test = new BoundLayerableSnapshotImpl();
         test.mint();
         test.mint();
         test.mint();
@@ -33,7 +33,7 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.setActiveLayers(14, ((14 << 248) | (15 << 240) | (16 << 232)));
     }
 
-    function test_snapshotBurnAndBindMultiple() public {
+    function test_snapshotBurnAndBindMultiple1() public {
         uint256[] memory layers = new uint256[](6);
         layers[0] = 6;
         layers[1] = 1;

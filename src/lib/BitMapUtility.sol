@@ -10,6 +10,7 @@ library BitMapUtility {
      * @return bitmap of val
      */
     function toBitMap(uint256 val) internal pure returns (uint256 bitmap) {
+        /// @solidity memory-safe-assembly
         assembly {
             bitmap := shl(val, 1)
         }
@@ -26,6 +27,7 @@ library BitMapUtility {
         pure
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             result := and(target, test)
         }
@@ -42,6 +44,7 @@ library BitMapUtility {
         pure
         returns (bool result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             result := and(shr(byteVal, target), 1)
         }
@@ -58,6 +61,7 @@ library BitMapUtility {
         pure
         returns (bool result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             result := eq(superset, or(superset, subset))
         }
@@ -73,6 +77,7 @@ library BitMapUtility {
         pure
         returns (uint256[] memory unpacked)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(bitMap) {
                 let freePtr := mload(0x40)
@@ -149,6 +154,7 @@ library BitMapUtility {
         pure
         returns (uint256 bitMap)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             // get pointer to first index of array
             let uintsIndexPtr := add(uints, 0x20)
@@ -177,6 +183,7 @@ library BitMapUtility {
      * from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol, ported to pure assembly
      */
     function msb(uint256 x) internal pure returns (uint256 mostSignificantBit) {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(lt(x, _2_128)) {
                 x := shr(128, x)
@@ -223,6 +230,7 @@ library BitMapUtility {
         pure
         returns (uint256 leastSignificantBit)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(x) {
                 mstore(0, 0)

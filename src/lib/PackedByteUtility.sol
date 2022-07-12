@@ -15,6 +15,7 @@ library PackedByteUtility {
         pure
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             result := byte(sub(31, index), packedBytes)
         }
@@ -31,6 +32,7 @@ library PackedByteUtility {
         pure
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             result := byte(index, packedBytes)
         }
@@ -46,6 +48,7 @@ library PackedByteUtility {
         pure
         returns (uint256 unpacked)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             for {
                 let i := 0
@@ -74,6 +77,7 @@ library PackedByteUtility {
         pure
         returns (uint256 packed)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             let arrayOfBytesIndexPtr := add(arrayOfBytes, 0x20)
             let arrayOfBytesLength := mload(arrayOfBytes)
@@ -106,6 +110,7 @@ library PackedByteUtility {
         pure
         returns (uint256[] memory unpacked)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             unpacked := mload(0x40)
             let unpackedIndexPtr := add(0x20, unpacked)
@@ -142,6 +147,7 @@ library PackedByteUtility {
         uint256 byteToPack,
         uint256 index
     ) internal pure returns (uint256 newPackedBytes) {
+        /// @solidity memory-safe-assembly
         assembly {
             // calculate left-indexed bit offset of byte within packedBytes
             let byteOffset := sub(248, mul(index, 8))

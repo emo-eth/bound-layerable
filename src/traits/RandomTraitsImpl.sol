@@ -15,6 +15,8 @@ abstract contract RandomTraitsImpl is RandomTraits {
         returns (uint8 layerType)
     {
         uint256 numTokensPerSet = NUM_TOKENS_PER_SET;
+
+        /// @solidity memory-safe-assembly
         assembly {
             layerType := mod(tokenId, numTokensPerSet)
             if gt(layerType, 5) {

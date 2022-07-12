@@ -80,7 +80,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 PackedByteUtility.unpackByteArray(
                     _tokenIdToPackedActiveLayers[tokenId]
                 ),
-                traitGenerationSeed
+                getRandomnessForTokenIdFromSeed(tokenId, traitGenerationSeed)
             );
     }
 
@@ -283,6 +283,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     function _unpackLayersToBitMapAndCheckForDuplicates(
         uint256 bytePackedLayers
     ) internal virtual returns (uint256 bitMap, uint256 numLayers) {
+        /// @solidity memory-safe-assembly
         assembly {
             for {
 
@@ -299,13 +300,12 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 bitMap := or(bitMap, shl(layer, 1))
                 // check equality - if equal, layer is a duplicate
                 if eq(lastBitMap, bitMap) {
-                    let free_mem_ptr := mload(0x40)
                     mstore(
-                        free_mem_ptr,
+                        0,
                         // revert DuplicateActiveLayers()
                         DUPLICATE_ACTIVE_LAYERS_SIGNATURE
                     )
-                    revert(free_mem_ptr, 4)
+                    revert(0, 4)
                 }
             }
         }
@@ -317,15 +317,16 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         virtual
     {
         // superset should be superset of subset, compare union to superset
+
+        /// @solidity memory-safe-assembly
         assembly {
             if iszero(eq(or(superset, subset), superset)) {
-                let freeMemPtr := mload(0x40)
                 mstore(
-                    freeMemPtr,
+                    0,
                     // revert LayerNotBoundToTokenId()
                     LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE
                 )
-                revert(freeMemPtr, 4)
+                revert(0, 4)
             }
         }
     }

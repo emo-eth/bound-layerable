@@ -71,6 +71,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
         uint8 layerType,
         bytes32 seed
     ) internal pure returns (uint8 layerSeed) {
+        /// @solidity memory-safe-assembly
         assembly {
             // store seed in first slot of scratch memory
             mstore(0x00, seed)
@@ -148,11 +149,11 @@ abstract contract RandomTraits is BatchVRFConsumer {
         uint256 layerSeed,
         uint256 distributions
     ) internal pure returns (uint256 layerId) {
+        /// @solidity memory-safe-assembly
         assembly {
             function revertWithBadDistributions() {
-                let freeMem := mload(0x40)
-                mstore(freeMem, BAD_DISTRIBUTIONS_SIGNATURE)
-                revert(freeMem, 4)
+                mstore(0, BAD_DISTRIBUTIONS_SIGNATURE)
+                revert(0, 4)
             }
 
             // declare i outside of loop in case final distribution val is less than seed

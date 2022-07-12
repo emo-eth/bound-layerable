@@ -45,6 +45,8 @@ abstract contract BoundLayerableVariations is BoundLayerable {
     {
         // pre-calculate layerVa
         bytes32 _layerVariationsSlot;
+
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0, layerVariations.slot)
             _layerVariationsSlot := keccak256(0, 0x20)
@@ -260,6 +262,8 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         uint256 unpackedLayers
     ) internal view {
         bytes32 _layerVariationsSlot = LAYER_VARIATIONS_SLOT;
+
+        /// @solidity memory-safe-assembly
         assembly {
             let variationsLength := sload(layerVariations.slot)
             let finalVariationsSlot := add(
@@ -285,13 +289,12 @@ abstract contract BoundLayerableVariations is BoundLayerable {
                         sub(activeVariations, 1)
                     )
                     if zeroIfOneOrNoneActive {
-                        let freeMemPtr := mload(0x40)
                         mstore(
-                            freeMemPtr,
+                            0,
                             // revert MultipleVariationsEnabled()
                             MULTIPLE_VARIATIONS_ENABLED_SIGNATURE
                         )
-                        revert(freeMemPtr, 0x4)
+                        revert(0, 0x4)
                     }
                 }
             }

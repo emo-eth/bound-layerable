@@ -35,6 +35,6 @@ interface ILayerable {
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
-        bytes32 traitGenerationSeed
+        bytes32 layerSeed
     ) external view returns (string memory);
 }

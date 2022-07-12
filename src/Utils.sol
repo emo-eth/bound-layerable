@@ -73,8 +73,7 @@ library utils {
         pure
         returns (bool)
     {
-        return
-            keccak256(abi.encodePacked(_a)) == keccak256(abi.encodePacked(_b));
+        return keccak256(bytes(_a)) == keccak256(bytes(_b));
     }
 
     // returns the length of a string in characters

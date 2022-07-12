@@ -244,6 +244,8 @@ contract ERC721A is IERC721A {
         uint256 packed = _packedAddressData[owner];
         uint256 auxCasted;
         // Cast `aux` with assembly to avoid redundant masking.
+
+        /// @solidity memory-safe-assembly
         assembly {
             auxCasted := aux
         }
@@ -284,7 +286,7 @@ contract ERC721A is IERC721A {
         revert OwnerQueryForNonexistentToken();
     }
 
-    function _isBurned(uint256 tokenId) internal view returns (bool) {
+    function _isBurned(uint256 tokenId) internal view returns (bool isBurned) {
         return _packedOwnerships[tokenId] & BITMASK_BURNED != 0;
     }
 
@@ -344,6 +346,7 @@ contract ERC721A is IERC721A {
         view
         returns (uint256 result)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             // Mask `owner` to the lower 160 bits, in case the upper bits somehow aren't clean.
             owner := and(owner, BITMASK_ADDRESS)
@@ -419,6 +422,8 @@ contract ERC721A is IERC721A {
         returns (uint256 result)
     {
         // For branchless setting of the `nextInitialized` flag.
+
+        /// @solidity memory-safe-assembly
         assembly {
             // `(quantity == 1) << BITPOS_NEXT_INITIALIZED`.
             result := shl(BITPOS_NEXT_INITIALIZED, eq(quantity, 1))
@@ -698,6 +703,8 @@ contract ERC721A is IERC721A {
     {
         TokenApprovalRef storage tokenApproval = _tokenApprovals[tokenId];
         // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId]`.
+
+        /// @solidity memory-safe-assembly
         assembly {
             approvedAddressSlot := tokenApproval.slot
             approvedAddress := sload(approvedAddressSlot)
@@ -712,6 +719,7 @@ contract ERC721A is IERC721A {
         address from,
         address msgSender
     ) private pure returns (bool result) {
+        /// @solidity memory-safe-assembly
         assembly {
             // Mask `from` to the lower 160 bits, in case the upper bits somehow aren't clean.
             from := and(from, BITMASK_ADDRESS)
@@ -757,6 +765,8 @@ contract ERC721A is IERC721A {
         _beforeTokenTransfers(from, to, tokenId, 1);
 
         // Clear approvals from the previous owner.
+
+        /// @solidity memory-safe-assembly
         assembly {
             if approvedAddress {
                 // This is equivalent to `delete _tokenApprovals[tokenId]`.
@@ -838,6 +848,8 @@ contract ERC721A is IERC721A {
         _beforeTokenTransfers(from, address(0), tokenId, 1);
 
         // Clear approvals from the previous owner.
+
+        /// @solidity memory-safe-assembly
         assembly {
             if approvedAddress {
                 // This is equivalent to `delete _tokenApprovals[tokenId]`.
@@ -921,6 +933,7 @@ contract ERC721A is IERC721A {
             if (reason.length == 0) {
                 revert TransferToNonERC721ReceiverImplementer();
             } else {
+                /// @solidity memory-safe-assembly
                 assembly {
                     revert(add(32, reason), mload(reason))
                 }
@@ -936,6 +949,8 @@ contract ERC721A is IERC721A {
         if (packed == 0) revert OwnershipNotInitializedForExtraData();
         uint256 extraDataCasted;
         // Cast `extraData` with assembly to avoid redundant masking.
+
+        /// @solidity memory-safe-assembly
         assembly {
             extraDataCasted := extraData
         }
@@ -1042,6 +1057,7 @@ contract ERC721A is IERC721A {
         virtual
         returns (string memory ptr)
     {
+        /// @solidity memory-safe-assembly
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit),
             // but we allocate 128 bytes to keep the free memory pointer 32-byte word aliged.
