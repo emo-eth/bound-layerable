@@ -33,14 +33,6 @@ contract OnChainTraits is Ownable {
         }
     }
 
-    function displayTypeJson(string memory displayTypeString)
-        internal
-        pure
-        returns (string memory)
-    {
-        return json.property('display_type', displayTypeString);
-    }
-
     function getTraitJson(uint256 traitId) public view returns (string memory) {
         Attribute memory attribute = traitAttributes[traitId];
 
@@ -49,6 +41,31 @@ contract OnChainTraits is Ownable {
             ','
         );
         return _getTraitJson(properties, attribute);
+    }
+
+    function getTraitJson(uint256 traitId, string memory qualifier)
+        public
+        view
+        returns (string memory)
+    {
+        Attribute memory attribute = traitAttributes[traitId];
+
+        string memory properties = string.concat(
+            json.property(
+                'trait_type',
+                string.concat(qualifier, ' ', attribute.traitType)
+            ),
+            ','
+        );
+        return _getTraitJson(properties, attribute);
+    }
+
+    function displayTypeJson(string memory displayTypeString)
+        internal
+        pure
+        returns (string memory)
+    {
+        return json.property('display_type', displayTypeString);
     }
 
     function _getTraitJson(string memory properties, Attribute memory attribute)
@@ -76,22 +93,5 @@ contract OnChainTraits is Ownable {
             json.property('value', attribute.value)
         );
         return json.object(properties);
-    }
-
-    function getTraitJson(uint256 traitId, string memory qualifier)
-        public
-        view
-        returns (string memory)
-    {
-        Attribute memory attribute = traitAttributes[traitId];
-
-        string memory properties = string.concat(
-            json.property(
-                'trait_type',
-                string.concat(qualifier, ' ', attribute.traitType)
-            ),
-            ','
-        );
-        return _getTraitJson(properties, attribute);
     }
 }
