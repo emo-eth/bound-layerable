@@ -8,6 +8,8 @@ import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
 import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
 import {MAX_INT} from 'bound-layerable/interface/Constants.sol';
+import {ILayerable} from 'bound-layerable/metadata/ILayerable.sol';
+import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 
 contract BoundLayerableTest is Test, BoundLayerableEvents {
     BoundLayerableTestImpl test;
@@ -28,6 +30,20 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
             test.transferFrom(address(1), address(this), i + 21);
         }
         vm.stopPrank();
+    }
+
+    function testSetMetadataContract() public {
+        ILayerable layerable = new ImageLayerable('default', msg.sender);
+        test.setMetadataContract(layerable);
+        assertEq(address(test.metadataContract()), address(layerable));
+    }
+
+    function testSetMetadataContract_onlyOwner(address addr) public {
+        vm.assume(addr != address(this));
+        ILayerable layerable = new ImageLayerable('default', msg.sender);
+        vm.startPrank(addr);
+        vm.expectRevert('Ownable: caller is not the owner');
+        test.setMetadataContract(layerable);
     }
 
     function testCheckUnpackedIsSubsetOfBound() public {
