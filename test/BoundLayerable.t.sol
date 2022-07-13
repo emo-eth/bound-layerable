@@ -115,6 +115,8 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[2] = 4;
         layers[3] = 200;
         uint256 activeLayers = PackedByteUtility.packArrayOfBytes(layers);
+        vm.expectEmit(true, true, true, false, address(test));
+        emit BoundLayerableEvents.ActiveLayersChanged(0, activeLayers);
         test.setActiveLayers(0, activeLayers);
 
         assertEq(test.getActiveLayersRaw(0), activeLayers);
@@ -131,7 +133,6 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         uint256 packedLayers = PackedByteUtility.packArrayOfBytes(layers);
         test.setActiveLayers(0, packedLayers);
         uint256[] memory activeLayers = test.getActiveLayers(0);
-        // emit log_named_uint("activeLayers[255]", activeLayers[255]);
         assertEq(activeLayers.length, 32);
         for (uint256 i; i < activeLayers.length; ++i) {
             assertEq(activeLayers[i], i + 1);
@@ -167,8 +168,6 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         assertTrue(test.isBurned(6));
         assertTrue(test.isBurned(1));
         assertFalse(test.isBurned(0));
-        uint256 bindings = test.getBoundLayerBitMap(0);
-        emit log_named_uint('bindings', bindings);
         uint256[] memory boundLayers = test.getBoundLayers(0);
         assertEq(boundLayers.length, 3);
         assertEq(boundLayers[0], 1);
