@@ -91,7 +91,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     function _tokenURI(uint256 tokenId) internal view returns (string memory) {
         return
             metadataContract.getTokenURI(
-                tokenId,
+                getLayerId(tokenId),
                 _tokenIdToBoundLayers[tokenId],
                 PackedByteUtility.unpackByteArray(
                     _tokenIdToPackedActiveLayers[tokenId]

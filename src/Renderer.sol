@@ -8,6 +8,7 @@ import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721Recipient} from 'bound-layerable-test/util/ERC721Recipient.sol';
 import {LayerType} from './interface/Enums.sol';
+import {ImageLayerable} from './metadata/ImageLayerable.sol';
 
 contract Renderer is ERC721Recipient {
     TestToken test;
@@ -88,7 +89,7 @@ contract Renderer is ERC721Recipient {
             uint8(LayerType.BORDER),
             packedDistributions
         );
-        test.metadataContract().setBaseLayerURI(
+        ImageLayerable(address(test.metadataContract())).setBaseLayerURI(
             '/Users/jameswenzel/dev/partner-smart-contracts/Layers/'
         );
     }

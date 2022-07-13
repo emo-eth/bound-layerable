@@ -2,10 +2,6 @@
 pragma solidity ^0.8.4;
 
 interface ILayerable {
-    function setBaseLayerURI(string calldata baseLayerURI) external;
-
-    function setDefaultURI(string calldata baseLayerURI) external;
-
     function getLayerImageURI(uint256 layerId)
         external
         view

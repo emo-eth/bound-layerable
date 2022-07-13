@@ -2,7 +2,7 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-fuzz_runs = 5000
+fuzz_runs = 1000
 solc_version = '0.8.15'
 optimizer_runs = 1_000_000
 optimizer = true

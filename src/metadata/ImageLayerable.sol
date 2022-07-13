@@ -9,15 +9,30 @@ import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Layerable} from './Layerable.sol';
+import {IImageLayerable} from './IImageLayerable.sol';
 import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
 
-contract ImageLayerable is Layerable {
+contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?
     using Strings for uint256;
 
-    constructor(string memory defaultURI, address _owner)
-        Layerable(defaultURI, _owner)
-    {}
+    string defaultURI;
+    // todo: use different URIs for solo layers and layered layers?
+    string baseLayerURI;
+
+    constructor(string memory _defaultURI, address _owner) Layerable(_owner) {
+        defaultURI = _defaultURI;
+    }
+
+    /// @notice set the default URI for unrevealed tokens
+    function setDefaultURI(string memory _defaultURI) public onlyOwner {
+        defaultURI = _defaultURI;
+    }
+
+    /// @notice set the base URI for layers
+    function setBaseLayerURI(string memory _baseLayerURI) public onlyOwner {
+        baseLayerURI = _baseLayerURI;
+    }
 
     /**
      * @notice get the complete URI of a set of token traits
@@ -42,7 +57,8 @@ contract ImageLayerable is Layerable {
 
         // if no bindings, format metadata as an individual NFT
         // check if bindings == 0 or 1; bindable traits will be treated differently
-        if (bindings == 0 || bindings == 0) {
+        // TODO: test this if/else
+        if (bindings == 0 || bindings == 1) {
             properties[0] = json.property('image', getLayerImageURI(layerId));
             properties[1] = json.property(
                 'attributes',
@@ -94,6 +110,7 @@ contract ImageLayerable is Layerable {
         override
         returns (string memory)
     {
+        // TODO: remove png?
         return string.concat(baseLayerURI, layerId.toString(), '.png');
     }
 }
