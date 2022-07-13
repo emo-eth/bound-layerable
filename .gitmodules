@@ -16,3 +16,6 @@
 [submodule "lib/chainlink"]
 	path = lib/chainlink
 	url = https://github.com/smartcontractkit/chainlink
+[submodule "lib/utility-contracts"]
+	path = lib/utility-contracts
+	url = https://github.com/jameswenzel/utility-contracts
