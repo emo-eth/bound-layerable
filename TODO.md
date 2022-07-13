@@ -18,6 +18,7 @@ Features:
 - [ ] Token.sol should be full-fledged token with all utils
 - [x] decide on Variations
   - [ ] punted for now, need to consider how to optimize
+- [ ] Placeholder image per layerType?
 
 
 Optimizations:
