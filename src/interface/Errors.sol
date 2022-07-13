@@ -15,3 +15,7 @@ error LayerAlreadyBound();
 error CannotBindBase();
 error OnlyBase();
 error InvalidLayerType();
+error MaxSupply();
+error MaxRandomness();
+error OnlyCoordinatorCanFulfill(address have, address want);
+error UnsafeReveal();

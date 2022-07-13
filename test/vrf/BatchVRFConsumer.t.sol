@@ -7,6 +7,7 @@ import {BatchVRFConsumer} from 'bound-layerable/vrf/BatchVRFConsumer.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
+import {MaxRandomness, UnsafeReveal, BatchNotRevealed} from 'bound-layerable/interface/Errors.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
     uint256 fakeNextTokenId;
@@ -338,13 +339,11 @@ contract BatchVRFConsumerTest is Test {
         bool inProgressNoForce = revealBatch == numCompletedBatches && !force;
 
         if (maxRandomness) {
-            vm.expectRevert(
-                abi.encodeWithSelector(BatchVRFConsumer.MaxRandomness.selector)
-            );
+            vm.expectRevert(abi.encodeWithSelector(MaxRandomness.selector));
         } else if (revealAheadOfCompleted) {
-            vm.expectRevert(BatchVRFConsumer.UnsafeReveal.selector);
+            vm.expectRevert(UnsafeReveal.selector);
         } else if (inProgressNoForce) {
-            vm.expectRevert(BatchVRFConsumer.UnsafeReveal.selector);
+            vm.expectRevert(UnsafeReveal.selector);
         }
         (uint32 numMissingBatches, uint32 _revealBatch) = test
             .checkAndReturnNumBatches();
@@ -392,9 +391,7 @@ contract BatchVRFConsumerTest is Test {
         for (uint8 i = 0; i < length; i++) {
             if (i > 4) {
                 vm.expectRevert(
-                    abi.encodeWithSelector(
-                        BatchVRFConsumer.BatchNotRevealed.selector
-                    )
+                    abi.encodeWithSelector(BatchNotRevealed.selector)
                 );
             }
             unchecked {

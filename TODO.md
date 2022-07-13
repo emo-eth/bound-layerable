@@ -16,7 +16,8 @@ Features:
 - [x] BoundLayerable
 - [x] Layerable
 - [ ] Token.sol should be full-fledged token with all utils
-- [ ] decide on Variations
+- [x] decide on Variations
+  - [ ] punted for now, need to consider how to optimize
 
 
 Optimizations:
@@ -24,6 +25,10 @@ Optimizations:
 - [x] use uint256s everywhere instead of uint8s
 - [x] Genericize LayerType
   - [x] genericize getLayerType
+- [ ] remove DisplayType from Attribute?
+- [ ] consider storing Attributes using SSTORE2
+  - [ ] probably punt to later version
+- [ ] consider removing vrfCoordinatorAddress as constructor param and set via chainId (larger deploy size)
 
 Cleanup:
 - [ ] natspec comments
@@ -35,18 +40,20 @@ Cleanup:
 - [x] rename bitField to bitMap
 - [ ] more helper contracts?
 - [ ] rename BatchVRFConsumer
+- [ ] remove/update todos in comments
+- [ ] rename traitGenerationSeed
+- [ ] remove maxmintable etc and import utility-contracts
 
 Tests:
 - [ ] test that switch to uint256s over uint8s doesn't allow anything weird
+- [ ] test that switch to uint32 disguised as bytes32 for traitgenerationseed doesn't allow anything weird
 - [x] PackedByteUtility
 - [x] BitMapUtility
-- [ ] BoundLayerable
-- [ ] RandomTraits
-- [ ] 
+- [x] BoundLayerable
+- [x] RandomTraits
 - [ ] modifiers
 
 Integration/e2e tests:
 - [ ] e2e tests for chainlink vrf
   - [ ] add "integration" foundry profile
   - [ ] add suite of integration tests that run against a testnet when "integration" foundry profile is active
-- [ ] 

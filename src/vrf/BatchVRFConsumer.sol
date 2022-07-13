@@ -6,6 +6,7 @@ import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordi
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
+import {BatchNotRevealed, MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from 'bound-layerable/interface/Errors.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {
     // VRF config
@@ -21,17 +22,13 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     uint240 immutable MAX_NUM_SETS;
     uint8 immutable NUM_TOKENS_PER_SET;
     uint248 immutable NUM_TOKENS_PER_RANDOM_BATCH;
+    uint256 immutable MAX_TOKEN_ID;
 
     bytes32 public traitGenerationSeed;
     uint248 revealBatch;
 
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
     bool forceUnsafeReveal;
-
-    error MaxRandomness();
-    error OnlyCoordinatorCanFulfill(address have, address want);
-    error UnsafeReveal();
-    error BatchNotRevealed();
 
     constructor(
         string memory name,
@@ -48,6 +45,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         NUM_TOKENS_PER_RANDOM_BATCH =
             (uint248(MAX_NUM_SETS) * uint248(NUM_TOKENS_PER_SET)) /
             uint248(MAX_BATCH);
+        MAX_TOKEN_ID = uint256(MAX_NUM_SETS) * uint256(NUM_TOKENS_PER_SET);
     }
 
     /**

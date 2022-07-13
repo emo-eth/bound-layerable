@@ -29,6 +29,17 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
 
     ILayerable public metadataContract;
 
+    modifier canMint(uint256 numSets) {
+        // get number of tokens to be minted, add next token id, compare to max token id (MAX_NUM_SETS * NUM_TOKENS_PER_SET)
+        if (
+            numSets * uint256(NUM_TOKENS_PER_SET) + _nextTokenId() >
+            MAX_TOKEN_ID
+        ) {
+            revert MaxSupply();
+        }
+        _;
+    }
+
     constructor(
         string memory name,
         string memory symbol,
