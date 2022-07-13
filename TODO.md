@@ -20,6 +20,7 @@ Features:
     -   [ ] punted for now, need to consider how to optimize
 -   [ ] Placeholder image per layerType?
 -   [ ] admin role in addition to owner?
+-   [ ] EIP-2981
 
 Optimizations:
 
