@@ -97,7 +97,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * and then comparing the final byte against the appropriate distributions
      */
     function getLayerId(uint256 tokenId) public view virtual returns (uint256) {
-        return getLayerId(tokenId, traitGenerationSeed);
+        return getLayerId(tokenId, getRandomnessForTokenId(tokenId));
     }
 
     /**

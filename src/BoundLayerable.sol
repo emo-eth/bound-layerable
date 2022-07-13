@@ -19,7 +19,12 @@ import {LayerType} from './interface/Enums.sol';
 abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     using BitMapUtility for uint256;
 
+    // mapping from tokenID to a bitmap of bound layers, where each bit is a boolean indicating the layerId at its
+    // position has been bound. Layers are bound to bases by burning them with one of the burnAndBind methods.
+    // LayerID zero is not valid, but is set at mint to reduce gas cost when binding the first layers, when it is unset
     mapping(uint256 => uint256) internal _tokenIdToBoundLayers;
+    // mapping from tokenID to packed array of (nonzero) bytes indicating the ordered layerIds that are active for the token
+    // only layerIds bound to the base tokenId can be set as active, and duplicates are not allowed.
     mapping(uint256 => uint256) internal _tokenIdToPackedActiveLayers;
 
     ILayerable public metadataContract;
@@ -170,7 +175,6 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
-        // check seed
         bytes32 traitSeed = traitGenerationSeed;
 
         bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
@@ -182,8 +186,8 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
-        // todo: try to batch with arrays by LayerType, fetching distribution for type,
 
+        // todo: try to batch with arrays by LayerType, fetching distribution for type,
         unchecked {
             // todo: revisit if via_ir = true
             uint256 length = layerTokenIds.length;

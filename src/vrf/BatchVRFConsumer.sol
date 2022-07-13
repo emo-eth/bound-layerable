@@ -24,7 +24,8 @@ contract BatchVRFConsumer is ERC721A, Ownable {
 
     bytes32 public traitGenerationSeed;
     uint248 revealBatch;
-    // allow unsafe revealing of an uncompleted batch, ie, in the case of a perpetually stalled mint
+
+    // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
     bool forceUnsafeReveal;
 
     error MaxRandomness();
@@ -49,10 +50,17 @@ contract BatchVRFConsumer is ERC721A, Ownable {
             uint248(MAX_BATCH);
     }
 
+    /**
+     * @notice when true, allow revealing the rest of a batch that has not completed minting yet
+     *         This is "unsafe" because it becomes possible to know the layerIds of unminted tokens from the batch
+     */
     function setForceUnsafeReveal(bool force) public onlyOwner {
         forceUnsafeReveal = force;
     }
 
+    /**
+     * @notice request random words from the chainlink vrf for each unrevealed batch
+     */
     function requestRandomWords(bytes32 keyHash)
         external
         onlyOwner
@@ -79,6 +87,12 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         return getRandomnessForTokenIdFromSeed(tokenId, traitGenerationSeed);
     }
 
+    /**
+     * @notice Get the 32-bit randomness for a given tokenId if it's been set, else revert
+     * @param tokenId tokenId of the token to get the randomness for
+     * @param seed bytes32 seed containing all batches randomness
+     * @return randomness 32-bit randomness as bytes32 for the given tokenId
+     */
     function getRandomnessForTokenIdFromSeed(uint256 tokenId, bytes32 seed)
         internal
         view
@@ -153,6 +167,11 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         revealBatch = _revealBatch;
     }
 
+    /**
+     * @notice calculate how many batches need to be revealed, and also get next batch number
+     * @return (uint32 numMissingBatches, uint32 _revealBatch) - number missing batches, and the current _revealBatch
+     *         index (current batch revealed + 1, or 0 if none)
+     */
     function _checkAndReturnNumBatches() internal returns (uint32, uint32) {
         // get next unminted token ID
         uint256 nextTokenId_ = nextTokenId();
@@ -176,6 +195,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
             ? 0
             : uint32(numCompletedBatches) - _revealBatch;
 
+        // don't ever reveal batches from which no tokens have been minted
         if (
             batchInProgressAlreadyRevealed ||
             (numMissingBatches == 0 && !batchIsInProgress)
@@ -183,7 +203,6 @@ contract BatchVRFConsumer is ERC721A, Ownable {
             revert UnsafeReveal();
         }
         // increment if batch is in progress
-
         if (batchIsInProgress && forceUnsafeReveal) {
             ++numMissingBatches;
         }

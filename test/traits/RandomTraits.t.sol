@@ -96,9 +96,9 @@ contract RandomTraitsTest is Test {
         );
     }
 
-    function testGetLayerIdBounds(bytes32 traitGenerationSeed) public {
+    function testGetLayerIdBounds(uint32 traitGenerationSeed) public {
         vm.assume(traitGenerationSeed != 0);
-        test.setTraitGenerationSeed(traitGenerationSeed);
+        test.setTraitGenerationSeed(bytes32(uint256(traitGenerationSeed)));
         distributions.push(0x80);
         test.setLayerTypeDistribution(
             uint8(LayerType.PORTRAIT),
@@ -109,10 +109,12 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerIdBounds(
-        bytes32 traitGenerationSeed,
+        uint32 traitGenerationSeed,
         uint8 numDistributions
     ) public {
         vm.assume(traitGenerationSeed != 0);
+        test.setTraitGenerationSeed(bytes32(uint256(traitGenerationSeed)));
+
         numDistributions = uint8(bound(numDistributions, 1, 32));
         for (uint256 i = 0; i < numDistributions; ++i) {
             // ~ evenly split distributions
