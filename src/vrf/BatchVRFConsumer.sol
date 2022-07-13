@@ -24,7 +24,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     uint248 immutable NUM_TOKENS_PER_RANDOM_BATCH;
     uint256 immutable MAX_TOKEN_ID;
 
-    bytes32 public traitGenerationSeed;
+    bytes32 public packedBatchRandomness;
     uint248 revealBatch;
 
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
@@ -82,7 +82,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         view
         returns (bytes32 randomness)
     {
-        return getRandomnessForTokenIdFromSeed(tokenId, traitGenerationSeed);
+        return getRandomnessForTokenIdFromSeed(tokenId, packedBatchRandomness);
     }
 
     /**
@@ -101,9 +101,9 @@ contract BatchVRFConsumer is ERC721A, Ownable {
 
         /// @solidity memory-safe-assembly
         assembly {
-            // use mask to get last 32 bits of shifted traitGenerationSeed
+            // use mask to get last 32 bits of shifted packedBatchRandomness
             randomness := and(
-                // shift traitGenerationSeed right by batchNum * 32 bits
+                // shift packedBatchRandomness right by batchNum * 32 bits
                 shr(
                     // get batch number of token, multiply by 32
                     mul(div(tokenId, numTokensPerRandomBatch), 32),
@@ -152,7 +152,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         (uint32 numBatches, uint32 _revealBatch) = _checkAndReturnNumBatches();
         uint256 length = randomWords.length;
         uint256 stop = length > numBatches ? numBatches : length;
-        bytes32 currSeed = traitGenerationSeed;
+        bytes32 currSeed = packedBatchRandomness;
         for (uint256 i; i < stop; ) {
             uint256 randomness = randomWords[i];
             currSeed = _writeRandomBatch(currSeed, _revealBatch, randomness);
@@ -161,7 +161,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
                 ++i;
             }
         }
-        traitGenerationSeed = currSeed;
+        packedBatchRandomness = currSeed;
         revealBatch = _revealBatch;
     }
 

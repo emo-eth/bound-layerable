@@ -32,7 +32,7 @@
 //     //     test.mint();
 //     //     test.mint();
 //     //     test.setBoundLayers(14, 2**256 - 1);
-//     //     test.setTraitGenerationSeed(bytes32(bytes1(0x01)));
+//     //     test.setPackedBatchRandomness(bytes32(bytes1(0x01)));
 //     //     uint256[] memory layers = new uint256[](2);
 //     //     layers[0] = 1;
 //     //     layers[1] = 2;

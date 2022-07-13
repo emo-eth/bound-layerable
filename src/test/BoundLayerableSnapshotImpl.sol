@@ -22,7 +22,7 @@ contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
             new ImageLayerable('default', msg.sender)
         )
     {
-        traitGenerationSeed = bytes32(uint256(1));
+        packedBatchRandomness = bytes32(uint256(1));
         for (uint256 i; i < 8; ++i) {
             uint256 dist;
             for (uint256 j; j < 32; ++j) {
@@ -32,8 +32,8 @@ contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
         }
     }
 
-    function setTraitGenerationSeed(bytes32 seed) public {
-        traitGenerationSeed = seed;
+    function setPackedBatchRandomness(bytes32 seed) public {
+        packedBatchRandomness = seed;
     }
 
     function mint() public {

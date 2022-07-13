@@ -16,7 +16,7 @@ contract TestTokenTest is Test, ERC721Recipient {
 
     function setUp() public virtual {
         test = new TestToken('Test', 'test', '');
-        test.setTraitGenerationSeed(bytes32(uint256(1)));
+        test.setPackedBatchRandomness(bytes32(uint256(1)));
     }
 
     function testDoTheMost() public {

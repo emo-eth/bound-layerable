@@ -7,3 +7,4 @@ erc721a/=lib/ERC721a/contracts/
 bound-layerable/=src/
 chainlink/=lib/chainlink/contracts/
 bound-layerable-test/=test/
+utility-contracts/=lib/utility-contracts/src/

@@ -87,8 +87,8 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
             getRandomnessForTokenIdPub(batchId * NUM_TOKENS_PER_RANDOM_BATCH);
     }
 
-    function setTraitGenerationSeed(bytes32 seed) public {
-        traitGenerationSeed = seed;
+    function setPackedBatchRandomness(bytes32 seed) public {
+        packedBatchRandomness = seed;
     }
 
     function getRandomnessForTokenIdFromSeedPub(uint256 tokenId, bytes32 seed)
@@ -409,7 +409,7 @@ contract BatchVRFConsumerTest is Test {
         for (uint256 i = 0; i < 8; i++) {
             randomness |= (i + 1) << (32 * i);
         }
-        test.setTraitGenerationSeed(bytes32(randomness));
+        test.setPackedBatchRandomness(bytes32(randomness));
         bytes32 tokenRandomness = test.getRandomnessForTokenIdPub(tokenId);
         assertEq(
             uint256(tokenRandomness),

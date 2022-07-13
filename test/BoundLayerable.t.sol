@@ -20,7 +20,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.mint();
         test.mint();
         test.setBoundLayers(14, 2**256 - 1);
-        test.setTraitGenerationSeed(bytes32(uint256(2**256 - 1)));
+        test.setPackedBatchRandomness(bytes32(uint256(2**256 - 1)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
@@ -144,7 +144,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     function testBurnAndBindSingle() public {
-        test.setTraitGenerationSeed(bytes32(MAX_INT));
+        test.setPackedBatchRandomness(bytes32(MAX_INT));
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
         test.burnAndBindSingle(7, 8);
@@ -176,7 +176,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     function testBurnAndBindSingleBatchNotRevealed() public {
-        test.setTraitGenerationSeed(bytes32(uint256(0)));
+        test.setPackedBatchRandomness(bytes32(uint256(0)));
         vm.expectRevert(abi.encodeWithSignature('BatchNotRevealed()'));
         test.burnAndBindSingle(6, 7);
     }
@@ -185,7 +185,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;
-        test.setTraitGenerationSeed(bytes32(uint256(0)));
+        test.setPackedBatchRandomness(bytes32(uint256(0)));
         vm.expectRevert(abi.encodeWithSignature('BatchNotRevealed()'));
         test.burnAndBindMultiple(7, layers);
     }

@@ -59,11 +59,11 @@ abstract contract RandomTraits is BatchVRFConsumer {
     }
 
     /**
-     * @notice calculate the 8-bit seed for a layer by hashing the traitGenerationSeed, tokenId, and layerType together
+     * @notice calculate the 8-bit seed for a layer by hashing the packedBatchRandomness, tokenId, and layerType together
      * and truncating to 8 bits
      * @param tokenId tokenId to get seed for
      * @param layerType layer type to get seed for
-     * @param seed traitGenerationSeed
+     * @param seed packedBatchRandomness
      * @return layerSeed - 8-bit seed for the given tokenId and layerType
      */
     function getLayerSeed(

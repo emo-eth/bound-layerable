@@ -35,7 +35,7 @@ contract TokenBulkBurnTest is Test, ERC721Recipient {
     function setUp() public virtual {
         test = new TokenImpl('Test', 'test', '');
         test.mintSets(5555);
-        test.setTraitGenerationSeed(bytes32(uint256(1)));
+        test.setPackedBatchRandomness(bytes32(uint256(1)));
     }
 
     function test_snapshotDisableTradingAndBurn() public {

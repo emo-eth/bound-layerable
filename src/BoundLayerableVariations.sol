@@ -149,7 +149,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         ) {
             revert NotOwner();
         }
-        bytes32 seed = traitGenerationSeed;
+        bytes32 seed = packedBatchRandomness;
 
         if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
@@ -219,7 +219,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
             revert OnlyBase();
         }
 
-        bytes32 seed = traitGenerationSeed;
+        bytes32 seed = packedBatchRandomness;
         uint256 baseLayerId = getLayerId(baseTokenId, seed);
 
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;

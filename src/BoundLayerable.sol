@@ -96,7 +96,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                 PackedByteUtility.unpackByteArray(
                     _tokenIdToPackedActiveLayers[tokenId]
                 ),
-                getRandomnessForTokenIdFromSeed(tokenId, traitGenerationSeed)
+                getRandomnessForTokenIdFromSeed(tokenId, packedBatchRandomness)
             );
     }
 
@@ -132,7 +132,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         }
 
         // check seed
-        bytes32 traitSeed = traitGenerationSeed;
+        bytes32 traitSeed = packedBatchRandomness;
         bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
             baseTokenId,
             traitSeed
@@ -186,7 +186,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
             revert OnlyBase();
         }
-        bytes32 traitSeed = traitGenerationSeed;
+        bytes32 traitSeed = packedBatchRandomness;
 
         bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
             baseTokenId,

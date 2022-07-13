@@ -9,10 +9,10 @@ import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
 import {ClaimableImageLayerable} from './ClaimableImageLayerable.sol';
-import {TwoStepOwnable} from '../util/TwoStepOwnable.sol';
-import {Withdrawable} from '../util/Withdrawable.sol';
-import {MaxMintable} from '../util/MaxMintable.sol';
-import {AllowList} from '../util/AllowList.sol';
+import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
+import {Withdrawable} from 'utility-contracts/withdrawable/Withdrawable.sol';
+import {MaxMintable} from 'utility-contracts/MaxMintable.sol';
+import {AllowList} from 'utility-contracts/AllowList.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {RandomTraitsImpl} from '../traits/RandomTraitsImpl.sol';
 
@@ -94,10 +94,10 @@ contract Token is
         super._mint(msg.sender, 7 * numSets);
     }
 
-    function numberMinted(address minter)
+    function _numberMinted(address minter)
         internal
         view
-        override
+        override(ERC721A, MaxMintable)
         returns (uint256)
     {
         return _numberMinted(minter);

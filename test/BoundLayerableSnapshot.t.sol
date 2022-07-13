@@ -17,7 +17,7 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.mint();
         test.mint();
         test.setBoundLayers(14, 2**256 - 1);
-        test.setTraitGenerationSeed(bytes32(uint256(2**256 - 1)));
+        test.setPackedBatchRandomness(bytes32(uint256(2**256 - 1)));
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 2;

@@ -9,7 +9,7 @@ import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 contract LayerableImpl is ImageLayerable {
     uint256 bindings;
     uint256[] activeLayers;
-    bytes32 traitGenerationSeed;
+    bytes32 packedBatchRandomness;
 
     constructor() ImageLayerable('default', msg.sender) {}
 
@@ -21,8 +21,8 @@ contract LayerableImpl is ImageLayerable {
         activeLayers = _activeLayers;
     }
 
-    function setTraitGenerationSeed(bytes32 _traitGenerationSeed) public {
-        traitGenerationSeed = _traitGenerationSeed;
+    function setPackedBatchRandomness(bytes32 _packedBatchRandomness) public {
+        packedBatchRandomness = _packedBatchRandomness;
     }
 
     function tokenURI(uint256 layerId)
@@ -36,7 +36,7 @@ contract LayerableImpl is ImageLayerable {
                 layerId,
                 bindings,
                 activeLayers,
-                traitGenerationSeed
+                packedBatchRandomness
             );
     }
 }
@@ -54,10 +54,10 @@ contract LayerableTest is Test {
         string memory expected = 'default';
         string memory actual = test.tokenURI(0);
         assertEq(actual, expected);
-        test.setTraitGenerationSeed(bytes32(uint256(1)));
+        test.setPackedBatchRandomness(bytes32(uint256(1)));
 
         // once seeded, if not bound, regular nft metadata
-        // test.setTraitGenerationSeed(bytes32(uint256(1)));
+        // test.setPackedBatchRandomness(bytes32(uint256(1)));
         expected = '{"image":"layer/1.png","attributes":"[{"trait_type":"test","value":"hello"}]"}';
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));

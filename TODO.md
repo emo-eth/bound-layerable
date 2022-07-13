@@ -42,8 +42,8 @@ Cleanup:
 - [ ] more helper contracts?
 - [ ] rename BatchVRFConsumer
 - [ ] remove/update todos in comments
-- [ ] rename traitGenerationSeed
-- [ ] remove maxmintable etc and import utility-contracts
+- [x] rename traitGenerationSeed
+- [x] remove maxmintable etc and import utility-contracts
 
 Tests:
 - [ ] test that switch to uint256s over uint8s doesn't allow anything weird

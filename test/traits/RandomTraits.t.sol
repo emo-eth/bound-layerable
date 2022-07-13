@@ -13,8 +13,8 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
         RandomTraits('', '', address(1234), 5555, numTokensPerSet, 1)
     {}
 
-    function setTraitGenerationSeed(bytes32 seed) public {
-        traitGenerationSeed = seed;
+    function setPackedBatchRandomness(bytes32 seed) public {
+        packedBatchRandomness = seed;
     }
 
     function getLayerTypeDistributions(uint8 layerType)
@@ -96,9 +96,9 @@ contract RandomTraitsTest is Test {
         );
     }
 
-    function testGetLayerIdBounds(uint32 traitGenerationSeed) public {
-        vm.assume(traitGenerationSeed != 0);
-        test.setTraitGenerationSeed(bytes32(uint256(traitGenerationSeed)));
+    function testGetLayerIdBounds(uint32 packedBatchRandomness) public {
+        vm.assume(packedBatchRandomness != 0);
+        test.setPackedBatchRandomness(bytes32(uint256(packedBatchRandomness)));
         distributions.push(0x80);
         test.setLayerTypeDistribution(
             uint8(LayerType.PORTRAIT),
@@ -109,11 +109,11 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerIdBounds(
-        uint32 traitGenerationSeed,
+        uint32 packedBatchRandomness,
         uint8 numDistributions
     ) public {
-        vm.assume(traitGenerationSeed != 0);
-        test.setTraitGenerationSeed(bytes32(uint256(traitGenerationSeed)));
+        vm.assume(packedBatchRandomness != 0);
+        test.setPackedBatchRandomness(bytes32(uint256(packedBatchRandomness)));
 
         numDistributions = uint8(bound(numDistributions, 1, 32));
         for (uint256 i = 0; i < numDistributions; ++i) {
