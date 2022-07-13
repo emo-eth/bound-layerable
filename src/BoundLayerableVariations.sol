@@ -211,7 +211,6 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         uint256 baseTokenId,
         uint256[] calldata layerTokenIds
     ) public virtual override {
-        // todo: modifier for these?
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
         }
@@ -225,16 +224,10 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
-        // todo: try to batch with arrays by LayerType, fetching distribution for type,
-        // and looping over arrays of LayerType, to avoid duplicate lookups of distributions
-        // todo: iterate once over array, delegating to LayerType arrays
-        // then iterate over types + arrays
-        // todo: look at most efficient way to code in assembly
+        // todo: is there a clever way to batch by LayerType?
         unchecked {
-            // todo: revisit if via_ir = true
             uint256 length = layerTokenIds.length;
-            uint256 i;
-            for (; i < length; ) {
+            for (uint256 i; i < length; ) {
                 uint256 tokenId = layerTokenIds[i];
                 if (ownerOf(tokenId) != msg.sender) {
                     revert NotOwner();
