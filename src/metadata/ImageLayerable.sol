@@ -55,7 +55,7 @@ contract ImageLayerable is Layerable {
             );
             properties[1] = json.property(
                 'attributes',
-                getLayerTraits(bindings)
+                getBoundLayerTraits(bindings)
             );
         }
         return json.objectOf(properties);

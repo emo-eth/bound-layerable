@@ -16,7 +16,7 @@ interface ILayerable {
         view
         returns (string memory);
 
-    function getLayerTraits(uint256 bindings)
+    function getBoundLayerTraits(uint256 bindings)
         external
         view
         returns (string memory);
@@ -26,7 +26,7 @@ interface ILayerable {
         view
         returns (string memory);
 
-    function getLayerAndActiveTraits(
+    function getBoundAndActiveLayerTraits(
         uint256 bindings,
         uint256[] calldata activeLayers
     ) external view returns (string memory);

@@ -53,12 +53,12 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         returns (string memory);
 
     /// @notice get stringified JSON array of bound layer traits
-    function getLayerTraits(uint256 bindings)
+    function getBoundLayerTraits(uint256 bindings)
         public
         view
         returns (string memory)
     {
-        return json.arrayOf(_getLayerTraits(bindings));
+        return json.arrayOf(_getBoundLayerTraits(bindings));
     }
 
     /// @notice get stringified JSON array of active layer traits
@@ -71,11 +71,11 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     }
 
     /// @notice get stringified JSON array of combined bound and active layer traits
-    function getLayerAndActiveTraits(
+    function getBoundAndActiveLayerTraits(
         uint256 bindings,
         uint256[] calldata activeLayers
     ) public view returns (string memory) {
-        string[] memory layerTraits = _getLayerTraits(bindings);
+        string[] memory layerTraits = _getBoundLayerTraits(bindings);
         string[] memory activeLayerTraits = _getActiveLayerTraits(activeLayers);
         return json.arrayOf(layerTraits, activeLayerTraits);
     }
@@ -91,7 +91,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     }
 
     /// @dev get array of stringified trait json for bindings
-    function _getLayerTraits(uint256 bindings)
+    function _getBoundLayerTraits(uint256 bindings)
         internal
         view
         returns (string[] memory layerTraits)
