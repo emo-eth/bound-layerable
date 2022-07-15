@@ -5,4 +5,8 @@ interface IImageLayerable {
     function setBaseLayerURI(string calldata baseLayerURI) external;
 
     function setDefaultURI(string calldata baseLayerURI) external;
+
+    function getDefaultImageURI(uint256 layerId)
+        external
+        returns (string memory);
 }

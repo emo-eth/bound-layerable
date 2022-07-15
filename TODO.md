@@ -1,3 +1,5 @@
+
+
 Features:
 
 -   [x] on-chain VRF for reveals
@@ -69,3 +71,8 @@ Integration/e2e tests:
 -   [ ] e2e tests for chainlink vrf
     -   [ ] add "integration" foundry profile
     -   [ ] add suite of integration tests that run against a testnet when "integration" foundry profile is active
+
+v0.2
+- [ ] variations
+- [ ] sstore2
+- [ ] multiple attributes per layer

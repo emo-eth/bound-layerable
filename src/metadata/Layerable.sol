@@ -51,7 +51,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         view
         returns (string memory)
     {
-        return json.arrayOf(_getBoundLayerTraits(bindings));
+        return json.arrayOf(_getBoundLayerTraits(bindings & ~uint256(0)));
     }
 
     /// @notice get stringified JSON array of active layer traits

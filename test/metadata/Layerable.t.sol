@@ -5,6 +5,9 @@ import {Test} from 'forge-std/Test.sol';
 import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {Attribute} from 'bound-layerable/interface/Structs.sol';
 import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
+import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
+import {StringTestUtility} from 'bound-layerable-test/helpers/StringTestUtility.sol';
 
 contract LayerableImpl is ImageLayerable {
     uint256 bindings;
@@ -42,6 +45,8 @@ contract LayerableImpl is ImageLayerable {
 }
 
 contract LayerableTest is Test {
+    using BitMapUtility for uint256;
+    using StringTestUtility for string;
     LayerableImpl test;
 
     function setUp() public {
@@ -51,14 +56,14 @@ contract LayerableTest is Test {
 
     function testGetTokenUri() public {
         // no seed means default metadata
-        string memory expected = 'default';
+        string memory expected = '{"image":"default"}';
         string memory actual = test.tokenURI(0);
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
 
         // once seeded, if not bound, regular nft metadata
         // test.setPackedBatchRandomness(bytes32(uint256(1)));
-        expected = '{"image":"layer/1.png","attributes":"[{"trait_type":"test","value":"hello"}]"}';
+        expected = '{"image":"layer/1","attributes":"[{"trait_type":"test","value":"hello"}]"}';
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
 
@@ -79,8 +84,37 @@ contract LayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2.png"  height="100%" /><image href="layer/1.png"  height="100%" /></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]"}';
+        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2"  height="100%" /><image href="layer/1"  height="100%" /></svg>","attributes":"[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]"}';
         actual = test.tokenURI(1);
         assertEq(actual, expected);
     }
+
+    // function testGetTokenUri(
+    //     uint256 bindings,
+    //     uint32 seed,
+    //     uint256 numActive,
+    //     uint256 layerId
+    // ) public {
+    //     bindings &= ~uint256(0);
+    //     uint256[] memory boundLayers = BitMapUtility.unpackBitMap(bindings); //.unpackBitMap();
+    //     numActive = bound(numActive, 0, boundLayers.length);
+    //     uint256[] memory activeLayers = new uint256[](numActive);
+    //     for (uint256 i = 0; i < numActive; i++) {
+    //         activeLayers[i] = boundLayers[i];
+    //     }
+    //     bytes32 layerSeed = bytes32(uint256(seed));
+    //     test.setPackedBatchRandomness(layerSeed);
+
+    //     string memory actual = test.getTokenURI(
+    //         layerId,
+    //         bindings,
+    //         activeLayers,
+    //         layerSeed
+    //     );
+    //     assertTrue(
+    //         actual.startsWith(
+    //             '{"image":"<svg xmlns="http://www.w3.org/2000/svg">'
+    //         )
+    //     );
+    // }
 }

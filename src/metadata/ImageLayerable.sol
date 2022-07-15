@@ -48,33 +48,26 @@ contract ImageLayerable is Layerable, IImageLayerable {
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) public view virtual override returns (string memory) {
-        string[] memory properties = new string[](2);
-
         // return default uri
         if (layerSeed == 0) {
-            return defaultURI;
+            return _constructJson(getDefaultImageURI(layerId), '');
         }
-
         // if no bindings, format metadata as an individual NFT
-        // check if bindings == 0 or 1; bindable traits will be treated differently
+        // check if bindings == 0 or 1; bindable layers will be treated differently
         // TODO: test this if/else
-        if (bindings == 0 || bindings == 1) {
-            properties[0] = json.property('image', getLayerImageURI(layerId));
-            properties[1] = json.property(
-                'attributes',
-                json.array(getTraitJson(layerId))
-            );
+        else if (bindings == 0 || bindings == 1) {
+            return
+                _constructJson(
+                    getLayerImageURI(layerId),
+                    json.array(getTraitJson(layerId))
+                );
         } else {
-            properties[0] = json.property(
-                'image',
-                getLayeredTokenImageURI(activeLayers)
-            );
-            properties[1] = json.property(
-                'attributes',
-                getBoundLayerTraits(bindings)
-            );
+            return
+                _constructJson(
+                    getLayeredTokenImageURI(activeLayers),
+                    getBoundAndActiveLayerTraits(bindings, activeLayers)
+                );
         }
-        return json.objectOf(properties);
     }
 
     /// @notice get the complete SVG for a set of activeLayers
@@ -110,7 +103,32 @@ contract ImageLayerable is Layerable, IImageLayerable {
         override
         returns (string memory)
     {
-        // TODO: remove png?
-        return string.concat(baseLayerURI, layerId.toString(), '.png');
+        return string.concat(baseLayerURI, layerId.toString());
+    }
+
+    /// @notice get the default URI for a layerId
+    function getDefaultImageURI(uint256)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return defaultURI;
+    }
+
+    /// @dev helper to wrap imageURI and optional attributes into a JSON object string
+    function _constructJson(string memory imageURI, string memory attributes)
+        internal
+        pure
+        returns (string memory)
+    {
+        if (bytes(attributes).length > 0) {
+            string[] memory properties = new string[](2);
+            properties[0] = json.property('image', imageURI);
+            properties[1] = json.property('attributes', attributes);
+            return json.objectOf(properties);
+        }
+        return json.object(json.property('image', imageURI));
     }
 }

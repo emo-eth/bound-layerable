@@ -8,6 +8,12 @@ optimizer_runs = 1_000_000
 optimizer = true
 # via_ir = true
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+remappings = [
+    "bound-layerable/=src/",
+    "bound-layerable-test/=test/",
+    "chainlink/=lib/chainlink/contracts/",
+    "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/"
+]
 
 [ir]
 via_ir = true
