@@ -106,7 +106,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
                 // shift packedBatchRandomness right by batchNum * 32 bits
                 shr(
                     // get batch number of token, multiply by 32
-                    mul(div(tokenId, numTokensPerRandomBatch), 32),
+                    shl(5, div(tokenId, numTokensPerRandomBatch)),
                     seed
                 ),
                 _32_MASK

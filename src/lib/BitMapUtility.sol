@@ -159,10 +159,7 @@ library BitMapUtility {
             // get pointer to first index of array
             let uintsIndexPtr := add(uints, 0x20)
             // get pointer to first word after final index of array
-            let finalUintsIndexPtr := add(
-                uintsIndexPtr,
-                mul(0x20, mload(uints))
-            )
+            let finalUintsIndexPtr := add(uintsIndexPtr, shl(5, mload(uints)))
             // loop until we reach the end of the array
             for {
 

@@ -177,7 +177,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
                         }
                         // if distribution is 0, and it's not the first, we've reached the end of the list
                         // return i + 1 + 32 * layerType
-                        layerId := add(add(1, i), mul(32, layerType))
+                        layerId := add(add(1, i), shl(5, layerType))
                         break
                     }
                     // first element should never be 0; distributions are invalid
@@ -191,7 +191,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
                     }
 
                     // layerIds are 1-indexed, so add 1 to i
-                    layerId := add(add(1, i), mul(32, layerType))
+                    layerId := add(add(1, i), shl(5, layerType))
                     break
                 }
             }
@@ -203,7 +203,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
                     revertWithBadDistributions()
                 }
                 // return previous layerId
-                layerId := add(i, mul(32, layerType))
+                layerId := add(i, shl(5, layerType))
             }
         }
     }

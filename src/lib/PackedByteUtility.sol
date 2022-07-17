@@ -84,7 +84,7 @@ library PackedByteUtility {
             if gt(arrayOfBytesLength, 32) {
                 arrayOfBytesLength := 32
             }
-            let finalI := mul(8, arrayOfBytesLength)
+            let finalI := shl(3, arrayOfBytesLength)
             let i
             for {
 
@@ -114,7 +114,7 @@ library PackedByteUtility {
         assembly {
             unpacked := mload(0x40)
             let unpackedIndexPtr := add(0x20, unpacked)
-            let maxUnpackedIndexPtr := add(unpackedIndexPtr, mul(0x20, 32))
+            let maxUnpackedIndexPtr := add(unpackedIndexPtr, shl(5, 32))
             let numBytes
             for {
 
@@ -131,7 +131,7 @@ library PackedByteUtility {
             // store the number of layers at the pointer to unpacked array
             mstore(unpacked, numBytes)
             // update free mem pointer to be old mem ptr + 0x20 (32-byte array length) + 0x20 * numLayers (each 32-byte element)
-            mstore(0x40, add(unpacked, add(0x20, mul(numBytes, 0x20))))
+            mstore(0x40, add(unpacked, add(0x20, shl(5, numBytes))))
         }
     }
 
@@ -150,7 +150,7 @@ library PackedByteUtility {
         /// @solidity memory-safe-assembly
         assembly {
             // calculate left-indexed bit offset of byte within packedBytes
-            let byteOffset := sub(248, mul(index, 8))
+            let byteOffset := sub(248, shl(3, index))
             // create a mask to clear the bits we're about to overwrite
             let mask := xor(MAX_INT, shl(byteOffset, 0xff))
             // copy packedBytes to newPackedBytes, clearing the relevant bits
