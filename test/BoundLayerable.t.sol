@@ -139,8 +139,55 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         }
     }
 
-    function testGetActiveLayersNoLayers() public view {
-        test.getActiveLayers(0);
+    function testGetActiveLayersNoLayers() public {
+        uint256[] memory layers = test.getActiveLayers(0);
+        assertEq(layers.length, 0);
+    }
+
+    function testGetActiveLayers(uint8 numActiveLayers) public {
+        numActiveLayers = uint8(bound(numActiveLayers, 0, 32));
+        uint256 bindings;
+        uint256[] memory layers = new uint256[](numActiveLayers);
+        for (uint256 i; i < numActiveLayers; ++i) {
+            layers[i] = i + 1;
+            bindings |= 1 << (i + 1);
+        }
+
+        uint256 packed = PackedByteUtility.packArrayOfBytes(layers);
+        test.setBoundLayers(0, bindings);
+
+        test.setActiveLayers(0, packed);
+        uint256[] memory loaded = test.getActiveLayers(0);
+        assertEq(loaded.length, numActiveLayers);
+        for (uint256 i; i < loaded.length; ++i) {
+            assertEq(loaded[i], layers[i]);
+        }
+    }
+
+    function testgetBoundLayers(uint8 numBoundLayers) public {
+        numBoundLayers = uint8(bound(numBoundLayers, 1, 255));
+        uint256 bindings;
+        for (uint256 i; i < numBoundLayers - 1; ++i) {
+            bindings |= 1 << (i + 1);
+        }
+
+        test.setBoundLayers(0, bindings);
+        uint256[] memory loaded = test.getBoundLayers(0);
+        assertEq(loaded.length, numBoundLayers - 1);
+        for (uint256 i; i < loaded.length; ++i) {
+            assertEq(loaded[i], i + 1);
+        }
+
+        for (uint256 i; i < numBoundLayers; ++i) {
+            bindings |= 1 << (i + 1);
+        }
+
+        test.setBoundLayers(7, bindings);
+        loaded = test.getBoundLayers(7);
+        assertEq(loaded.length, numBoundLayers);
+        for (uint256 i; i < loaded.length; ++i) {
+            assertEq(loaded[i], i + 1);
+        }
     }
 
     function testBurnAndBindSingle() public {
