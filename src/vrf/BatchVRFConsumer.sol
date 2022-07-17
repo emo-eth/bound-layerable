@@ -12,7 +12,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
     // VRF config
     uint8 constant MAX_BATCH = 8;
     uint16 constant NUM_CONFIRMATIONS = 7;
-    uint32 constant CALLBACK_GAS_LIMIT = 100_000;
+    uint32 constant CALLBACK_GAS_LIMIT = 300_000;
     // todo: mutable?
     uint64 immutable SUBSCRIPTION_ID;
     VRFCoordinatorV2Interface immutable COORDINATOR;
@@ -52,7 +52,7 @@ contract BatchVRFConsumer is ERC721A, Ownable {
      * @notice when true, allow revealing the rest of a batch that has not completed minting yet
      *         This is "unsafe" because it becomes possible to know the layerIds of unminted tokens from the batch
      */
-    function setForceUnsafeReveal(bool force) public onlyOwner {
+    function setForceUnsafeReveal(bool force) external onlyOwner {
         forceUnsafeReveal = force;
     }
 

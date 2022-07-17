@@ -52,10 +52,23 @@ abstract contract RandomTraits is BatchVRFConsumer {
         virtual
         onlyOwner
     {
-        if (layerType > 7) {
-            revert InvalidLayerType();
+        _setLayerTypeDistribution(layerType, distribution);
+    }
+
+    /**
+     * @notice Set layer type distributions for multiple layer types
+     * @param layerTypes layer types to set distribution for
+     * @param distributions an array of uint256s comprised of sorted, packed bytes
+     *  that will be compared against a random byte to determine the layerId
+     *  for a given tokenId
+     */
+    function setLayerTypeDistributions(
+        uint8[] memory layerTypes,
+        uint256[] memory distributions
+    ) public virtual onlyOwner {
+        for (uint8 i = 0; i < layerTypes.length; i++) {
+            _setLayerTypeDistribution(layerTypes[i], distributions[i]);
         }
-        layerTypeToPackedDistributions[layerType] = distribution;
     }
 
     /**
@@ -206,5 +219,14 @@ abstract contract RandomTraits is BatchVRFConsumer {
                 layerId := add(i, shl(5, layerType))
             }
         }
+    }
+
+    function _setLayerTypeDistribution(uint8 layerType, uint256 distribution)
+        internal
+    {
+        if (layerType > 7) {
+            revert InvalidLayerType();
+        }
+        layerTypeToPackedDistributions[layerType] = distribution;
     }
 }

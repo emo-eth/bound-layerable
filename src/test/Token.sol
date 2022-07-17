@@ -8,7 +8,7 @@ import {BoundLayerable} from '../BoundLayerable.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
-import {ClaimableImageLayerable} from './ClaimableImageLayerable.sol';
+import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {Withdrawable} from 'utility-contracts/withdrawable/Withdrawable.sol';
 import {MaxMintable} from 'utility-contracts/MaxMintable.sol';
@@ -24,11 +24,8 @@ contract Token is
     Withdrawable,
     TwoStepOwnable
 {
-    uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
-    ClaimableImageLayerable alsoMetadata;
 
-    // TODO: disable transferring to someone who does not own a base layer?
     constructor(
         string memory name,
         string memory symbol,
@@ -46,12 +43,12 @@ contract Token is
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            new ClaimableImageLayerable(msg.sender)
+            new ImageLayerable('default', msg.sender)
         )
         AllowList(merkleRoot)
         MaxMintable(maxSetsPerWallet * numTokensPerSet)
     {
-        alsoMetadata = ClaimableImageLayerable(address(metadataContract));
+        // alsoMetadata = ClaimableImageLayerable(address(metadataContract));
     }
 
     modifier includesCorrectPayment(uint256 numSets) {
@@ -80,9 +77,8 @@ contract Token is
     }
 
     function mintSet() public payable includesCorrectPayment(1) {
-        // TODO: test this does not mess with active layers etc
         _setPlaceholderBinding(_nextTokenId());
-        super._mint(msg.sender, 7);
+        super._mint(msg.sender, NUM_TOKENS_PER_SET);
     }
 
     // todo: restrict numminted
@@ -91,7 +87,7 @@ contract Token is
         payable
         includesCorrectPayment(numSets)
     {
-        super._mint(msg.sender, 7 * numSets);
+        super._mint(msg.sender, NUM_TOKENS_PER_SET * numSets);
     }
 
     function _numberMinted(address minter)

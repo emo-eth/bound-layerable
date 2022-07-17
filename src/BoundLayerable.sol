@@ -117,66 +117,79 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
      * @notice Bind a layer token to a base token and burn the layer token. User must own both tokens.
      * @param baseTokenId TokenID of a base token
      * @param layerTokenId TokenID of a layer token
+     * @param packedActiveLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
+     * emits LayersBoundToToken
+     * emits ActiveLayersChanged
+     */
+    function burnAndBindSingleAndSetActiveLayers(
+        uint256 baseTokenId,
+        uint256 layerTokenId,
+        uint256 packedActiveLayerIds
+    ) public {
+        _burnAndBindSingle(baseTokenId, layerTokenId);
+        _setActiveLayers(baseTokenId, packedActiveLayerIds);
+    }
+
+    /**
+     * @notice Bind a layer token to a base token and burn the layer token. User must own both tokens.
+     * @param baseTokenId TokenID of a base token
+     * @param layerTokenIds TokenIDs of layer tokens
+     * @param packedActiveLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
+     * emits LayersBoundToToken
+     * emits ActiveLayersChanged
+     */
+    function burnAndBindMultipleAndSetActiveLayers(
+        uint256 baseTokenId,
+        uint256[] calldata layerTokenIds,
+        uint256 packedActiveLayerIds
+    ) public {
+        _burnAndBindMultiple(baseTokenId, layerTokenIds);
+        _setActiveLayers(baseTokenId, packedActiveLayerIds);
+    }
+
+    /**
+     * @notice Bind a layer token to a base token and burn the layer token. User must own both tokens.
+     * @param baseTokenId TokenID of a base token
+     * @param layerTokenId TokenID of a layer token
      * emits LayersBoundToToken
      */
     function burnAndBindSingle(uint256 baseTokenId, uint256 layerTokenId)
         public
         virtual
     {
-        // check ownership
-        if (
-            ownerOf(baseTokenId) != msg.sender ||
-            ownerOf(layerTokenId) != msg.sender
-        ) {
-            revert NotOwner();
-        }
-
-        // check seed
-        bytes32 traitSeed = packedBatchRandomness;
-        bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
-            baseTokenId,
-            traitSeed
-        );
-
-        // check base
-        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
-            revert OnlyBase();
-        }
-        uint256 baseLayerId = getLayerId(baseTokenId, baseSeed);
-
-        bytes32 layerSeed = getRandomnessForTokenIdFromSeed(
-            layerTokenId,
-            traitSeed
-        );
-        // check layer
-        if (layerTokenId % NUM_TOKENS_PER_SET == 0) {
-            revert CannotBindBase();
-        }
-        uint256 layerId = getLayerId(layerTokenId, layerSeed);
-
-        uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
-        // always bind baseLayer, since it won't be set automatically
-        bindings |= baseLayerId.toBitMap();
-        // TODO: necessary?
-        uint256 layerIdBitMap = layerId.toBitMap();
-        if (bindings & layerIdBitMap > 0) {
-            revert LayerAlreadyBound();
-        }
-
-        _burn(layerTokenId);
-        _setBoundLayersAndEmitEvent(baseTokenId, bindings | layerIdBitMap);
+        _burnAndBindSingle(baseTokenId, layerTokenId);
     }
 
     /**
      * @notice Bind layer tokens to a base token and burn the layer tokens. User must own all tokens.
      * @param baseTokenId TokenID of a base token
-     * @param layerTokenIds TokenID of a layer token
+     * @param layerTokenIds TokenIDs of layer tokens
      * emits LayersBoundToToken
      */
     function burnAndBindMultiple(
         uint256 baseTokenId,
         uint256[] calldata layerTokenIds
     ) public virtual {
+        _burnAndBindMultiple(baseTokenId, layerTokenIds);
+    }
+
+    /**
+     * @notice Set the active layer IDs for a base token. Layers must be bound to token
+     * @param baseTokenId TokenID of a base token
+     * @param packedLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
+     * emits ActiveLayersChanged
+     */
+    function setActiveLayers(uint256 baseTokenId, uint256 packedLayerIds)
+        external
+        virtual
+    {
+        _setActiveLayers(baseTokenId, packedLayerIds);
+    }
+
+    function _burnAndBindMultiple(
+        uint256 baseTokenId,
+        uint256[] calldata layerTokenIds
+    ) internal virtual {
         // check owner
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();
@@ -235,14 +248,56 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         _setBoundLayersAndEmitEvent(baseTokenId, bindings);
     }
 
-    /**
-     * @notice Set the active layer IDs for a base token. Layers must be bound to token
-     * @param baseTokenId TokenID of a base token
-     * @param packedLayerIds Ordered layer IDs packed as bytes into uint256s to set as active on the base token
-     * emits ActiveLayersChanged
-     */
-    function setActiveLayers(uint256 baseTokenId, uint256 packedLayerIds)
-        external
+    function _burnAndBindSingle(uint256 baseTokenId, uint256 layerTokenId)
+        internal
+        virtual
+    {
+        // check ownership
+        if (
+            ownerOf(baseTokenId) != msg.sender ||
+            ownerOf(layerTokenId) != msg.sender
+        ) {
+            revert NotOwner();
+        }
+
+        // check seed
+        bytes32 traitSeed = packedBatchRandomness;
+        bytes32 baseSeed = getRandomnessForTokenIdFromSeed(
+            baseTokenId,
+            traitSeed
+        );
+
+        // check base
+        if (baseTokenId % NUM_TOKENS_PER_SET != 0) {
+            revert OnlyBase();
+        }
+        uint256 baseLayerId = getLayerId(baseTokenId, baseSeed);
+
+        bytes32 layerSeed = getRandomnessForTokenIdFromSeed(
+            layerTokenId,
+            traitSeed
+        );
+        // check layer
+        if (layerTokenId % NUM_TOKENS_PER_SET == 0) {
+            revert CannotBindBase();
+        }
+        uint256 layerId = getLayerId(layerTokenId, layerSeed);
+
+        uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
+        // always bind baseLayer, since it won't be set automatically
+        bindings |= baseLayerId.toBitMap();
+        // TODO: necessary?
+        uint256 layerIdBitMap = layerId.toBitMap();
+        if (bindings & layerIdBitMap > 0) {
+            revert LayerAlreadyBound();
+        }
+
+        _burn(layerTokenId);
+        _setBoundLayersAndEmitEvent(baseTokenId, bindings | layerIdBitMap);
+    }
+
+    function _setActiveLayers(uint256 baseTokenId, uint256 packedLayerIds)
+        internal
         virtual
     {
         // check owner

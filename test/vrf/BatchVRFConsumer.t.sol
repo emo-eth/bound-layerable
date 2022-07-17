@@ -138,7 +138,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 1 // 1 batch
             ),
             abi.encode(10)
@@ -174,7 +174,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 completedBatches - revealedBatches
             ),
             abi.encode(10)
@@ -193,7 +193,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 8 // 8 batches
             ),
             abi.encode(10)
@@ -213,7 +213,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 6 // 6 batches
             ),
             abi.encode(10)
@@ -232,7 +232,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 3 // 3 batches
             ),
             abi.encode(10)
@@ -252,7 +252,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 2 // 2 batches
             ),
             abi.encode(10)
@@ -275,7 +275,7 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                100_000,
+                300_000,
                 1 // 1 batch
             ),
             abi.encode(10)
@@ -401,6 +401,47 @@ contract BatchVRFConsumerTest is Test {
                 );
             }
         }
+    }
+
+    /// @dev test that rawFulfillRandomWords succeeds even when length might not match what is expected
+    function testFulfillRandomWords(
+        uint8 length,
+        uint8 revealBatch,
+        uint8 completedBatches
+    ) public {
+        length = uint8(bound(length, 0, 8));
+        revealBatch = uint8(bound(revealBatch, 0, 8));
+        completedBatches = uint8(bound(completedBatches, 0, 8));
+        test.setRevealBatch(revealBatch);
+        uint256 numSets = (uint256(8000) * completedBatches) / 8 + 1;
+        test.mintSets(numSets);
+        uint256[] memory randomWords = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            unchecked {
+                randomWords[i] = (i + 1) << (32 * (i));
+            }
+        }
+
+        if (revealBatch >= 8) {
+            vm.expectRevert(MaxRandomness.selector);
+        } else if (revealBatch > completedBatches) {
+            vm.expectRevert(UnsafeReveal.selector);
+        }
+        test.rawFulfillRandomWords(1, randomWords);
+    }
+
+    /// @dev test fulfilling all randomness at once
+    function testFulfillRandomWords() public {
+        uint256 length = 8;
+        test.setRevealBatch(0);
+        test.mintSets(8000);
+        uint256[] memory randomWords = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            unchecked {
+                randomWords[i] = (i + 1) << (32 * i);
+            }
+        }
+        test.rawFulfillRandomWords(1, randomWords);
     }
 
     function testGetRandomnessForTokenId(uint256 tokenId) public {

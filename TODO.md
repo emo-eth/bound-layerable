@@ -52,6 +52,8 @@ Cleanup:
 -   [ ] remove/update todos in comments
 -   [x] rename traitGenerationSeed
 -   [x] remove maxmintable etc and import utility-contracts
+-   [ ] figure out why forge doesn't replace revert codes w error name
+-   [ ] make subscription mutable?
 
 Tests:
 
@@ -65,6 +67,7 @@ Tests:
 -   [ ] Layerable
 -   [ ] ImageLayerable
 -   [ ] BoundLayerable -> Layerable
+-   [ ] BoundLayerable new combined BurnAndSetActive methods
 
 Integration/e2e tests:
 
