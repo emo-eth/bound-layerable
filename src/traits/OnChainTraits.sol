@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 import {json} from '../lib/JSON.sol';
 import {ArrayLengthMismatch} from '../interface/Errors.sol';
 import {DisplayType} from '../interface/Enums.sol';

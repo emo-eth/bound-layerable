@@ -3,14 +3,14 @@ pragma solidity ^0.8.4;
 
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg, utils} from '../SVG.sol';
-import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Layerable} from './Layerable.sol';
 import {IImageLayerable} from './IImageLayerable.sol';
-import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 
 contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?
@@ -126,7 +126,8 @@ contract ImageLayerable is Layerable, IImageLayerable {
         if (bytes(attributes).length > 0) {
             string[] memory properties = new string[](2);
             properties[0] = json.property('image', imageURI);
-            properties[1] = json.property('attributes', attributes);
+            // attributes should be a JSON array, no need to wrap it in quotes
+            properties[1] = json.rawProperty('attributes', attributes);
             return json.objectOf(properties);
         }
         return json.object(json.property('image', imageURI));

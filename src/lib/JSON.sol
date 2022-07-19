@@ -39,6 +39,20 @@ library json {
     }
 
     /**
+     * @notice enclose name with quotes, but not rawValue, and place a colon "between":them
+     * @param name name of property
+     * @param rawValue raw value of property, which will not be enclosed in quotes
+     * @return string of "name":value
+     */
+    function rawProperty(string memory name, string memory rawValue)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string.concat('"', name, '":', rawValue);
+    }
+
+    /**
      * @notice comma-join an array of properties and {"enclose":"them","in":"braces"}
      * @param properties array of properties to join
      * @return string of {"name":"value","name":"value",...}

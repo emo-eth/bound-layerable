@@ -6,7 +6,7 @@ import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordi
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
-import {BatchNotRevealed, MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from 'bound-layerable/interface/Errors.sol';
+import {BatchNotRevealed, MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from '../interface/Errors.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {
     // VRF config

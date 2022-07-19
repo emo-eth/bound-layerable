@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts//utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
 import {LayerType} from '../interface/Enums.sol';
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
 import {BadDistributions, InvalidLayerType} from '../interface/Errors.sol';

@@ -31,6 +31,15 @@ contract JsonTest is Test {
         assertTrue(propertyified.endsWith(value.quote()));
     }
 
+    function testRawProperty(string memory name, string memory value) public {
+        string memory propertyified = json.rawProperty(name, value);
+        assertTrue(propertyified.startsWith('"'));
+        assertFalse(propertyified.endsWith('"'));
+        assertTrue(propertyified.contains(bytes1(':')));
+        assertTrue(propertyified.startsWith(name.quote()));
+        assertTrue(propertyified.endsWith(value));
+    }
+
     function testObjectOf(
         string memory name,
         string memory value,
