@@ -4,11 +4,6 @@ pragma solidity ^0.8.4;
 import {BoundLayerable} from '../BoundLayerable.sol';
 import {RandomTraitsImpl} from '../traits/RandomTraitsImpl.sol';
 import {IncorrectPayment} from '../interface/Errors.sol';
-import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
-import {Withdrawable} from 'utility-contracts/withdrawable/Withdrawable.sol';
-import {MaxMintable} from 'utility-contracts/MaxMintable.sol';
-import {AllowList} from 'utility-contracts/AllowList.sol';
-import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {ImageLayerable} from '../metadata/ImageLayerable.sol';
 
