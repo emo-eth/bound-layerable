@@ -1,11 +1,11 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import {VRFConsumerBaseV2} from 'chainlink/src/v0.8/VRFConsumerBaseV2.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
-import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
-import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
+import {ERC721A} from '../token/ERC721A.sol';
+import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
 import {BatchNotRevealed, MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from 'bound-layerable/interface/Errors.sol';
 
 contract BatchVRFConsumer is ERC721A, Ownable {

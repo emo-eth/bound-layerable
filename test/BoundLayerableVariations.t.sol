@@ -2,7 +2,7 @@
 // pragma solidity ^0.8.4;
 
 // import {Test} from 'forge-std/Test.sol';
-// import {BoundLayerableVariationsTestImpl} from 'bound-layerable/test/BoundLayerableVariationsTestImpl.sol';
+// import {BoundLayerableVariationsTestImpl} from 'bound-layerable/implementations/BoundLayerableVariationsTestImpl.sol';
 // import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 // import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 // import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';

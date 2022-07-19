@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
@@ -12,15 +12,7 @@ import {MAX_INT} from 'bound-layerable/interface/Constants.sol';
 
 contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
     constructor()
-        BoundLayerable(
-            '',
-            '',
-            address(1234),
-            5555,
-            7,
-            1,
-            new ImageLayerable('default', msg.sender)
-        )
+        BoundLayerable('', '', address(1234), 5555, 7, 1, address(0))
     {
         packedBatchRandomness = bytes32(uint256(1));
         for (uint256 i; i < 8; ++i) {
@@ -30,6 +22,7 @@ contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
             }
             layerTypeToPackedDistributions[getLayerType(i)] = dist;
         }
+        metadataContract = new ImageLayerable('default', msg.sender);
     }
 
     function setPackedBatchRandomness(bytes32 seed) public {

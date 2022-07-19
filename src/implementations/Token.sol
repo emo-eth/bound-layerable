@@ -5,10 +5,9 @@ import {ERC721A} from '../token/ERC721A.sol';
 
 import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
 import {BoundLayerable} from '../BoundLayerable.sol';
-import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
-import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
+import {ImageLayerable} from '../metadata/ImageLayerable.sol';
 import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {Withdrawable} from 'utility-contracts/withdrawable/Withdrawable.sol';
 import {MaxMintable} from 'utility-contracts/MaxMintable.sol';
@@ -16,7 +15,7 @@ import {AllowList} from 'utility-contracts/AllowList.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {RandomTraitsImpl} from '../traits/RandomTraitsImpl.sol';
 
-contract Token is
+contract TokenImpl is
     BoundLayerable,
     RandomTraitsImpl,
     MaxMintable,
@@ -34,7 +33,8 @@ contract Token is
         uint8 numTokensPerSet,
         uint64 subscriptionId,
         uint256 maxSetsPerWallet,
-        bytes32 merkleRoot
+        bytes32 merkleRoot,
+        address layerableAddress
     )
         BoundLayerable(
             name,
@@ -43,7 +43,7 @@ contract Token is
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            new ImageLayerable('default', msg.sender)
+            layerableAddress
         )
         AllowList(merkleRoot)
         MaxMintable(maxSetsPerWallet * numTokensPerSet)

@@ -47,7 +47,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
-        ILayerable _metadataContract
+        address _metadataContractAddress
     )
         RandomTraits(
             name,
@@ -58,7 +58,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             subscriptionId
         )
     {
-        metadataContract = _metadataContract;
+        metadataContract = ILayerable(_metadataContractAddress);
     }
 
     /////////////

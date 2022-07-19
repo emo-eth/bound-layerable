@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {BoundLayerableSnapshotImpl} from 'bound-layerable/test/BoundLayerableSnapshotImpl.sol';
+import {BoundLayerableSnapshotImpl} from 'bound-layerable/implementations/BoundLayerableSnapshotImpl.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';

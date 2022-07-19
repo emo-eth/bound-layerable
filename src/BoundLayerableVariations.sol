@@ -31,7 +31,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
         uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
-        ILayerable _metadataContract
+        address metadataContractAddress
     )
         BoundLayerable(
             name,
@@ -40,7 +40,7 @@ abstract contract BoundLayerableVariations is BoundLayerable {
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            _metadataContract
+            metadataContractAddress
         )
     {
         // pre-calculate layerVa

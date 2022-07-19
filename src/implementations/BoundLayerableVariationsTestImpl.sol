@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
@@ -16,15 +16,7 @@ contract BoundLayerableVariationsTestImpl is
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
     constructor()
-        BoundLayerableVariations(
-            '',
-            '',
-            address(1234),
-            5555,
-            7,
-            1,
-            new ImageLayerable('default', msg.sender)
-        )
+        BoundLayerableVariations('', '', address(1234), 5555, 7, 1, address(0))
     {
         layerVariations.push(LayerVariation(4, 4));
         layerVariations.push(LayerVariation(200, 8));
@@ -36,6 +28,7 @@ contract BoundLayerableVariationsTestImpl is
             }
             layerTypeToPackedDistributions[getLayerType(i)] = dist;
         }
+        metadataContract = new ImageLayerable('default', msg.sender);
     }
 
     function setPackedBatchRandomness(bytes32 seed) public {

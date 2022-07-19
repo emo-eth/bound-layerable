@@ -1,4 +1,4 @@
-[default]
+[profile.default]
 src = 'src'
 out = 'out'
 libs = ['lib']
@@ -6,14 +6,20 @@ fuzz_runs = 1000
 solc_version = '0.8.15'
 optimizer_runs = 1_000_000
 optimizer = true
-# via_ir = true
-# See more config options https://github.com/foundry-rs/foundry/tree/master/config
 remappings = [
-    "bound-layerable/=src/",
-    "bound-layerable-test/=test/",
-    "chainlink/=lib/chainlink/contracts/",
-    "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/"
+    'ERC721A/=lib/ERC721A/contracts/',
+    'bound-layerable-test/=test/',
+    'bound-layerable/=src/',
+    'chainlink/=lib/chainlink/contracts/',
+    'ds-test/=lib/forge-std/lib/ds-test/src/',
+    'erc721a/=lib/ERC721a/contracts/',
+    'forge-std/=lib/forge-std/src/',
+    'hot-chain-svg/=lib/hot-chain-svg/contracts/',
+    'openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/',
+    'solmate/=lib/solmate/src/',
+    'utility-contracts/=lib/utility-contracts/src/'
 ]
 
-[ir]
+[profile.ir]
 via_ir = true
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
-import {TestToken} from 'bound-layerable/test/TestToken.sol';
+import {TestToken} from 'bound-layerable/implementations/TestToken.sol';
 
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
