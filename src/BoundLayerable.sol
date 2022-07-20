@@ -71,17 +71,24 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         view
         returns (uint256[] memory)
     {
-        // TODO: test doesn't return 0
-        return
-            BitMapUtility.unpackBitMap(
-                _tokenIdToBoundLayers[tokenId] & NOT_0TH_BITMASK
-            );
+        return BitMapUtility.unpackBitMap(getBoundLayerBitMap(tokenId));
+    }
+
+    /// @notice get the layerIds currently bound to a tokenId as a bit map
+    function getBoundLayerBitMap(uint256 tokenId)
+        public
+        view
+        virtual
+        returns (uint256)
+    {
+        return _tokenIdToBoundLayers[tokenId] & NOT_0TH_BITMASK;
     }
 
     /// @notice get the layerIds currently active on a tokenId
     function getActiveLayers(uint256 tokenId)
-        external
+        public
         view
+        virtual
         returns (uint256[] memory)
     {
         uint256 activePackedLayers = _tokenIdToPackedActiveLayers[tokenId];
@@ -92,10 +99,8 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         return
             metadataContract.getTokenURI(
                 getLayerId(tokenId),
-                _tokenIdToBoundLayers[tokenId],
-                PackedByteUtility.unpackByteArray(
-                    _tokenIdToPackedActiveLayers[tokenId]
-                ),
+                getBoundLayerBitMap(tokenId),
+                getActiveLayers(tokenId),
                 getRandomnessForTokenIdFromSeed(tokenId, packedBatchRandomness)
             );
     }
@@ -207,7 +212,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         );
         uint256 baseLayerId = getLayerId(baseTokenId, baseSeed);
 
-        uint256 bindings = _tokenIdToBoundLayers[baseTokenId] & NOT_0TH_BITMASK;
+        uint256 bindings = getBoundLayerBitMap(baseTokenId);
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
 
@@ -283,7 +288,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         }
         uint256 layerId = getLayerId(layerTokenId, layerSeed);
 
-        uint256 bindings = _tokenIdToBoundLayers[baseTokenId];
+        uint256 bindings = getBoundLayerBitMap(baseTokenId);
         // always bind baseLayer, since it won't be set automatically
         bindings |= baseLayerId.toBitMap();
         // TODO: necessary?
@@ -317,7 +322,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         ) = _unpackLayersToBitMapAndCheckForDuplicates(packedLayerIds);
 
         // check new active layers are all bound to baseTokenId
-        uint256 boundLayers = _tokenIdToBoundLayers[baseTokenId];
+        uint256 boundLayers = getBoundLayerBitMap(baseTokenId);
         _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // clear all bytes after last non-zero bit on packedLayerIds,
