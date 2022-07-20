@@ -13,7 +13,26 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
     uint8 constant EXCLUSIVE_LAYER_ID = 255;
     uint8 constant TIMESTAMP_BITS_TO_TRUNCATE = 16;
 
-    constructor(uint256 _bindCutoffTimestamp) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        address vrfCoordinatorAddress,
+        uint240 maxNumSets,
+        uint8 numTokensPerSet,
+        uint64 subscriptionId,
+        address _metadataContractAddress,
+        uint256 _bindCutoffTimestamp
+    )
+        BoundLayerable(
+            name,
+            symbol,
+            vrfCoordinatorAddress,
+            maxNumSets,
+            numTokensPerSet,
+            subscriptionId,
+            _metadataContractAddress
+        )
+    {
         TRUNCATED_FIRST_COMPOSED_CUTOFF = uint256(
             uint24(_bindCutoffTimestamp >> TIMESTAMP_BITS_TO_TRUNCATE)
         );

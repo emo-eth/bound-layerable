@@ -80,14 +80,6 @@ contract BoundLayerableVariationsTestImpl is
         return _tokenIdToPackedActiveLayers[tokenId];
     }
 
-    function getBoundLayerBitMap(uint256 tokenId)
-        public
-        view
-        returns (uint256)
-    {
-        return _tokenIdToBoundLayers[tokenId];
-    }
-
     function mint() public {
         _setPlaceholderBinding(_nextTokenId());
         super._mint(msg.sender, 7);

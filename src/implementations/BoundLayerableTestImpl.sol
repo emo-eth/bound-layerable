@@ -42,14 +42,6 @@ contract BoundLayerableTestImpl is BoundLayerableSnapshotImpl {
         return _tokenIdToPackedActiveLayers[tokenId];
     }
 
-    function getBoundLayerBitMap(uint256 tokenId)
-        public
-        view
-        returns (uint256)
-    {
-        return _tokenIdToBoundLayers[tokenId];
-    }
-
     function getLayerId(uint256 tokenId)
         public
         view
