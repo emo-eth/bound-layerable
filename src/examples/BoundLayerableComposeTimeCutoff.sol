@@ -24,7 +24,6 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
         super._setActiveLayers(baseTokenId, packedActivelayers);
         uint24 extraData = _getExtraDataAt(baseTokenId);
         if (extraData == 0) {
-            _setExtraDataAt(baseTokenId, uint24(packedActivelayers));
             // truncate the 16 least significant bits (18.2 hours) off of the timestamp, giving us a "40" bit timestamp
             uint256 truncatedTimeStamp = block.timestamp >> 16;
             _setExtraDataAt(baseTokenId, uint24(truncatedTimeStamp));
