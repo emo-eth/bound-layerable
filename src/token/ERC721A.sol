@@ -1123,6 +1123,7 @@ contract ERC721A is IERC721A {
      */
     function _getExtraDataAt(uint256 index)
         internal
+        view
         virtual
         returns (uint24 extraData)
     {
