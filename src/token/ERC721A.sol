@@ -942,6 +942,21 @@ contract ERC721A is IERC721A {
     }
 
     /**
+     * @dev Get extra data for token ID
+     */
+    function _getExtraDataAt(uint256 index)
+        internal
+        virtual
+        returns (uint24 extraData)
+    {
+        uint256 packed = _packedOwnerships[index];
+        /// @solidity memory-safe-assembly
+        assembly {
+            extraData := shr(BITPOS_EXTRA_DATA, packed)
+        }
+    }
+
+    /**
      * @dev Directly sets the extra data for the ownership data `index`.
      */
     function _setExtraDataAt(uint256 index, uint24 extraData) internal virtual {
