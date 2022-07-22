@@ -6,11 +6,16 @@ import {OnChainTraits} from 'bound-layerable/traits/OnChainTraits.sol';
 import {Attribute} from 'bound-layerable/interface/Structs.sol';
 import {DisplayType} from 'bound-layerable/interface/Enums.sol';
 
+// concrete implementation
+contract OnChainTraitsImpl is OnChainTraits {
+
+}
+
 contract OnChainTraitsTest is Test {
     OnChainTraits test;
 
     function setUp() public {
-        test = new OnChainTraits();
+        test = new OnChainTraitsImpl();
     }
 
     function testGetTraitJson() public {

@@ -8,12 +8,24 @@ import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {ILayerable} from './ILayerable.sol';
+import {InvalidInitialization} from '../interface/Errors.sol';
 
 abstract contract Layerable is ILayerable, OnChainTraits {
     using BitMapUtility for uint256;
 
     constructor(address _owner) {
-        transferOwnership(_owner);
+        _initialize(_owner);
+    }
+
+    function initialize(address _owner) external virtual {
+        _initialize(_owner);
+    }
+
+    function _initialize(address _owner) internal virtual {
+        if (address(this).code.length > 0) {
+            revert InvalidInitialization();
+        }
+        _transferOwnership(_owner);
     }
 
     /**

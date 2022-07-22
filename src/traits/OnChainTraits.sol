@@ -9,7 +9,7 @@ import {ArrayLengthMismatch} from '../interface/Errors.sol';
 import {DisplayType} from '../interface/Enums.sol';
 import {Attribute} from '../interface/Structs.sol';
 
-contract OnChainTraits is Ownable {
+abstract contract OnChainTraits is Ownable {
     using Strings for uint256;
 
     mapping(uint256 => Attribute) public traitAttributes;

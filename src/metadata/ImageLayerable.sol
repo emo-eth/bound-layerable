@@ -11,6 +11,7 @@ import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Layerable} from './Layerable.sol';
 import {IImageLayerable} from './IImageLayerable.sol';
 import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
+import {InvalidInitialization} from '../interface/Errors.sol';
 
 contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?
@@ -20,7 +21,23 @@ contract ImageLayerable is Layerable, IImageLayerable {
     // todo: use different URIs for solo layers and layered layers?
     string baseLayerURI;
 
+    // TODO: add baseLayerURI
     constructor(string memory _defaultURI, address _owner) Layerable(_owner) {
+        _initialize(_defaultURI);
+    }
+
+    function initialize(address _owner, string memory _defaultURI)
+        public
+        virtual
+    {
+        super._initialize(_owner);
+        _initialize(_defaultURI);
+    }
+
+    function _initialize(string memory _defaultURI) internal virtual {
+        if (address(this).code.length > 0) {
+            revert InvalidInitialization();
+        }
         defaultURI = _defaultURI;
     }
 

@@ -20,3 +20,4 @@ error MaxRandomness();
 error OnlyCoordinatorCanFulfill(address have, address want);
 error UnsafeReveal();
 error NoActiveLayers();
+error InvalidInitialization();
