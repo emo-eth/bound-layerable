@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {LayerType} from '../interface/Enums.sol';
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
 import {BadDistributions, InvalidLayerType} from '../interface/Errors.sol';
@@ -16,6 +16,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     // Function getLayerId will check if layerSeed is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
+    // TODO: does this mean for N < 32 traits, there should be N-1 distributions?
     mapping(uint8 => uint256) layerTypeToPackedDistributions;
 
     constructor(

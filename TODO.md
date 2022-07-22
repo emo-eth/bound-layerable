@@ -1,4 +1,13 @@
 
+EXPAND:
+
+- configurable lock 
+- lock layers from transfer?
+- use setAux to track date composed
+- limited signature layer for those minted in first week
+- first x slime holders 
+- authorized burn function for future composability?
+- [ ] unset forceUnsafeReveal when unsafe revealing
 
 Features:
 

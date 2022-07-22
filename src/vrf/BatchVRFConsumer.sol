@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {VRFConsumerBaseV2} from 'chainlink/src/v0.8/VRFConsumerBaseV2.sol';
-import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
-import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
+import {VRFConsumerBaseV2} from 'chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol';
+import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
+import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
 import {BatchNotRevealed, MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from '../interface/Errors.sol';
@@ -150,17 +150,13 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         virtual
     {
         (uint32 numBatches, uint32 _revealBatch) = _checkAndReturnNumBatches();
-        uint256 length = randomWords.length;
-        uint256 stop = length > numBatches ? numBatches : length;
         bytes32 currSeed = packedBatchRandomness;
-        for (uint256 i; i < stop; ) {
-            uint256 randomness = randomWords[i];
-            currSeed = _writeRandomBatch(currSeed, _revealBatch, randomness);
-            unchecked {
-                _revealBatch += 1;
-                ++i;
-            }
-        }
+        uint256 randomness = randomWords[0];
+
+        uint256 mask = type(uint256).max << (256 - (32 * numBatches));
+        uint256 newRandomness = randomness & mask;
+        currSeed = bytes32(uint256(currSeed) | newRandomness);
+        _revealBatch += numBatches;
         packedBatchRandomness = currSeed;
         revealBatch = _revealBatch;
     }
@@ -170,9 +166,13 @@ contract BatchVRFConsumer is ERC721A, Ownable {
      * @return (uint32 numMissingBatches, uint32 _revealBatch) - number missing batches, and the current _revealBatch
      *         index (current batch revealed + 1, or 0 if none)
      */
-    function _checkAndReturnNumBatches() internal returns (uint32, uint32) {
+    function _checkAndReturnNumBatches()
+        internal
+        view
+        returns (uint32, uint32)
+    {
         // get next unminted token ID
-        uint256 nextTokenId_ = nextTokenId();
+        uint256 nextTokenId_ = _nextTokenId();
         // get number of fully completed batches
         uint256 numCompletedBatches = nextTokenId_ /
             NUM_TOKENS_PER_RANDOM_BATCH;
@@ -206,19 +206,5 @@ contract BatchVRFConsumer is ERC721A, Ownable {
         }
 
         return (numMissingBatches, _revealBatch);
-    }
-
-    function _writeRandomBatch(
-        bytes32 seed,
-        uint32 batch,
-        uint256 randomness
-    ) internal pure returns (bytes32) {
-        uint256 writeMask = uint256(_32_MASK) << (32 * batch);
-        uint256 clearMask = ~writeMask;
-        return bytes32((uint256(seed) & clearMask) | (randomness & writeMask));
-    }
-
-    function nextTokenId() internal virtual returns (uint256) {
-        return _nextTokenId();
     }
 }

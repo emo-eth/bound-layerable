@@ -1114,6 +1114,22 @@ contract ERC721A is IERC721A {
         }
     }
 
+    function _setPackedOwnershipOf(uint256 index, uint256 packed)
+        internal
+        virtual
+    {
+        _packedOwnerships[index] = packed;
+    }
+
+    function _getPackedOwnershipOf(uint256 index)
+        internal
+        view
+        virtual
+        returns (uint256)
+    {
+        return _packedOwnerships[index];
+    }
+
     // =============================================================
     //                     EXTRA DATA OPERATIONS
     // =============================================================

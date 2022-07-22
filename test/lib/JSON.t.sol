@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {Test} from 'forge-std/Test.sol';
 import {json} from 'bound-layerable/lib/JSON.sol';
-import {StringTestUtility} from 'bound-layerable-test/helpers/StringTestUtility.sol';
+import {StringTestUtility} from '../helpers/StringTestUtility.sol';
 
 contract JsonTest is Test {
     using json for string;

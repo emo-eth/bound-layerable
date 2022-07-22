@@ -6,7 +6,7 @@ import {BoundLayerableTestImpl} from 'bound-layerable/implementations/BoundLayer
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
-import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
+import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers, NoActiveLayers} from 'bound-layerable/interface/Errors.sol';
 import {MAX_INT} from 'bound-layerable/interface/Constants.sol';
 import {ILayerable} from 'bound-layerable/metadata/ILayerable.sol';
 import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
@@ -155,12 +155,17 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
         uint256 packed = PackedByteUtility.packArrayOfBytes(layers);
         test.setBoundLayers(0, bindings);
-
-        test.setActiveLayers(0, packed);
-        uint256[] memory loaded = test.getActiveLayers(0);
-        assertEq(loaded.length, numActiveLayers);
-        for (uint256 i; i < loaded.length; ++i) {
-            assertEq(loaded[i], layers[i]);
+        if (numActiveLayers == 0) {
+            vm.expectRevert(NoActiveLayers.selector);
+            test.setActiveLayers(0, packed);
+        } else {
+            test.setActiveLayers(0, packed);
+            test.setActiveLayers(0, packed);
+            uint256[] memory loaded = test.getActiveLayers(0);
+            assertEq(loaded.length, numActiveLayers);
+            for (uint256 i; i < loaded.length; ++i) {
+                assertEq(loaded[i], layers[i]);
+            }
         }
     }
 

@@ -5,9 +5,9 @@ import {Test} from 'forge-std/Test.sol';
 
 import {BatchVRFConsumer} from 'bound-layerable/vrf/BatchVRFConsumer.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
-import {VRFCoordinatorV2Interface} from 'chainlink/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
+import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
-import {MaxRandomness, UnsafeReveal, BatchNotRevealed} from 'bound-layerable/interface/Errors.sol';
+import {MaxRandomness, BatchNotRevealed, UnsafeReveal, BatchNotRevealed} from 'bound-layerable/interface/Errors.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
     uint256 fakeNextTokenId;
@@ -50,7 +50,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         return revealBatch;
     }
 
-    function nextTokenId() internal virtual override returns (uint256) {
+    function _nextTokenId() internal view virtual override returns (uint256) {
         return fakeNextTokenId;
     }
 
@@ -60,14 +60,6 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
 
     function checkAndReturnNumBatches() public returns (uint32, uint32) {
         return _checkAndReturnNumBatches();
-    }
-
-    function writeRandomBatch(
-        bytes32 seed,
-        uint32 batch,
-        uint256 randomness
-    ) public pure returns (bytes32) {
-        return _writeRandomBatch(seed, batch, randomness);
     }
 
     function getRandomnessForTokenIdPub(uint256 tokenId)
@@ -124,6 +116,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testRequestRandomWords_onlyOwner(address addr) public {
+        vm.assume(addr != address(this));
         vm.startPrank(addr);
         vm.expectRevert('Ownable: caller is not the owner');
         test.requestRandomWords(bytes32(uint256(1)));
@@ -292,28 +285,28 @@ contract BatchVRFConsumerTest is Test {
         test.requestRandomWords(bytes32(uint256(1)));
     }
 
-    function testWriteRandomBatch(
-        bool emptySeed,
-        uint8 batch,
-        uint256 randomness
-    ) public {
-        // bound batch to [0,7]
-        batch = uint8(bound(batch, 0, 7));
-        bytes32 seed;
-        // test that writing overwrites any previous randomness by supplying all 1's
-        if (!emptySeed) {
-            seed = bytes32(~uint256(0));
-        }
-        bytes32 newSeed = test.writeRandomBatch(seed, batch, randomness);
-        // calculate bits to shift based on batch number
-        uint256 shift = 32 * batch;
-        // create mask for last 32 bits once shifted
-        uint256 batchMask = 2**32 - 1;
-        // get 32-bit randomness that should have been written
-        uint256 maskedRandomness = (randomness >> shift) & batchMask;
-        uint256 maskedSeed = (uint256(newSeed) >> shift) & batchMask;
-        assertEq(maskedRandomness, maskedSeed);
-    }
+    // function testWriteRandomBatch(
+    //     bool emptySeed,
+    //     uint8 batch,
+    //     uint256 randomness
+    // ) public {
+    //     // bound batch to [0,7]
+    //     batch = uint8(bound(batch, 0, 7));
+    //     bytes32 seed;
+    //     // test that writing overwrites any previous randomness by supplying all 1's
+    //     if (!emptySeed) {
+    //         seed = bytes32(~uint256(0));
+    //     }
+    //     bytes32 newSeed = test.writeRandomBatch(seed, batch, randomness);
+    //     // calculate bits to shift based on batch number
+    //     uint256 shift = 32 * batch;
+    //     // create mask for last 32 bits once shifted
+    //     uint256 batchMask = 2**32 - 1;
+    //     // get 32-bit randomness that should have been written
+    //     uint256 maskedRandomness = (randomness >> shift) & batchMask;
+    //     uint256 maskedSeed = (uint256(newSeed) >> shift) & batchMask;
+    //     assertEq(maskedRandomness, maskedSeed);
+    // }
 
     function testCheckAndReturnNumBatches(
         uint8 numCompletedBatches,
@@ -375,50 +368,43 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(1, new uint256[](2));
     }
 
-    function testFulfillRandomWords(uint8 length) public {
-        length = uint8(bound(length, 0, 8));
+    function testFulfillRandomnessDoesnotOverWriteExistingSeed() public {
+        test.setPackedBatchRandomness(bytes32(uint256(1)));
         test.setRevealBatch(3);
         test.mintSets(8000);
-        uint256[] memory randomWords = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
+        uint256 randomWord;
+        for (uint256 i = 0; i < 5; i++) {
             unchecked {
-                randomWords[i] = (i + 1) << (32 * (i + 3));
+                // randomWords[i] = (i + 1) << (32 * (i + 3));
+                randomWord |= (i + 1) << (32 * (i + 3));
             }
         }
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = randomWord;
         test.rawFulfillRandomWords(1, randomWords);
-        uint256 expectedEndBatch = length > 5 ? 8 : 3 + length;
-        assertEq(test.getRevealBatch(), expectedEndBatch);
-        for (uint8 i = 0; i < length; i++) {
-            if (i > 4) {
-                vm.expectRevert(
-                    abi.encodeWithSelector(BatchNotRevealed.selector)
-                );
-            }
-            unchecked {
-                assertEq(
-                    uint256(test.getRandomnessForBatchId(i + 3)),
-                    randomWords[i] >> (32 * (i + 3))
-                );
-            }
-        }
+        // uint256 expectedEndBatch = length > 5 ? 8 : 3 + length;
+        assertEq(test.getRevealBatch(), 8);
+        assertEq(test.getRandomnessForBatchId(0), bytes32(uint256(1)));
     }
 
     /// @dev test that rawFulfillRandomWords succeeds even when length might not match what is expected
-    function testFulfillRandomWords(
-        uint8 length,
-        uint8 revealBatch,
-        uint8 completedBatches
-    ) public {
-        length = uint8(bound(length, 0, 8));
+    function testFulfillRandomWords(uint8 revealBatch, uint8 completedBatches)
+        public
+    {
+        // length = uint8(bound(length, 0, 8));
         revealBatch = uint8(bound(revealBatch, 0, 8));
         completedBatches = uint8(bound(completedBatches, 0, 8));
         test.setRevealBatch(revealBatch);
         uint256 numSets = (uint256(8000) * completedBatches) / 8 + 1;
         test.mintSets(numSets);
-        uint256[] memory randomWords = new uint256[](length);
+        uint256 randomWord;
+        // uint256[] memory randomWords = new uint256[](length);
+        uint256 length = revealBatch > completedBatches
+            ? 0
+            : completedBatches - revealBatch;
         for (uint256 i = 0; i < length; i++) {
             unchecked {
-                randomWords[i] = (i + 1) << (32 * (i));
+                randomWord |= (i + 1) << (32 * (i));
             }
         }
 
@@ -427,6 +413,8 @@ contract BatchVRFConsumerTest is Test {
         } else if (revealBatch > completedBatches) {
             vm.expectRevert(UnsafeReveal.selector);
         }
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = randomWord;
         test.rawFulfillRandomWords(1, randomWords);
     }
 
@@ -456,6 +444,11 @@ contract BatchVRFConsumerTest is Test {
             uint256(tokenRandomness),
             (tokenId / test.getNumTokensPerRandomBatch()) + 1
         );
+    }
+
+    function testGetRandomnessForTokenId_notRevealed(uint256 tokenId) public {
+        vm.expectRevert(BatchNotRevealed.selector);
+        test.getRandomnessForTokenIdPub(tokenId);
     }
 
     function test_snapshotGetRandomnessForTokenIdFromSeed() public view {

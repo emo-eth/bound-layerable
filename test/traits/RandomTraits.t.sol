@@ -223,4 +223,9 @@ contract RandomTraitsTest is Test {
         assertEq(uint256(test.getLayerType(6)), 5);
         assertEq(uint256(test.getLayerType(13)), 5);
     }
+
+    // function testNDistributionsForNMaxNot255() public {
+    //     uint256 numDistributions = test.getNumDistributionsForNMax(255);
+    //     assertEq(numDistributions, 0);
+    // }
 }

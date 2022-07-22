@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {ERC721A} from '../token/ERC721A.sol';
 
-import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
+import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {BoundLayerable} from '../BoundLayerable.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';

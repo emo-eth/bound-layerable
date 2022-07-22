@@ -15,13 +15,13 @@ contract TestnetToken is BoundLayerable, RandomTraitsImpl {
             'test',
             'TEST',
             0x6168499c0cFfCaCD319c818142124B7A15E857ab,
-            100,
+            1000,
             7,
             8632,
             address(0)
         )
     {
-        metadataContract = new ImageLayerable('default', msg.sender);
+        // metadataContract = new ImageLayerable('default', msg.sender);
     }
 
     modifier includesCorrectPayment(uint256 numSets) {

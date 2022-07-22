@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Ownable} from 'openzeppelin-contracts/access/Ownable.sol';
+import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
 import {LayerVariation} from './interface/Structs.sol';
@@ -305,6 +305,10 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         internal
         virtual
     {
+        // TODO: explicitly test this
+        if (packedLayerIds == 0) {
+            revert NoActiveLayers();
+        }
         // check owner
         if (ownerOf(baseTokenId) != msg.sender) {
             revert NotOwner();

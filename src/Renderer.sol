@@ -6,7 +6,7 @@ import {utils} from './Utils.sol';
 import {TestToken} from './implementations/TestToken.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
-import {ERC721Recipient} from 'bound-layerable-test/util/ERC721Recipient.sol';
+import {ERC721Recipient} from '../test/util/ERC721Recipient.sol';
 import {LayerType} from './interface/Enums.sol';
 import {ImageLayerable} from './metadata/ImageLayerable.sol';
 

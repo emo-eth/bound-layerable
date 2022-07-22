@@ -3,14 +3,14 @@ pragma solidity ^0.8.4;
 
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg, utils} from '../SVG.sol';
-import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Layerable} from './Layerable.sol';
 import {IImageLayerable} from './IImageLayerable.sol';
-import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 
 contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?

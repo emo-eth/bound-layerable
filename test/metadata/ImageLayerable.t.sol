@@ -7,8 +7,8 @@ import {Attribute} from 'bound-layerable/interface/Structs.sol';
 import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
-import {StringTestUtility} from 'bound-layerable-test/helpers/StringTestUtility.sol';
-import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
+import {StringTestUtility} from '../helpers/StringTestUtility.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 
 contract ImageLayerableImpl is ImageLayerable {
     uint256 bindings;
