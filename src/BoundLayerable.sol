@@ -4,17 +4,12 @@ pragma solidity ^0.8.4;
 import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
-import {LayerVariation} from './interface/Structs.sol';
 import {ILayerable} from './metadata/ILayerable.sol';
-import {Layerable} from './metadata/Layerable.sol';
-
 import {RandomTraits} from './traits/RandomTraits.sol';
 import {ERC721A} from './token/ERC721A.sol';
-
-import './interface/Errors.sol';
+import {MaxSupply, NotOwner, CannotBindBase, OnlyBase, LayerAlreadyBound, NoActiveLayers} from './interface/Errors.sol';
 import {NOT_0TH_BITMASK, DUPLICATE_ACTIVE_LAYERS_SIGNATURE, LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
-import {LayerType} from './interface/Enums.sol';
 
 abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     using BitMapUtility for uint256;

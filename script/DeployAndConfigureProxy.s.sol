@@ -1,20 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import {Test} from 'forge-std/Test.sol';
 import {Script} from 'forge-std/Script.sol';
 import {TestnetToken} from '../src/implementations/TestnetToken.sol';
-import {Layerable} from '../src/metadata/Layerable.sol';
 import {ImageLayerable} from '../src/metadata/ImageLayerable.sol';
 import {Attribute} from '../src/interface/Structs.sol';
 import {DisplayType} from '../src/interface/Enums.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {TransparentUpgradeableProxy} from 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 import {Solenv} from 'solenv/Solenv.sol';
 
 contract Deploy is Script {
-    using Strings for uint256;
-
     struct AttributeTuple {
         uint256 traitId;
         string name;
@@ -77,7 +72,7 @@ contract Deploy is Script {
         // layerable.setAttributes(layerIds, attributes);
 
         // set metadata contract on token
-        TestnetToken token = TestnetToken(tokenAddress);
+        // TestnetToken token = TestnetToken(tokenAddress);
         // token.setMetadataContract(layerable);
     }
 }

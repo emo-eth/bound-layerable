@@ -14,6 +14,12 @@ import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 contract BoundLayerableTest is Test, BoundLayerableEvents {
     BoundLayerableTestImpl test;
 
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 indexed tokenId
+    );
+
     function setUp() public {
         test = new BoundLayerableTestImpl();
         test.mint();
@@ -197,8 +203,11 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
 
     function testBurnAndBindSingle() public {
         test.setPackedBatchRandomness(bytes32(MAX_INT));
+        vm.expectEmit(true, true, true, false, address(test));
+        emit Transfer(address(this), address(0), 8);
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
+
         test.burnAndBindSingle(7, 8);
         assertTrue(test.isBurned(8));
         assertFalse(test.isBurned(7));
@@ -214,6 +223,11 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         uint256[] memory layers = new uint256[](2);
         layers[0] = 1;
         layers[1] = 6;
+        vm.expectEmit(true, true, true, false, address(test));
+        emit Transfer(address(this), address(0), 1);
+        vm.expectEmit(true, true, true, false, address(test));
+        emit Transfer(address(this), address(0), 6);
+
         vm.expectEmit(true, true, false, false, address(test));
         emit LayersBoundToToken(0, (1 << 1) | (1 << 2) | (1 << 7));
         test.burnAndBindMultiple(0, layers);

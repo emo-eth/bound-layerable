@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
-import {LayerType} from '../interface/Enums.sol';
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
 import {BadDistributions, InvalidLayerType} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 abstract contract RandomTraits is BatchVRFConsumer {
-    using Strings for uint256;
-
     // 32 possible traits per layerType given uint8 distributions
     // except final trait type, which has 31, because 0 is not a valid layerId.
     // Function getLayerId will check if layerSeed is less than the distribution,
