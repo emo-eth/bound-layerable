@@ -19,3 +19,6 @@
 [submodule "lib/utility-contracts"]
 	path = lib/utility-contracts
 	url = https://github.com/jameswenzel/utility-contracts
+[submodule "lib/solenv"]
+	path = lib/solenv
+	url = https://github.com/memester-xyz/solenv
