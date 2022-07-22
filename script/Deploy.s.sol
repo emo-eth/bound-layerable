@@ -8,7 +8,8 @@ import {Layerable} from '../src/metadata/Layerable.sol';
 import {ImageLayerable} from '../src/metadata/ImageLayerable.sol';
 import {Attribute} from '../src/interface/Structs.sol';
 import {DisplayType} from '../src/interface/Enums.sol';
-import {Strings} from 'openzeppelin-contracts/utils/Strings.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
+import {Solenv} from 'solenv/Solenv.sol';
 
 contract Deploy is Script {
     using Strings for uint256;
@@ -37,18 +38,14 @@ contract Deploy is Script {
         }
     }
 
-    function run() public {
-        // address coordinator;
-        // uint256 chainId;
-        // assembly {
-        //     chainId := chainid()
-        // }
-        // coordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
-        address deployer = 0x92B381515bd4851Faf3d33A161f7967FD87B1227;
-        vm.startBroadcast(deployer);
+    function setUp() public virtual {
+        Solenv.config();
+    }
 
-        // emit log_named_uint('chainid', chainId);
-        // if (chainId == 4) {
+    function run() public {
+        address deployer = vm.envAddress('DEPLOYER');
+        vm.startBroadcast(deployer);
+        // if (chainId == 4) {coordinator 0x6168499c0cFfCaCD319c818142124B7A15E857ab
         // } else if (chainId == 137) {
         //     coordinator = 0xAE975071Be8F8eE67addBC1A82488F1C24858067;
         // } else if (chainId == 80001) {
@@ -58,6 +55,5 @@ contract Deploy is Script {
         // }
         // emit log_named_address('coordinator', coordinator);
         TestnetToken token = new TestnetToken();
-        // token.setMetadataContract(layerable);
     }
 }
