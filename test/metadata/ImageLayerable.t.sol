@@ -4,9 +4,7 @@ pragma solidity ^0.8.4;
 import {Test} from 'forge-std/Test.sol';
 import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {Attribute} from 'bound-layerable/interface/Structs.sol';
-import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
-import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
-import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
+import {DisplayType} from 'bound-layerable/interface/Enums.sol';
 import {StringTestUtility} from '../helpers/StringTestUtility.sol';
 import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 
@@ -46,10 +44,8 @@ contract ImageLayerableImpl is ImageLayerable {
 }
 
 contract ImageLayerableTest is Test {
-    using BitMapUtility for uint256;
     using StringTestUtility for string;
     using Strings for uint256;
-    using Strings for uint8;
 
     ImageLayerableImpl test;
 
@@ -68,7 +64,7 @@ contract ImageLayerableTest is Test {
 
         // once seeded, if not bound, regular nft metadata
         // test.setPackedBatchRandomness(bytes32(uint256(1)));
-        expected = 'data:application/json;utf8,{"image":"layer/1","attributes":[{"trait_type":"test","value":"hello"}]}';
+        expected = 'data:application/json;utf8,{"image":"layer/1","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}';
 
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
@@ -106,7 +102,7 @@ contract ImageLayerableTest is Test {
         expected = string.concat(
             'data:application/json;utf8,{"image":"layer/',
             layerId.toString(),
-            '","attributes":[{"trait_type":"test","value":"hello"}]}'
+            '","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}'
         );
         test.setAttribute(
             layerId,

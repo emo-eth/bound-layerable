@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
-
 library json {
-    using Strings for uint256;
-
     /**
      * @notice enclose a string in {braces}
      * @param  value string to enclose in braces
@@ -125,6 +121,20 @@ library json {
         returns (string memory)
     {
         return _join(values, ',');
+    }
+
+    /**
+     * @notice join two strings with a comma
+     * @param value1 first string
+     * @param value2 second string
+     * @return string of value1,value2
+     */
+    function _commaJoin(string memory value1, string memory value2)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string.concat(value1, ',', value2);
     }
 
     /**

@@ -2,16 +2,14 @@
 pragma solidity ^0.8.4;
 
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
-import {svg, utils} from '../SVG.sol';
+import {svg} from '../SVG.sol';
 import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
-import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
-import {BitMapUtility} from '../lib/BitMapUtility.sol';
-import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {Layerable} from './Layerable.sol';
 import {IImageLayerable} from './IImageLayerable.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {InvalidInitialization} from '../interface/Errors.sol';
+import {Attribute} from '../interface/Structs.sol';
+import {DisplayType} from '../interface/Enums.sol';
 
 contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?
@@ -71,12 +69,20 @@ contract ImageLayerable is Layerable, IImageLayerable {
         }
         // if no bindings, format metadata as an individual NFT
         // check if bindings == 0 or 1; bindable layers will be treated differently
-        // TODO: test this if/else
         else if (bindings == 0 || bindings == 1) {
+            Attribute memory layerTypeAttribute = traitAttributes[layerId];
+            layerTypeAttribute.value = layerTypeAttribute.traitType;
+            layerTypeAttribute.traitType = 'Layer Type';
+            layerTypeAttribute.displayType = DisplayType.String;
             return
                 _constructJson(
                     getLayerImageURI(layerId),
-                    json.array(getLayerJson(layerId))
+                    json.array(
+                        json._commaJoin(
+                            _getAttributeJson(layerTypeAttribute),
+                            getLayerJson(layerId)
+                        )
+                    )
                 );
         } else {
             return

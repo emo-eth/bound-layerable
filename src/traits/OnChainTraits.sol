@@ -2,16 +2,12 @@
 pragma solidity ^0.8.4;
 
 import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
-import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {json} from '../lib/JSON.sol';
 import {ArrayLengthMismatch} from '../interface/Errors.sol';
 import {DisplayType} from '../interface/Enums.sol';
 import {Attribute} from '../interface/Structs.sol';
 
 abstract contract OnChainTraits is Ownable {
-    using Strings for uint256;
-
     mapping(uint256 => Attribute) public traitAttributes;
 
     function setAttribute(uint256 traitId, Attribute calldata attribute)
@@ -35,12 +31,7 @@ abstract contract OnChainTraits is Ownable {
 
     function getLayerJson(uint256 traitId) public view returns (string memory) {
         Attribute memory attribute = traitAttributes[traitId];
-
-        string memory properties = string.concat(
-            json.property('trait_type', attribute.traitType),
-            ','
-        );
-        return _getLayerJson(properties, attribute);
+        return _getAttributeJson(attribute);
     }
 
     function getLayerJson(uint256 traitId, string memory qualifier)
@@ -49,7 +40,25 @@ abstract contract OnChainTraits is Ownable {
         returns (string memory)
     {
         Attribute memory attribute = traitAttributes[traitId];
+        return _getAttributeJson(attribute, qualifier);
+    }
 
+    function _getAttributeJson(Attribute memory attribute)
+        internal
+        pure
+        returns (string memory)
+    {
+        string memory properties = string.concat(
+            json.property('trait_type', attribute.traitType),
+            ','
+        );
+        return _getAttributeJson(properties, attribute);
+    }
+
+    function _getAttributeJson(
+        Attribute memory attribute,
+        string memory qualifier
+    ) internal pure returns (string memory) {
         string memory properties = string.concat(
             json.property(
                 'trait_type',
@@ -57,7 +66,7 @@ abstract contract OnChainTraits is Ownable {
             ),
             ','
         );
-        return _getLayerJson(properties, attribute);
+        return _getAttributeJson(properties, attribute);
     }
 
     function displayTypeJson(string memory displayTypeString)
@@ -68,11 +77,10 @@ abstract contract OnChainTraits is Ownable {
         return json.property('display_type', displayTypeString);
     }
 
-    function _getLayerJson(string memory properties, Attribute memory attribute)
-        internal
-        pure
-        returns (string memory)
-    {
+    function _getAttributeJson(
+        string memory properties,
+        Attribute memory attribute
+    ) internal pure returns (string memory) {
         // todo: probably don't need this for layers, but good for generic
         DisplayType displayType = attribute.displayType;
         if (displayType != DisplayType.String) {

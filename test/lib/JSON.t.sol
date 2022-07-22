@@ -142,4 +142,11 @@ contract JsonTest is Test {
             expectedAddedCommas + expectedNativeCommas
         );
     }
+
+    function testJoinComma() public {
+        string memory a = 'a';
+        string memory b = 'b';
+        string memory joined = 'a,b';
+        assertEq(json._commaJoin(a, b), joined);
+    }
 }
