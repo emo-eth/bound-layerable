@@ -52,19 +52,19 @@ contract ImageLayerable is Layerable, IImageLayerable {
     }
 
     /**
-     * @notice get the complete URI of a set of token traits
+     * @notice get the raw URI of a set of token traits, not encoded as a data uri
      * @param layerId the layerId of the base token
      * @param bindings the bitmap of bound traits
      * @param activeLayers packed array of active layerIds as bytes
      * @param layerSeed the random seed for random generation of traits, used to determine if layers have been revealed
      * @return the complete URI of the token, including image and all attributes
      */
-    function getTokenURI(
+    function _getRawTokenJson(
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
         bytes32 layerSeed
-    ) public view virtual override returns (string memory) {
+    ) internal view virtual override returns (string memory) {
         // return default uri
         if (layerSeed == 0) {
             return _constructJson(getDefaultImageURI(layerId), '');

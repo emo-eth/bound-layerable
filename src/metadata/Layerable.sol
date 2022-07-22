@@ -29,19 +29,32 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     }
 
     /**
-     * @notice get the complete URI of a set of token traits
+     * @notice get the complete URI of a set of token traits, encoded as a data-uri
      * @param layerId the layerId of the base token
      * @param bindings the bitmap of bound traits
      * @param activeLayers packed array of active layerIds as bytes
      * @param layerSeed the random seed for random generation of traits, used to determine if layers have been revealed
-     * @return the complete URI of the token, including image and all attributes
+     * @return the complete data URI of the token, including image and all attributes
      */
     function getTokenURI(
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
         bytes32 layerSeed
-    ) public view virtual returns (string memory);
+    ) public view virtual returns (string memory) {
+        return
+            string.concat(
+                'data:application/json;utf8,',
+                _getRawTokenJson(layerId, bindings, activeLayers, layerSeed)
+            );
+    }
+
+    function _getRawTokenJson(
+        uint256 layerId,
+        uint256 bindings,
+        uint256[] calldata activeLayers,
+        bytes32 layerSeed
+    ) internal view virtual returns (string memory);
 
     /// @notice get the complete SVG for a set of activeLayers
     function getLayeredTokenImageURI(uint256[] calldata activeLayers)

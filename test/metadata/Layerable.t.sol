@@ -124,33 +124,4 @@ contract LayerableTest is Test {
             );
         }
     }
-
-    // function testGetTokenUri(
-    //     uint256 bindings,
-    //     uint32 seed,
-    //     uint256 numActive,
-    //     uint256 layerId
-    // ) public {
-    //     bindings &= ~uint256(0);
-    //     uint256[] memory boundLayers = BitMapUtility.unpackBitMap(bindings); //.unpackBitMap();
-    //     numActive = bound(numActive, 0, boundLayers.length);
-    //     uint256[] memory activeLayers = new uint256[](numActive);
-    //     for (uint256 i = 0; i < numActive; i++) {
-    //         activeLayers[i] = boundLayers[i];
-    //     }
-    //     bytes32 layerSeed = bytes32(uint256(seed));
-    //     test.setPackedBatchRandomness(layerSeed);
-
-    //     string memory actual = test.getTokenURI(
-    //         layerId,
-    //         bindings,
-    //         activeLayers,
-    //         layerSeed
-    //     );
-    //     assertTrue(
-    //         actual.startsWith(
-    //             '{"image":"<svg xmlns="http://www.w3.org/2000/svg">'
-    //         )
-    //     );
-    // }
 }
