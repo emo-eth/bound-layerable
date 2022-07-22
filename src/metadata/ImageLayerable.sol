@@ -76,7 +76,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
             return
                 _constructJson(
                     getLayerImageURI(layerId),
-                    json.array(getTraitJson(layerId))
+                    json.array(getLayerJson(layerId))
                 );
         } else {
             return

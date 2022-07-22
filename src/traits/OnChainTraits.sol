@@ -33,17 +33,17 @@ abstract contract OnChainTraits is Ownable {
         }
     }
 
-    function getTraitJson(uint256 traitId) public view returns (string memory) {
+    function getLayerJson(uint256 traitId) public view returns (string memory) {
         Attribute memory attribute = traitAttributes[traitId];
 
         string memory properties = string.concat(
             json.property('trait_type', attribute.traitType),
             ','
         );
-        return _getTraitJson(properties, attribute);
+        return _getLayerJson(properties, attribute);
     }
 
-    function getTraitJson(uint256 traitId, string memory qualifier)
+    function getLayerJson(uint256 traitId, string memory qualifier)
         public
         view
         returns (string memory)
@@ -57,7 +57,7 @@ abstract contract OnChainTraits is Ownable {
             ),
             ','
         );
-        return _getTraitJson(properties, attribute);
+        return _getLayerJson(properties, attribute);
     }
 
     function displayTypeJson(string memory displayTypeString)
@@ -68,7 +68,7 @@ abstract contract OnChainTraits is Ownable {
         return json.property('display_type', displayTypeString);
     }
 
-    function _getTraitJson(string memory properties, Attribute memory attribute)
+    function _getLayerJson(string memory properties, Attribute memory attribute)
         internal
         pure
         returns (string memory)

@@ -96,6 +96,7 @@ contract LayerableTest is Test {
         uint256 bindings;
         for (uint256 i = 0; i < boundLayers.length; i++) {
             bindings |= 1 << boundLayers[i];
+
             test.setAttribute(
                 boundLayers[i],
                 Attribute(

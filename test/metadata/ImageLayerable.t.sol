@@ -68,6 +68,7 @@ contract ImageLayerableTest is Test {
         // once seeded, if not bound, regular nft metadata
         // test.setPackedBatchRandomness(bytes32(uint256(1)));
         expected = '{"image":"layer/1","attributes":[{"trait_type":"test","value":"hello"}]}';
+
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
 

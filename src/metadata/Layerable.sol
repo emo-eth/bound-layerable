@@ -94,7 +94,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         uint256[] memory boundLayers = BitMapUtility.unpackBitMap(bindings);
         layerTraits = new string[](boundLayers.length);
         for (uint256 i; i < boundLayers.length; ++i) {
-            layerTraits[i] = getTraitJson(boundLayers[i]);
+            layerTraits[i] = getLayerJson(boundLayers[i]);
         }
     }
 
@@ -107,7 +107,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     {
         activeLayerTraits = new string[](activeLayers.length);
         for (uint256 i; i < activeLayers.length; ++i) {
-            activeLayerTraits[i] = getTraitJson(activeLayers[i], 'Active');
+            activeLayerTraits[i] = getLayerJson(activeLayers[i], 'Active');
         }
     }
 }
