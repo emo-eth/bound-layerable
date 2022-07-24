@@ -29,12 +29,16 @@ abstract contract OnChainTraits is Ownable {
         }
     }
 
-    function getLayerJson(uint256 traitId) public view returns (string memory) {
+    function getLayerTraitJson(uint256 traitId)
+        public
+        view
+        returns (string memory)
+    {
         Attribute memory attribute = traitAttributes[traitId];
         return _getAttributeJson(attribute);
     }
 
-    function getLayerJson(uint256 traitId, string memory qualifier)
+    function getLayerTraitJson(uint256 traitId, string memory qualifier)
         public
         view
         returns (string memory)

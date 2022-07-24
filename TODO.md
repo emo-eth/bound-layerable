@@ -1,16 +1,16 @@
-
 EXPAND:
 
-- configurable lock 
-- lock layers from transfer?
-- use setAux to track date composed
-- limited signature layer for those minted in first week
-- first x slime holders 
-- authorized burn function for future composability?
-- [ ] unset forceUnsafeReveal when unsafe revealing
+-   configurable lock
+-   lock layers from transfer?
+-   use setAux to track date composed
+-   limited signature layer for those minted in first week
+-   first x slime holders
+-   authorized burn function for future composability?
+-   [ ] unset forceUnsafeReveal when unsafe revealing
 
 Features:
 
+-   [x] add "Layer Count" to base layers
 -   [x] on-chain VRF for reveals
     -   [x] batched reveals
     -   [x] implement
@@ -85,6 +85,7 @@ Integration/e2e tests:
     -   [ ] add suite of integration tests that run against a testnet when "integration" foundry profile is active
 
 v0.2
-- [ ] variations
-- [ ] sstore2
-- [ ] multiple attributes per layer
+
+-   [ ] variations
+-   [ ] sstore2
+-   [ ] multiple attributes per layer

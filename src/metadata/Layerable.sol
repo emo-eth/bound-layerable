@@ -10,8 +10,12 @@ import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {ILayerable} from './ILayerable.sol';
 import {InvalidInitialization} from '../interface/Errors.sol';
 
+import {Base64} from 'solady/utils/Base64.sol';
+import {LibString} from 'solady/utils/LibString.sol';
+
 abstract contract Layerable is ILayerable, OnChainTraits {
     using BitMapUtility for uint256;
+    using LibString for uint256;
 
     constructor(address _owner) {
         _initialize(_owner);
@@ -42,11 +46,39 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) public view virtual returns (string memory) {
+        // TODO: maybe don't base64 encode? just base64 encode svg?
         return
             string.concat(
-                'data:application/json;utf8,',
-                _getRawTokenJson(layerId, bindings, activeLayers, layerSeed)
+                'data:application/json;base64,',
+                Base64.encode(
+                    bytes(
+                        _getRawTokenJson(
+                            layerId,
+                            bindings,
+                            activeLayers,
+                            layerSeed
+                        )
+                    )
+                )
             );
+    }
+
+    function getTokenJson(
+        uint256 layerId,
+        uint256 bindings,
+        uint256[] calldata activeLayers,
+        bytes32 layerSeed
+    ) public view virtual returns (string memory) {
+        return _getRawTokenJson(layerId, bindings, activeLayers, layerSeed);
+    }
+
+    function getLayerJson(uint256 layerId)
+        public
+        view
+        virtual
+        returns (string memory)
+    {
+        return _getRawLayerJson(layerId);
     }
 
     function _getRawTokenJson(
@@ -55,6 +87,12 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) internal view virtual returns (string memory);
+
+    function _getRawLayerJson(uint256 layerId)
+        internal
+        view
+        virtual
+        returns (string memory);
 
     /// @notice get the complete SVG for a set of activeLayers
     function getLayeredTokenImageURI(uint256[] calldata activeLayers)
@@ -105,10 +143,15 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         returns (string[] memory layerTraits)
     {
         uint256[] memory boundLayers = BitMapUtility.unpackBitMap(bindings);
-        layerTraits = new string[](boundLayers.length);
+
+        layerTraits = new string[](boundLayers.length + 1);
         for (uint256 i; i < boundLayers.length; ++i) {
-            layerTraits[i] = getLayerJson(boundLayers[i]);
+            layerTraits[i] = getLayerTraitJson(boundLayers[i]);
         }
+        layerTraits[boundLayers.length] = json.property(
+            'Layer Count',
+            boundLayers.length.toString()
+        );
     }
 
     /// @dev get array of stringified trait json for active layers. Prepends "Active" to trait title.
@@ -120,7 +163,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     {
         activeLayerTraits = new string[](activeLayers.length);
         for (uint256 i; i < activeLayers.length; ++i) {
-            activeLayerTraits[i] = getLayerJson(activeLayers[i], 'Active');
+            activeLayerTraits[i] = getLayerTraitJson(activeLayers[i], 'Active');
         }
     }
 }

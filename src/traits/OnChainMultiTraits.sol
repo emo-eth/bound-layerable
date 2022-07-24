@@ -3,14 +3,14 @@ pragma solidity ^0.8.4;
 
 import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
+import {LibString} from 'solady/utils/LibString.sol';
 import {json} from '../lib/JSON.sol';
 import {ArrayLengthMismatch} from '../interface/Errors.sol';
 import {DisplayType} from '../interface/Enums.sol';
 import {Attribute} from '../interface/Structs.sol';
 
 abstract contract OnChainMultiTraits is Ownable {
-    using Strings for uint256;
+    using LibString for uint256;
 
     mapping(uint256 => Attribute[]) public traitAttributes;
 
@@ -44,7 +44,11 @@ abstract contract OnChainMultiTraits is Ownable {
         }
     }
 
-    function getLayerJson(uint256 layerId) public view returns (string memory) {
+    function getLayerTraitJson(uint256 layerId)
+        public
+        view
+        returns (string memory)
+    {
         Attribute[] memory attributes = traitAttributes[layerId];
         uint256 attributesLength = attributes.length;
         string[] memory attributeJsons = new string[](attributesLength);
@@ -57,7 +61,7 @@ abstract contract OnChainMultiTraits is Ownable {
         return json._commaJoin(attributeJsons);
     }
 
-    function getLayerJson(uint256 layerId, string memory qualifier)
+    function getLayerTraitJson(uint256 layerId, string memory qualifier)
         public
         view
         returns (string memory)

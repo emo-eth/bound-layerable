@@ -8,7 +8,7 @@ import {DisplayType, LayerType} from 'bound-layerable/interface/Enums.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
 import {StringTestUtility} from '../helpers/StringTestUtility.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
+import {LibString} from 'solady/utils/LibString.sol';
 
 contract LayerableImpl is ImageLayerable {
     uint256 bindings;
@@ -48,8 +48,8 @@ contract LayerableImpl is ImageLayerable {
 contract LayerableTest is Test {
     using BitMapUtility for uint256;
     using StringTestUtility for string;
-    using Strings for uint256;
-    using Strings for uint8;
+    using LibString for uint256;
+    using LibString for uint8;
 
     LayerableImpl test;
 

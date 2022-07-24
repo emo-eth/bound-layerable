@@ -18,7 +18,7 @@ contract OnChainMultiTraitsTest is Test {
         test = new OnChainTraitsImpl();
     }
 
-    function testGetLayerJson() public {
+    function testGetLayerTraitJson() public {
         Attribute memory attribute = Attribute(
             'test',
             'hello',
@@ -28,17 +28,17 @@ contract OnChainMultiTraitsTest is Test {
         attributes[0] = attribute;
         test.setAttribute(1, attributes);
         string memory expected = '{"trait_type":"test","value":"hello"}';
-        string memory actual = test.getLayerJson(1);
+        string memory actual = test.getLayerTraitJson(1);
         assertEq(abi.encode(actual), abi.encode(expected));
 
         attribute.displayType = DisplayType.Date;
         test.setAttribute(2, attributes);
         expected = '{"trait_type":"test","display_type":"date","value":"hello"}';
-        actual = test.getLayerJson(2);
+        actual = test.getLayerTraitJson(2);
         assertEq(abi.encode(actual), abi.encode(expected));
 
         expected = '{"trait_type":"qual test","display_type":"date","value":"hello"}';
-        actual = test.getLayerJson(2, 'qual');
+        actual = test.getLayerTraitJson(2, 'qual');
         assertEq(abi.encode(actual), abi.encode(expected));
     }
 
@@ -54,11 +54,11 @@ contract OnChainMultiTraitsTest is Test {
         test.setAttributes(traitIds, attributes);
 
         string memory expected = '{"trait_type":"test","value":"hello"}';
-        string memory actual = test.getLayerJson(1);
+        string memory actual = test.getLayerTraitJson(1);
         assertEq(bytes(actual), bytes(expected));
 
         expected = '{"trait_type":"test","value":"hello2"}';
-        actual = test.getLayerJson(2);
+        actual = test.getLayerTraitJson(2);
         assertEq(bytes(actual), bytes(expected));
     }
 

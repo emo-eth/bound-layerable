@@ -3,17 +3,18 @@ pragma solidity ^0.8.4;
 
 import {OnChainTraits} from '../traits/OnChainTraits.sol';
 import {svg} from '../SVG.sol';
-import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {json} from '../lib/JSON.sol';
 import {Layerable} from './Layerable.sol';
 import {IImageLayerable} from './IImageLayerable.sol';
 import {InvalidInitialization} from '../interface/Errors.sol';
 import {Attribute} from '../interface/Structs.sol';
 import {DisplayType} from '../interface/Enums.sol';
+import {Base64} from 'solady/utils/Base64.sol';
+import {LibString} from 'solady/utils/LibString.sol';
 
 contract ImageLayerable is Layerable, IImageLayerable {
     // TODO: different strings impl?
-    using Strings for uint256;
+    using LibString for uint256;
 
     string defaultURI;
     // todo: use different URIs for solo layers and layered layers?
@@ -70,20 +71,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
         // if no bindings, format metadata as an individual NFT
         // check if bindings == 0 or 1; bindable layers will be treated differently
         else if (bindings == 0 || bindings == 1) {
-            Attribute memory layerTypeAttribute = traitAttributes[layerId];
-            layerTypeAttribute.value = layerTypeAttribute.traitType;
-            layerTypeAttribute.traitType = 'Layer Type';
-            layerTypeAttribute.displayType = DisplayType.String;
-            return
-                _constructJson(
-                    getLayerImageURI(layerId),
-                    json.array(
-                        json._commaJoin(
-                            _getAttributeJson(layerTypeAttribute),
-                            getLayerJson(layerId)
-                        )
-                    )
-                );
+            return _getRawLayerJson(layerId);
         } else {
             return
                 _constructJson(
@@ -91,6 +79,29 @@ contract ImageLayerable is Layerable, IImageLayerable {
                     getBoundAndActiveLayerTraits(bindings, activeLayers)
                 );
         }
+    }
+
+    function _getRawLayerJson(uint256 layerId)
+        internal
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        Attribute memory layerTypeAttribute = traitAttributes[layerId];
+        layerTypeAttribute.value = layerTypeAttribute.traitType;
+        layerTypeAttribute.traitType = 'Layer Type';
+        layerTypeAttribute.displayType = DisplayType.String;
+        return
+            _constructJson(
+                getLayerImageURI(layerId),
+                json.array(
+                    json._commaJoin(
+                        _getAttributeJson(layerTypeAttribute),
+                        getLayerTraitJson(layerId)
+                    )
+                )
+            );
     }
 
     /// @notice get the complete SVG for a set of activeLayers
@@ -112,9 +123,16 @@ contract ImageLayerable is Layerable, IImageLayerable {
 
         return
             string.concat(
-                '<svg xmlns="http://www.w3.org/2000/svg">',
-                layerImages,
-                '</svg>'
+                'data:image/svg+xml;base64,',
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '<svg xmlns="http://www.w3.org/2000/svg">',
+                            layerImages,
+                            '</svg>'
+                        )
+                    )
+                )
             );
     }
 

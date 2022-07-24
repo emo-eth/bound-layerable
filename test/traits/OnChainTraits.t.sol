@@ -18,19 +18,19 @@ contract OnChainTraitsTest is Test {
         test = new OnChainTraitsImpl();
     }
 
-    function testGetLayerJson() public {
+    function testGetLayerTraitJson() public {
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         string memory expected = '{"trait_type":"test","value":"hello"}';
-        string memory actual = test.getLayerJson(1);
+        string memory actual = test.getLayerTraitJson(1);
         assertEq(abi.encode(actual), abi.encode(expected));
 
         test.setAttribute(2, Attribute('test', 'hello', DisplayType.Date));
         expected = '{"trait_type":"test","display_type":"date","value":"hello"}';
-        actual = test.getLayerJson(2);
+        actual = test.getLayerTraitJson(2);
         assertEq(abi.encode(actual), abi.encode(expected));
 
         expected = '{"trait_type":"qual test","display_type":"date","value":"hello"}';
-        actual = test.getLayerJson(2, 'qual');
+        actual = test.getLayerTraitJson(2, 'qual');
         assertEq(abi.encode(actual), abi.encode(expected));
     }
 
@@ -44,11 +44,11 @@ contract OnChainTraitsTest is Test {
         test.setAttributes(traitIds, attributes);
 
         string memory expected = '{"trait_type":"test","value":"hello"}';
-        string memory actual = test.getLayerJson(1);
+        string memory actual = test.getLayerTraitJson(1);
         assertEq(bytes(actual), bytes(expected));
 
         expected = '{"trait_type":"test","value":"hello2"}';
-        actual = test.getLayerJson(2);
+        actual = test.getLayerTraitJson(2);
         assertEq(bytes(actual), bytes(expected));
     }
 
