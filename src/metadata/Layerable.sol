@@ -12,6 +12,8 @@ import {InvalidInitialization} from '../interface/Errors.sol';
 
 import {Base64} from 'solady/utils/Base64.sol';
 import {LibString} from 'solady/utils/LibString.sol';
+import {Attribute} from '../interface/Structs.sol';
+import {DisplayType} from '../interface/Enums.sol';
 
 abstract contract Layerable is ILayerable, OnChainTraits {
     using BitMapUtility for uint256;
@@ -148,10 +150,13 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         for (uint256 i; i < boundLayers.length; ++i) {
             layerTraits[i] = getLayerTraitJson(boundLayers[i]);
         }
-        layerTraits[boundLayers.length] = json.property(
+        Attribute memory layerCount = Attribute(
             'Layer Count',
-            boundLayers.length.toString()
+            boundLayers.length.toString(),
+            DisplayType.Number
         );
+
+        layerTraits[boundLayers.length] = _getAttributeJson(layerCount);
     }
 
     /// @dev get array of stringified trait json for active layers. Prepends "Active" to trait title.
