@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import {BoundLayerable} from '../BoundLayerable.sol';
@@ -46,19 +46,12 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
     {
         super._setActiveLayers(baseTokenId, packedActivelayers);
         uint256 packed = _getPackedOwnershipOf(baseTokenId);
-
-        // if (packed >> _BITPOS_EXTRA_DATA == 0) {
-        //     uint256 truncatedTimeStamp = (block.timestamp >>
-        //         TIMESTAMP_BITS_TO_TRUNCATE) & 0xFFFFFF;
-        //     packed = packed | (truncatedTimeStamp << _BITPOS_EXTRA_DATA);
-        //     _setPackedOwnershipOf(baseTokenId, packed);
-        // }
-        // uint24 extraData = _getExtraDataAt(baseTokenId);
-        // if (extraData == 0) {
-        //     // truncate the 16 least significant bits (18.2 hours) off of the timestamp, giving us a "40" bit timestamp
-
-        //     _setExtraDataAt(baseTokenId, uint24(truncatedTimeStamp));
-        // }
+        if (packed >> _BITPOS_EXTRA_DATA == 0) {
+            uint256 truncatedTimeStamp = (block.timestamp >>
+                TIMESTAMP_BITS_TO_TRUNCATE) & 0xFFFFFF;
+            packed = packed | (truncatedTimeStamp << _BITPOS_EXTRA_DATA);
+            _setPackedOwnershipOf(baseTokenId, packed);
+        }
     }
 
     function getBoundLayerBitMap(uint256 tokenId)
@@ -69,13 +62,11 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
         returns (uint256 bindings)
     {
         bindings = super.getBoundLayerBitMap(tokenId);
-
         uint256 truncatedBoundTimestamp = _getExtraDataAt(tokenId);
         // if not set, short-circuit
         if (truncatedBoundTimestamp == 0) {
             return bindings;
         }
-
         // place immutable variables on stack
         uint256 numTokensPerSet = NUM_TOKENS_PER_SET;
         uint256 truncatedFirstComposedCutoffTimestamp = TRUNCATED_FIRST_COMPOSED_CUTOFF;

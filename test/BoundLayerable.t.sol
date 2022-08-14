@@ -39,14 +39,24 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     }
 
     function testSetMetadataContract() public {
-        ILayerable layerable = new ImageLayerable('default', msg.sender);
+        ILayerable layerable = new ImageLayerable(
+            msg.sender,
+            'default',
+            100,
+            100
+        );
         test.setMetadataContract(layerable);
         assertEq(address(test.metadataContract()), address(layerable));
     }
 
     function testSetMetadataContract_onlyOwner(address addr) public {
         vm.assume(addr != address(this));
-        ILayerable layerable = new ImageLayerable('default', msg.sender);
+        ILayerable layerable = new ImageLayerable(
+            msg.sender,
+            'default',
+            100,
+            100
+        );
         vm.startPrank(addr);
         vm.expectRevert('Ownable: caller is not the owner');
         test.setMetadataContract(layerable);

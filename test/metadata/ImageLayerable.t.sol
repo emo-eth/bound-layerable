@@ -13,7 +13,7 @@ contract ImageLayerableImpl is ImageLayerable {
     uint256[] activeLayers;
     bytes32 packedBatchRandomness;
 
-    constructor() ImageLayerable('default', msg.sender) {}
+    constructor() ImageLayerable(msg.sender, 'default', 100, 100) {}
 
     function setBindings(uint256 _bindings) public {
         bindings = _bindings;
@@ -71,15 +71,15 @@ contract ImageLayerableTest is Test {
 
     function testGetTokenURI() public {
         // no seed means default metadata
-        string memory expected = '{"image":"default"}';
+        string
+            memory expected = 'data:application/json;base64,eyJpbWFnZSI6ImRlZmF1bHQifQ==';
         string memory actual = test.tokenURI(0);
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
 
         // once seeded, if not bound, regular nft metadata
         // test.setPackedBatchRandomness(bytes32(uint256(1)));
-        expected = '{"image":"layer/1","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}';
-
+        expected = 'data:application/json;base64,eyJpbWFnZSI6ImxheWVyLzEiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiTGF5ZXIgVHlwZSIsInZhbHVlIjoidGVzdCJ9LHsidHJhaXRfdHlwZSI6InRlc3QiLCJ2YWx1ZSI6ImhlbGxvIn1dfQ==';
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
 
@@ -91,7 +91,7 @@ contract ImageLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"></svg>","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]}';
+        expected = 'data:application/json;base64,eyJpbWFnZSI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlHaGxhV2RvZEQwaU1UQXdJaUFnZDJsa2RHZzlJakV3TUNJZ1Bqd3ZjM1puUGc9PSIsImF0dHJpYnV0ZXMiOlt7InRyYWl0X3R5cGUiOiJ0ZXN0IiwidmFsdWUiOiJoZWxsbyJ9LHsidHJhaXRfdHlwZSI6InRlc3QyIiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiJoZWxsbzIifSx7InRyYWl0X3R5cGUiOiJMYXllciBDb3VudCIsImRpc3BsYXlfdHlwZSI6Im51bWJlciIsInZhbHVlIjoiMiJ9XX0=';
         actual = test.tokenURI(1);
         assertEq(actual, expected);
         uint256[] memory activeLayers = new uint256[](2);
@@ -100,7 +100,7 @@ contract ImageLayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2"  height="100%" /><image href="layer/1"  height="100%" /></svg>","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]}';
+        expected = 'data:application/json;base64,eyJpbWFnZSI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlHaGxhV2RvZEQwaU1UQXdJaUFnZDJsa2RHZzlJakV3TUNJZ1BqeHBiV0ZuWlNCb2NtVm1QU0pzWVhsbGNpOHlJaUFnYUdWcFoyaDBQU0l4TURBbElpQWdkMmxrZEdnOUlqRXdNQ1VpSUM4K1BHbHRZV2RsSUdoeVpXWTlJbXhoZVdWeUx6RWlJQ0JvWldsbmFIUTlJakV3TUNVaUlDQjNhV1IwYUQwaU1UQXdKU0lnTHo0OEwzTjJaejQ9IiwiYXR0cmlidXRlcyI6W3sidHJhaXRfdHlwZSI6InRlc3QiLCJ2YWx1ZSI6ImhlbGxvIn0seyJ0cmFpdF90eXBlIjoidGVzdDIiLCJkaXNwbGF5X3R5cGUiOiJudW1iZXIiLCJ2YWx1ZSI6ImhlbGxvMiJ9LHsidHJhaXRfdHlwZSI6IkxheWVyIENvdW50IiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiIyIn0seyJ0cmFpdF90eXBlIjoiQWN0aXZlIHRlc3QyIiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiJoZWxsbzIifSx7InRyYWl0X3R5cGUiOiJBY3RpdmUgdGVzdCIsInZhbHVlIjoiaGVsbG8ifV19';
         actual = test.tokenURI(1);
         assertEq(actual, expected);
     }
@@ -127,7 +127,7 @@ contract ImageLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"></svg>","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"}]}';
+        expected = '{"image":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjwvc3ZnPg==","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Layer Count","display_type":"number","value":"2"}]}';
         actual = test.tokenJson(1);
         assertEq(actual, expected);
         uint256[] memory activeLayers = new uint256[](2);
@@ -136,7 +136,7 @@ contract ImageLayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected = '{"image":"<svg xmlns="http://www.w3.org/2000/svg"><image href="layer/2"  height="100%" /><image href="layer/1"  height="100%" /></svg>","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]}';
+        expected = '{"image":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjxpbWFnZSBocmVmPSJsYXllci8yIiAgaGVpZ2h0PSIxMDAlIiAgd2lkdGg9IjEwMCUiIC8+PGltYWdlIGhyZWY9ImxheWVyLzEiICBoZWlnaHQ9IjEwMCUiICB3aWR0aD0iMTAwJSIgLz48L3N2Zz4=","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Layer Count","display_type":"number","value":"2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]}';
         actual = test.tokenJson(1);
         assertEq(actual, expected);
     }

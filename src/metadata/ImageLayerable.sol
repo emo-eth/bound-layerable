@@ -20,24 +20,48 @@ contract ImageLayerable is Layerable, IImageLayerable {
     // todo: use different URIs for solo layers and layered layers?
     string baseLayerURI;
 
+    uint256 width;
+    uint256 height;
+
     // TODO: add baseLayerURI
-    constructor(string memory _defaultURI, address _owner) Layerable(_owner) {
-        _initialize(_defaultURI);
+    constructor(
+        address _owner,
+        string memory _defaultURI,
+        uint256 _width,
+        uint256 _height
+    ) Layerable(_owner) {
+        _initialize(_defaultURI, _width, _height);
     }
 
-    function initialize(address _owner, string memory _defaultURI)
-        public
-        virtual
-    {
+    function initialize(
+        address _owner,
+        string memory _defaultURI,
+        uint256 _width,
+        uint256 _height
+    ) public virtual {
         super._initialize(_owner);
-        _initialize(_defaultURI);
+        _initialize(_defaultURI, _width, _height);
     }
 
-    function _initialize(string memory _defaultURI) internal virtual {
+    function _initialize(
+        string memory _defaultURI,
+        uint256 _width,
+        uint256 _height
+    ) internal virtual {
         if (address(this).code.length > 0) {
             revert InvalidInitialization();
         }
         defaultURI = _defaultURI;
+        width = _width;
+        height = _height;
+    }
+
+    function setWidth(uint256 _width) external onlyOwner {
+        width = _width;
+    }
+
+    function setHeight(uint256 _height) external onlyOwner {
+        height = _height;
     }
 
     /// @notice set the default URI for unrevealed tokens
@@ -117,7 +141,14 @@ contract ImageLayerable is Layerable, IImageLayerable {
             string memory layerUri = getLayerImageURI(activeLayers[i]);
             layerImages = string.concat(
                 layerImages,
-                svg.image(layerUri, svg.prop('height', '100%'))
+                svg.image(
+                    layerUri,
+                    string.concat(
+                        svg.prop('height', '100%'),
+                        ' ',
+                        svg.prop('width', '100%')
+                    )
+                )
             );
         }
 
@@ -127,7 +158,11 @@ contract ImageLayerable is Layerable, IImageLayerable {
                 Base64.encode(
                     bytes(
                         string.concat(
-                            '<svg xmlns="http://www.w3.org/2000/svg">',
+                            '<svg xmlns="http://www.w3.org/2000/svg" ',
+                            svg.prop('height', height.toString()),
+                            ' ',
+                            svg.prop('width', width.toString()),
+                            '>',
                             layerImages,
                             '</svg>'
                         )

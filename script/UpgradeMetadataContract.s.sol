@@ -30,13 +30,19 @@ contract Deploy is Script {
         vm.startBroadcast(admin);
 
         // deploy new logic contracts
-        ImageLayerable logic = new ImageLayerable('', deployer);
+        ImageLayerable logic = new ImageLayerable(deployer, '', 0, 0);
         TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(
             payable(proxyAddress)
         );
 
         // upgrade proxy to use the new logic contract
         proxy.upgradeTo(address(logic));
+        // vm.stopBroadcast();
+
         vm.stopBroadcast();
+        vm.startBroadcast(deployer);
+        ImageLayerable impl = ImageLayerable(proxyAddress);
+        impl.setWidth(1000);
+        impl.setHeight(1250);
     }
 }

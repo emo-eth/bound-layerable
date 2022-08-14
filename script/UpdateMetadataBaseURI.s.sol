@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import {Script} from 'forge-std/Script.sol';
@@ -39,45 +39,17 @@ contract Deploy is Script {
     }
 
     function run() public {
+        Solenv.config();
+
         address deployer = vm.envAddress('DEPLOYER');
-        address admin = vm.envAddress('ADMIN');
-        address tokenAddress = vm.envAddress('TOKEN');
-        string memory defaultURI = vm.envString('DEFAULT_URI');
+        address metadataContract = vm.envAddress('METADATA_PROXY');
         string memory baseLayerURI = vm.envString('BASE_LAYER_URI');
 
         // use a separate admin account to deploy the proxy
-        vm.startBroadcast(admin);
-        // deploy this to have a copy of implementation logic
-        ImageLayerable logic = new ImageLayerable(
-            deployer,
-            defaultURI,
-            1000,
-            1250
-        );
-
-        // deploy proxy using the logic contract, setting "deployer" addr as owner
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(logic),
-            admin,
-            abi.encodeWithSignature(
-                'initialize(address,string)',
-                deployer,
-                'default'
-            )
-        );
-        vm.stopBroadcast();
-
         vm.startBroadcast(deployer);
-        // configure layerable contract metadata
-        ImageLayerable layerable = ImageLayerable(address(proxy));
-        layerable.setBaseLayerURI(baseLayerURI);
+        // deploy this to have a copy of implementation logic
+        ImageLayerable metadata = ImageLayerable(metadataContract); //, deployer);
 
-        // uint256[] memory layerIds = []
-        // Attribute[] memory attributes = []
-        // layerable.setAttributes(layerIds, attributes);
-
-        // set metadata contract on token
-        // TestnetToken token = TestnetToken(tokenAddress);
-        // token.setMetadataContract(layerable);
+        metadata.setBaseLayerURI(baseLayerURI);
     }
 }

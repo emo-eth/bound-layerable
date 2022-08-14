@@ -8,7 +8,7 @@ import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 contract ClaimableImageLayerable is ImageLayerable {
     uint256 private constant BITMASK_BURNED = 1 << 224;
 
-    constructor(address _owner) ImageLayerable('', _owner) {}
+    constructor(address _owner) ImageLayerable(_owner, '', 100, 100) {}
 
     function claimOwnership() public {
         _transferOwnership(msg.sender);
