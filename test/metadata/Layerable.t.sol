@@ -9,6 +9,7 @@ import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
 import {StringTestUtility} from '../helpers/StringTestUtility.sol';
 import {LibString} from 'solady/utils/LibString.sol';
+import {InvalidInitialization} from 'bound-layerable/interface/Errors.sol';
 
 contract LayerableImpl is ImageLayerable {
     uint256 bindings;
@@ -123,5 +124,10 @@ contract LayerableTest is Test {
                 )
             );
         }
+    }
+
+    function testInitialize_InvalidInitialization() public {
+        vm.expectRevert(abi.encodeWithSelector(InvalidInitialization.selector));
+        test.initialize(address(0));
     }
 }
