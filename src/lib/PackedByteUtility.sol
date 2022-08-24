@@ -38,23 +38,41 @@ library PackedByteUtility {
         }
     }
 
-    function getPackedShortFromRight(uint256 _index, uint256 _packedShorts)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function packShortAtIndex(
+        uint256 packedShorts,
+        uint256 shortToPack,
+        uint256 index
+    ) internal pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
         assembly {
-            result := and(shr(shl(4, _index), _packedShorts), 0xffff)
+            let shortOffset := sub(240, shl(4, index))
+            let mask := xor(MAX_INT, shl(shortOffset, 0xffff))
+            result := and(packedShorts, mask)
+            result := or(result, shl(shortOffset, shortToPack))
         }
     }
 
-    function getPackedShortFromLeft(uint256 _index, uint256 _packedShorts)
+    function getPackedShortFromRight(uint256 packed, uint256 index)
         internal
         pure
         returns (uint256 result)
     {
         assembly {
-            result := and(shr(shl(4, sub(16, _index)), _packedShorts), 0xffff)
+            let shortOffset := shl(4, index)
+            result := shr(shortOffset, packed)
+            result := and(result, 0xffff)
+        }
+    }
+
+    function getPackedShortFromLeft(uint256 packed, uint256 index)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            let shortOffset := sub(240, shl(4, index))
+            result := shr(shortOffset, packed)
+            result := and(result, 0xffff)
         }
     }
 
@@ -117,6 +135,22 @@ library PackedByteUtility {
                     shl(sub(248, i), mload(arrayOfBytesIndexPtr))
                 )
             }
+        }
+    }
+
+    function packArrayOfShorts(uint256[] memory shorts)
+        internal
+        pure
+        returns (uint256[2] memory packed)
+    {
+        packed = [uint256(0), uint256(0)];
+        for (uint256 i; i < shorts.length; i++) {
+            if (i == 32) {
+                break;
+            }
+            uint256 j = i / 16;
+            uint256 index = i % 16;
+            packed[j] = packShortAtIndex(packed[j], shorts[i], index);
         }
     }
 

@@ -11,6 +11,7 @@ import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
 import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {MAX_INT} from 'bound-layerable/interface/Constants.sol';
 import {ERC721A} from 'bound-layerable/token/ERC721A.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract BoundLayerableFirstComposedCutoffImpl is
     BoundLayerableFirstComposedCutoff,
@@ -28,13 +29,17 @@ contract BoundLayerableFirstComposedCutoffImpl is
             2**64
         )
     {
-        packedBatchRandomness = bytes32(uint256(1));
         for (uint256 i; i < 8; ++i) {
-            uint256 dist;
-            for (uint256 j; j < 32; ++j) {
-                dist |= ((j + 1) * 7) << (256 - (j + 1) * 8);
+            uint256[2] memory dists = [uint256(0), uint256(0)];
+            for (uint256 k; k < 2; ++k) {
+                uint256 dist = dists[k];
+                for (uint256 j; j < 16; ++j) {
+                    uint256 short = (j + 1 + (16 * k)) * 2047;
+                    dist = PackedByteUtility.packShortAtIndex(dist, short, j);
+                    dists[k] = dist;
+                }
             }
-            layerTypeToPackedDistributions[getLayerType(i)] = dist;
+            layerTypeToPackedDistributions[getLayerType(i)] = dists;
         }
         metadataContract = new ImageLayerable(msg.sender, 'default', 100, 100);
     }

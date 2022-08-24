@@ -129,7 +129,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @notice calculate the layerId for a given layerType, seed, and distributions.
      * @param layerType of layer
      * @param layerSeed uint256 random seed for layer (in practice will be truncated to 8 bits)
-     * @param distributions uint256 packed distributions of layerIds
+     * @param distributionsArray uint256[2] packed distributions of layerIds
      * @return layerId limited to 8 bits
      *
      * @dev If the last packed byte is <255, any seed larger than the last packed byte
@@ -157,7 +157,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     function getLayerId(
         uint8 layerType,
         uint256 layerSeed,
-        uint256[2] memory distributions
+        uint256[2] memory distributionsArray
     ) internal pure returns (uint256 layerId) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -165,55 +165,92 @@ abstract contract RandomTraits is BatchVRFConsumer {
                 mstore(0, BAD_DISTRIBUTIONS_SIGNATURE)
                 revert(0, 4)
             }
+            function getPackedShortFromLeft(index, packed) -> short {
+                let shortOffset := sub(240, shl(4, index))
+                short := shr(shortOffset, packed)
+                short := and(short, 0xffff)
+            }
 
+            let j
             // declare i outside of loop in case final distribution val is less than seed
             let i
+            let jOffset
+            let indexOffset
+
             // iterate over distribution values until we find one that our layer seed is less than
             for {
 
-            } lt(i, 32) {
-                i := add(1, i)
+            } lt(j, 2) {
+                j := add(1, j)
+                indexOffset := add(indexOffset, 0x20)
             } {
-                let dist := byte(i, distributions)
-                if iszero(dist) {
-                    if gt(i, 0) {
+                let distributions := mload(add(distributionsArray, indexOffset))
+                jOffset := mul(16, eq(j, 1))
+
+                for {
+
+                } lt(i, 16) {
+                    i := add(1, i)
+                } {
+                    let dist := getPackedShortFromLeft(i, distributions)
+                    if iszero(dist) {
+                        if iszero(i) {
+                            if iszero(j) {
+                                // first element should never be 0; distributions are invalid
+                                revertWithBadDistributions()
+                            }
+                        }
                         // if we've reached end of distributions, check layer type != 7
                         // otherwise if layerSeed is less than the last distribution,
                         // the layerId calculation will evaluate to 256 (overflow)
-                        if eq(i, 31) {
+                        if eq(add(i, jOffset), 31) {
                             if eq(layerType, 7) {
                                 revertWithBadDistributions()
                             }
                         }
                         // if distribution is 0, and it's not the first, we've reached the end of the list
                         // return i + 1 + 32 * layerType
-                        layerId := add(add(1, i), shl(5, layerType))
+                        layerId := add(
+                            // add 1 if j == 0
+                            // add 17 if j == 1
+                            add(i, add(1, jOffset)),
+                            shl(5, layerType)
+                        )
                         break
                     }
-                    // first element should never be 0; distributions are invalid
-                    revertWithBadDistributions()
-                }
-                if lt(layerSeed, dist) {
-                    // if i is 31 here, math will overflow here if layerType == 7
-                    // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
-                    if and(eq(i, 31), eq(layerType, 7)) {
-                        revertWithBadDistributions()
-                    }
+                    if lt(layerSeed, dist) {
+                        // if i is 31 here, math will overflow here if layerType == 7
+                        // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
+                        if and(eq(i, 31), eq(layerType, 7)) {
+                            revertWithBadDistributions()
+                        }
 
-                    // layerIds are 1-indexed, so add 1 to i
-                    layerId := add(add(1, i), shl(5, layerType))
+                        // layerIds are 1-indexed, so add 1 to i+j
+                        layerId := add(
+                            // add 1 if j == 0
+                            // add 17 if j == 1
+                            add(i, add(1, jOffset)),
+                            shl(5, layerType)
+                        )
+                        break
+                    }
+                }
+                // if layerId has been set, we don't need to increment j
+                if gt(layerId, 0) {
                     break
                 }
             }
-            // if i is 32, we've reached the end of the list and should default to the last id
-            if eq(i, 32) {
-                // math will overflow here if layerType == 7
-                // 32 + 32 * 7 = 256, which is too large for a uint8
-                if eq(layerType, 7) {
-                    revertWithBadDistributions()
+            // if i+j is 32, we've reached the end of the list and should default to the last id
+            if iszero(layerId) {
+                if eq(add(i, jOffset), 32) {
+                    // math will overflow here if layerType == 7
+                    // 32 + 32 * 7 = 256, which is too large for a uint8
+                    if eq(layerType, 7) {
+                        revertWithBadDistributions()
+                    }
+                    // return previous layerId
+                    layerId := add(add(jOffset, i), shl(5, layerType))
                 }
-                // return previous layerId
-                layerId := add(i, shl(5, layerType))
             }
         }
     }

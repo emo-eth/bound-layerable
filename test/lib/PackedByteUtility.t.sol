@@ -265,4 +265,30 @@ contract PackedByteUtilityTest is Test {
         );
         assertEq(unpacked, toPack);
     }
+
+    function testGetPackedShortFromLeft(uint16 toPack, uint8 index) public {
+        index %= 16;
+        uint256 packed = PackedByteUtility.packShortAtIndex(0, toPack, index);
+        emit log_named_uint('packed', packed);
+        uint256 unpacked = PackedByteUtility.getPackedShortFromLeft(
+            packed,
+            index
+        );
+        assertEq(unpacked, toPack);
+    }
+
+    function testGetPackedShortFromRight(uint16 toPack, uint8 index) public {
+        index %= 16;
+        uint256 packed = PackedByteUtility.packShortAtIndex(
+            0,
+            toPack,
+            15 - index
+        );
+        emit log_named_uint('packed', packed);
+        uint256 unpacked = PackedByteUtility.getPackedShortFromRight(
+            packed,
+            index
+        );
+        assertEq(unpacked, toPack);
+    }
 }

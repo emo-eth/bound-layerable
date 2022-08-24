@@ -24,36 +24,40 @@ contract TestTokenTest is Test, ERC721Recipient {
 
         // 6 backgrounds
         distributions = [
-            uint256(42),
-            uint256(84),
-            uint256(126),
-            uint256(168),
-            uint256(210),
-            uint256(252)
+            uint256(42 * 256),
+            uint256(84 * 256),
+            uint256(126 * 256),
+            uint256(168 * 256),
+            uint256(210 * 256),
+            uint256(252 * 256)
         ];
 
         uint256[] memory _distributions = distributions;
-        uint256 packedDistributions = PackedByteUtility.packArrayOfBytes(
-            _distributions
-        );
+        uint256[2] memory packedDistributions = PackedByteUtility
+            .packArrayOfShorts(_distributions);
         test.setLayerTypeDistribution(
             uint8(LayerType.BACKGROUND),
             packedDistributions
         );
 
+        packedDistributions = [uint256(2**16) << 240, uint256(0)];
+
         // 1 portrait
-        test.setLayerTypeDistribution(uint8(LayerType.PORTRAIT), 255 << 248);
+        test.setLayerTypeDistribution(
+            uint8(LayerType.PORTRAIT),
+            packedDistributions
+        );
 
         // 5 textures
         distributions = [
-            uint256(51),
-            uint256(102),
-            uint256(153),
-            uint256(204),
-            uint256(255)
+            uint256(51 * 256),
+            uint256(102 * 256),
+            uint256(153 * 256),
+            uint256(204 * 256),
+            uint256(255 * 256)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packArrayOfBytes(
+        packedDistributions = PackedByteUtility.packArrayOfShorts(
             _distributions
         );
 
@@ -64,17 +68,17 @@ contract TestTokenTest is Test, ERC721Recipient {
 
         // 8 objects
         distributions = [
-            uint256(31),
-            uint256(62),
-            uint256(93),
-            uint256(124),
-            uint256(155),
-            uint256(186),
-            uint256(217),
-            uint256(248)
+            uint256(31 * 256),
+            uint256(62 * 256),
+            uint256(93 * 256),
+            uint256(124 * 256),
+            uint256(155 * 256),
+            uint256(186 * 256),
+            uint256(217 * 256),
+            uint256(248 * 256)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packArrayOfBytes(
+        packedDistributions = PackedByteUtility.packArrayOfShorts(
             _distributions
         );
         test.setLayerTypeDistribution(
@@ -84,16 +88,16 @@ contract TestTokenTest is Test, ERC721Recipient {
 
         // 7 borders
         distributions = [
-            uint256(36),
-            uint256(72),
-            uint256(108),
-            uint256(144),
-            uint256(180),
-            uint256(216),
-            uint256(252)
+            uint256(36 * 256),
+            uint256(72 * 256),
+            uint256(108 * 256),
+            uint256(144 * 256),
+            uint256(180 * 256),
+            uint256(216 * 256),
+            uint256(252 * 256)
         ];
         _distributions = distributions;
-        packedDistributions = PackedByteUtility.packArrayOfBytes(
+        packedDistributions = PackedByteUtility.packArrayOfShorts(
             _distributions
         );
         test.setLayerTypeDistribution(

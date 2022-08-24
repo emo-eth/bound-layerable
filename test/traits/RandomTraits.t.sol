@@ -20,7 +20,7 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
     function getLayerTypeDistributions(uint8 layerType)
         public
         view
-        returns (uint256)
+        returns (uint256[2] memory)
     {
         return layerTypeToPackedDistributions[layerType];
     }
@@ -36,7 +36,7 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
     function getLayerIdPub(
         uint8 layerType,
         uint256 layerSeed,
-        uint256 distributions
+        uint256[2] memory distributions
     ) public pure returns (uint256) {
         return getLayerId(layerType, layerSeed, distributions);
     }
@@ -50,12 +50,16 @@ contract RandomTraitsTest is Test {
         test = new RandomTraitsTestImpl(7);
     }
 
-    function testSetLayerTypeDistribution(uint8 layerType, uint256 distribution)
-        public
-    {
+    function testSetLayerTypeDistribution(
+        uint8 layerType,
+        uint256[2] memory distribution
+    ) public {
         layerType = uint8(bound(layerType, 0, 7));
         test.setLayerTypeDistribution(layerType, distribution);
-        assertEq(test.getLayerTypeDistributions(layerType), distribution);
+        assertEq(
+            keccak256(abi.encode(test.getLayerTypeDistributions(layerType))),
+            keccak256(abi.encode(distribution))
+        );
     }
 
     function testSetLayerTypeDistributionInvalidLayerType(uint8 layerType)
@@ -63,14 +67,17 @@ contract RandomTraitsTest is Test {
     {
         layerType = uint8(bound(layerType, 8, 255));
         vm.expectRevert(abi.encodeWithSelector(InvalidLayerType.selector));
-        test.setLayerTypeDistribution(layerType, 0);
+        uint256[2] memory _distributions = [uint256(0), uint256(0)];
+        test.setLayerTypeDistribution(layerType, _distributions);
     }
 
     function testSetLayerTypeDistributionNotOwner(address notOwner) public {
         vm.assume(notOwner != address(this));
         vm.startPrank(notOwner);
+        uint256[2] memory _distributions = [uint256(1), uint256(0)];
+
         vm.expectRevert('Ownable: caller is not the owner');
-        test.setLayerTypeDistribution(0, 1);
+        test.setLayerTypeDistribution(0, _distributions);
     }
 
     function testGetLayerSeedShifts() public {
@@ -102,7 +109,7 @@ contract RandomTraitsTest is Test {
         distributions.push(0x80);
         test.setLayerTypeDistribution(
             uint8(LayerType.PORTRAIT),
-            PackedByteUtility.packArrayOfBytes(distributions)
+            PackedByteUtility.packArrayOfShorts(distributions)
         );
         uint256 layerId = test.getLayerId(0);
         assertTrue(layerId == 1 || layerId == 2);
@@ -126,7 +133,7 @@ contract RandomTraitsTest is Test {
         }
         test.setLayerTypeDistribution(
             uint8(LayerType.PORTRAIT),
-            PackedByteUtility.packArrayOfBytes(distributions)
+            PackedByteUtility.packArrayOfShorts(distributions)
         );
         uint256 layerId = test.getLayerId(0);
         assertGt(layerId, 0);
@@ -134,26 +141,25 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerIdBoundsDirect(
-        uint8 layerSeed,
+        uint16 layerSeed,
         uint8 layerType,
         uint8 numDistributions,
         uint8 increment
     ) public {
         layerType = uint8(bound(layerType, 0, 7));
         numDistributions = uint8(bound(numDistributions, 1, 32));
-        increment = uint8(bound(increment, 1, 8));
+        increment = uint8(bound(increment, 1, 2048));
 
         for (uint256 i = 0; i < numDistributions; ++i) {
             // ~ evenly split distributions
             uint256 num = (i + 1) * increment;
-            if (num == 256) {
-                num == 255;
+            if (num == 65536) {
+                num == 65535;
             }
             distributions.push(num);
         }
-        uint256 distributionPacked = PackedByteUtility.packArrayOfBytes(
-            distributions
-        );
+        uint256[2] memory distributionPacked = PackedByteUtility
+            .packArrayOfShorts(distributions);
 
         // test will revert if it's the last layer type and ends at an index higher than 31
         // since it will try to assign layerId to 256
