@@ -38,6 +38,26 @@ library PackedByteUtility {
         }
     }
 
+    function getPackedShortFromRight(uint256 _index, uint256 _packedShorts)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            result := and(shr(shl(4, _index), _packedShorts), 0xffff)
+        }
+    }
+
+    function getPackedShortFromLeft(uint256 _index, uint256 _packedShorts)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        assembly {
+            result := and(shr(shl(4, sub(16, _index)), _packedShorts), 0xffff)
+        }
+    }
+
     /**
      * @notice unpack elements of a packed byte array into a bitmap. Short-circuits at first 0-byte.
      * @param  packedBytes uint256 of bytes
