@@ -10,6 +10,7 @@ EXPAND:
 
 Features:
 
+-   [ ] add base name to metadata contract
 -   [x] add "Layer Count" to base layers
 -   [x] on-chain VRF for reveals
     -   [x] batched reveals

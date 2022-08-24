@@ -37,6 +37,7 @@ contract ImageLayerableImpl is ImageLayerable {
         return
             this.getTokenJson(
                 layerId,
+                layerId,
                 bindings,
                 activeLayers,
                 packedBatchRandomness
@@ -51,6 +52,7 @@ contract ImageLayerableImpl is ImageLayerable {
     {
         return
             this.getTokenURI(
+                layerId,
                 layerId,
                 bindings,
                 activeLayers,

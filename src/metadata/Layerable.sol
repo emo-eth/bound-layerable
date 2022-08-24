@@ -43,6 +43,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
      * @return the complete data URI of the token, including image and all attributes
      */
     function getTokenURI(
+        uint256 tokenId,
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
@@ -55,6 +56,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
                 Base64.encode(
                     bytes(
                         _getRawTokenJson(
+                            tokenId,
                             layerId,
                             bindings,
                             activeLayers,
@@ -66,12 +68,20 @@ abstract contract Layerable is ILayerable, OnChainTraits {
     }
 
     function getTokenJson(
+        uint256 tokenId,
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) public view virtual returns (string memory) {
-        return _getRawTokenJson(layerId, bindings, activeLayers, layerSeed);
+        return
+            _getRawTokenJson(
+                tokenId,
+                layerId,
+                bindings,
+                activeLayers,
+                layerSeed
+            );
     }
 
     function getLayerJson(uint256 layerId)
@@ -80,17 +90,24 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         virtual
         returns (string memory)
     {
-        return _getRawLayerJson(layerId);
+        return _getRawLayerJson(_getName(0, layerId), layerId);
     }
 
     function _getRawTokenJson(
+        uint256 tokenId,
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) internal view virtual returns (string memory);
 
-    function _getRawLayerJson(uint256 layerId)
+    function _getRawLayerJson(string memory name, uint256 layerId)
+        internal
+        view
+        virtual
+        returns (string memory);
+
+    function _getName(uint256 tokenId, uint256 layerId)
         internal
         view
         virtual

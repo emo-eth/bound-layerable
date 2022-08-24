@@ -28,6 +28,7 @@ interface ILayerable {
     ) external view returns (string memory);
 
     function getTokenURI(
+        uint256 tokenId,
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,

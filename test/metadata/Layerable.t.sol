@@ -39,6 +39,7 @@ contract LayerableImpl is ImageLayerable {
         return
             this.getTokenURI(
                 layerId,
+                layerId,
                 bindings,
                 activeLayers,
                 packedBatchRandomness

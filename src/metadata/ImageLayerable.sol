@@ -83,29 +83,32 @@ contract ImageLayerable is Layerable, IImageLayerable {
      * @return the complete URI of the token, including image and all attributes
      */
     function _getRawTokenJson(
+        uint256 tokenId,
         uint256 layerId,
         uint256 bindings,
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) internal view virtual override returns (string memory) {
+        string memory name = _getName(tokenId, layerId);
         // return default uri
         if (layerSeed == 0) {
-            return _constructJson(getDefaultImageURI(layerId), '');
+            return _constructJson(name, getDefaultImageURI(layerId), '');
         }
         // if no bindings, format metadata as an individual NFT
         // check if bindings == 0 or 1; bindable layers will be treated differently
         else if (bindings == 0 || bindings == 1) {
-            return _getRawLayerJson(layerId);
+            return _getRawLayerJson(name, layerId);
         } else {
             return
                 _constructJson(
+                    name,
                     getLayeredTokenImageURI(activeLayers),
                     getBoundAndActiveLayerTraits(bindings, activeLayers)
                 );
         }
     }
 
-    function _getRawLayerJson(uint256 layerId)
+    function _getRawLayerJson(string memory name, uint256 layerId)
         internal
         view
         virtual
@@ -118,6 +121,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
         layerTypeAttribute.displayType = DisplayType.String;
         return
             _constructJson(
+                name,
                 getLayerImageURI(layerId),
                 json.array(
                     json._commaJoin(
@@ -126,6 +130,16 @@ contract ImageLayerable is Layerable, IImageLayerable {
                     )
                 )
             );
+    }
+
+    function _getName(uint256 tokenId, uint256)
+        internal
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return tokenId.toString();
     }
 
     /// @notice get the complete SVG for a set of activeLayers
@@ -194,18 +208,24 @@ contract ImageLayerable is Layerable, IImageLayerable {
     }
 
     /// @dev helper to wrap imageURI and optional attributes into a JSON object string
-    function _constructJson(string memory imageURI, string memory attributes)
-        internal
-        pure
-        returns (string memory)
-    {
+    function _constructJson(
+        string memory name,
+        string memory imageURI,
+        string memory attributes
+    ) internal pure returns (string memory) {
+        string[] memory properties;
+        string memory nameProperty = json.property('name', name);
         if (bytes(attributes).length > 0) {
-            string[] memory properties = new string[](2);
-            properties[0] = json.property('image', imageURI);
+            properties = new string[](3);
+            properties[0] = nameProperty;
+            properties[1] = json.property('image', imageURI);
             // attributes should be a JSON array, no need to wrap it in quotes
-            properties[1] = json.rawProperty('attributes', attributes);
-            return json.objectOf(properties);
+            properties[2] = json.rawProperty('attributes', attributes);
+        } else {
+            properties = new string[](2);
+            properties[0] = nameProperty;
+            properties[1] = json.property('image', imageURI);
         }
-        return json.object(json.property('image', imageURI));
+        return json.objectOf(properties);
     }
 }
