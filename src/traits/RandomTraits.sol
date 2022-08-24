@@ -12,7 +12,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     // so traits distribution cutoffs should be sorted left-to-right
     // ie smallest packed 8-bit segment should be the leftmost 8 bits
     // TODO: does this mean for N < 32 traits, there should be N-1 distributions?
-    mapping(uint8 => uint256) layerTypeToPackedDistributions;
+    mapping(uint8 => uint256[2]) layerTypeToPackedDistributions;
 
     constructor(
         string memory name,
@@ -43,11 +43,10 @@ abstract contract RandomTraits is BatchVRFConsumer {
      *  that will be compared against a random byte to determine the layerId
      *  for a given tokenId
      */
-    function setLayerTypeDistribution(uint8 layerType, uint256 distribution)
-        public
-        virtual
-        onlyOwner
-    {
+    function setLayerTypeDistribution(
+        uint8 layerType,
+        uint256[2] calldata distribution
+    ) public virtual onlyOwner {
         _setLayerTypeDistribution(layerType, distribution);
     }
 
@@ -60,7 +59,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
      */
     function setLayerTypeDistributions(
         uint8[] memory layerTypes,
-        uint256[] memory distributions
+        uint256[2][] calldata distributions
     ) public virtual onlyOwner {
         for (uint8 i = 0; i < layerTypes.length; i++) {
             _setLayerTypeDistribution(layerTypes[i], distributions[i]);
@@ -120,7 +119,9 @@ abstract contract RandomTraits is BatchVRFConsumer {
     {
         uint8 layerType = getLayerType(tokenId);
         uint256 layerSeed = getLayerSeed(tokenId, layerType, seed);
-        uint256 distributions = layerTypeToPackedDistributions[layerType];
+        uint256[2] memory distributions = layerTypeToPackedDistributions[
+            layerType
+        ];
         return getLayerId(layerType, layerSeed, distributions);
     }
 
@@ -156,7 +157,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     function getLayerId(
         uint8 layerType,
         uint256 layerSeed,
-        uint256 distributions
+        uint256[2] memory distributions
     ) internal pure returns (uint256 layerId) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -217,9 +218,10 @@ abstract contract RandomTraits is BatchVRFConsumer {
         }
     }
 
-    function _setLayerTypeDistribution(uint8 layerType, uint256 distribution)
-        internal
-    {
+    function _setLayerTypeDistribution(
+        uint8 layerType,
+        uint256[2] calldata distribution
+    ) internal {
         if (layerType > 7) {
             revert InvalidLayerType();
         }
