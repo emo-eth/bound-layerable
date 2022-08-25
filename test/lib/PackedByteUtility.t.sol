@@ -140,6 +140,47 @@ contract PackedByteUtilityTest is Test {
         // assertEq(packed[1], 5 << 248);
     }
 
+    function testPackArrayOfShorts() public {
+        uint256[] memory bytearray = new uint256[](1);
+        bytearray[0] = 0;
+        uint256[2] memory packed = PackedByteUtility.packArrayOfShorts(
+            bytearray
+        );
+        assertEq(packed[0], 0x0);
+
+        bytearray[0] = 1;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], 0x1 << 240);
+
+        bytearray[0] = 2;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], 0x2 << 240);
+
+        bytearray[0] = 0xFF;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], 0xFF << 240);
+
+        bytearray = new uint256[](2);
+        bytearray[0] = 1;
+        bytearray[1] = 2;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], (0x1 << 240) | (0x2 << 224));
+
+        bytearray = new uint256[](32);
+        bytearray[0] = 1;
+        bytearray[15] = 2;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], (0x1 << 240) | 2);
+
+        bytearray = new uint256[](33);
+        bytearray[0] = 1;
+        bytearray[15] = 2;
+        bytearray[32] = 5;
+        packed = PackedByteUtility.packArrayOfShorts(bytearray);
+        assertEq(packed[0], (0x1 << 240) | 2);
+        // assertEq(packed[1], 5 << 248);
+    }
+
     function testPackArraysOfBytes() public {
         uint256[] memory bytearray = new uint256[](1);
         bytearray[0] = 0;
@@ -233,6 +274,30 @@ contract PackedByteUtilityTest is Test {
         for (uint8 i = 0; i < 32; i++) {
             assertEq(
                 PackedByteUtility.getPackedByteFromLeft(packed, i),
+                generic[i]
+            );
+        }
+    }
+
+    function testPackArrayOfShorts(uint16[32] memory toPack) public {
+        uint256[] memory generic = new uint256[](32);
+        for (uint8 i = 0; i < 32; i++) {
+            // always pack at least 1, never more than 255
+            generic[i] = toPack[i];
+        }
+        uint256[2] memory packed = PackedByteUtility.packArrayOfShorts(generic);
+        emit log_named_uint('packed[0]', packed[0]);
+        emit log_named_uint('packed[1]', packed[1]);
+
+        for (uint8 i = 0; i < 32; i++) {
+            uint256 arrIndex = i / 16;
+            uint256 packedElements = packed[arrIndex];
+            uint256 packedIndex = i % 16;
+            assertEq(
+                PackedByteUtility.getPackedShortFromLeft(
+                    packedElements,
+                    packedIndex
+                ),
                 generic[i]
             );
         }

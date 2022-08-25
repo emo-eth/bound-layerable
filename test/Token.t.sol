@@ -40,7 +40,7 @@ contract TestTokenTest is Test, ERC721Recipient {
             packedDistributions
         );
 
-        packedDistributions = [uint256(2**16) << 240, uint256(0)];
+        packedDistributions = [uint256(2**16 - 1) << 240, uint256(0)];
 
         // 1 portrait
         test.setLayerTypeDistribution(

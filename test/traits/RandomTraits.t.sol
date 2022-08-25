@@ -29,7 +29,7 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
         uint256 tokenId,
         uint8 layerType,
         bytes32 seed
-    ) public pure returns (uint8) {
+    ) public pure returns (uint16) {
         return getLayerSeed(tokenId, layerType, seed);
     }
 
@@ -144,11 +144,11 @@ contract RandomTraitsTest is Test {
         uint16 layerSeed,
         uint8 layerType,
         uint8 numDistributions,
-        uint8 increment
+        uint16 increment
     ) public {
         layerType = uint8(bound(layerType, 0, 7));
         numDistributions = uint8(bound(numDistributions, 1, 32));
-        increment = uint8(bound(increment, 1, 2048));
+        increment = uint16(bound(increment, 1, 2048));
 
         for (uint256 i = 0; i < numDistributions; ++i) {
             // ~ evenly split distributions
@@ -160,6 +160,8 @@ contract RandomTraitsTest is Test {
         }
         uint256[2] memory distributionPacked = PackedByteUtility
             .packArrayOfShorts(distributions);
+        emit log_named_uint('distributions[0]', distributionPacked[0]);
+        emit log_named_uint('distributions[1]', distributionPacked[1]);
 
         // test will revert if it's the last layer type and ends at an index higher than 31
         // since it will try to assign layerId to 256

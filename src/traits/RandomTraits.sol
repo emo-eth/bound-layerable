@@ -67,18 +67,18 @@ abstract contract RandomTraits is BatchVRFConsumer {
     }
 
     /**
-     * @notice calculate the 8-bit seed for a layer by hashing the packedBatchRandomness, tokenId, and layerType together
-     * and truncating to 8 bits
+     * @notice calculate the 16-bit seed for a layer by hashing the packedBatchRandomness, tokenId, and layerType together
+     * and truncating to 16 bits
      * @param tokenId tokenId to get seed for
      * @param layerType layer type to get seed for
      * @param seed packedBatchRandomness
-     * @return layerSeed - 8-bit seed for the given tokenId and layerType
+     * @return layerSeed - 16-bit seed for the given tokenId and layerType
      */
     function getLayerSeed(
         uint256 tokenId,
         uint8 layerType,
         bytes32 seed
-    ) internal pure returns (uint8 layerSeed) {
+    ) internal pure returns (uint16 layerSeed) {
         /// @solidity memory-safe-assembly
         assembly {
             // store seed in first slot of scratch memory
@@ -183,6 +183,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
             } lt(j, 2) {
                 j := add(1, j)
                 indexOffset := add(indexOffset, 0x20)
+                i := 0
             } {
                 let distributions := mload(add(distributionsArray, indexOffset))
                 jOffset := mul(16, eq(j, 1))
@@ -219,10 +220,12 @@ abstract contract RandomTraits is BatchVRFConsumer {
                         break
                     }
                     if lt(layerSeed, dist) {
-                        // if i is 31 here, math will overflow here if layerType == 7
+                        // if i+jOffset is 31 here, math will overflow here if layerType == 7
                         // 31 + 1 + 32 * 7 = 256, which is too large for a uint8
-                        if and(eq(i, 31), eq(layerType, 7)) {
-                            revertWithBadDistributions()
+                        if eq(layerType, 7) {
+                            if eq(add(i, jOffset), 31) {
+                                revertWithBadDistributions()
+                            }
                         }
 
                         // layerIds are 1-indexed, so add 1 to i+j
@@ -242,14 +245,14 @@ abstract contract RandomTraits is BatchVRFConsumer {
             }
             // if i+j is 32, we've reached the end of the list and should default to the last id
             if iszero(layerId) {
-                if eq(add(i, jOffset), 32) {
+                if eq(j, 2) {
                     // math will overflow here if layerType == 7
                     // 32 + 32 * 7 = 256, which is too large for a uint8
                     if eq(layerType, 7) {
                         revertWithBadDistributions()
                     }
                     // return previous layerId
-                    layerId := add(add(jOffset, i), shl(5, layerType))
+                    layerId := add(32, shl(5, layerType))
                 }
             }
         }
