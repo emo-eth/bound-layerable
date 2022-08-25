@@ -4,9 +4,8 @@ pragma solidity ^0.8.4;
 import {BoundLayerable} from '../BoundLayerable.sol';
 
 /**
- * @notice BoundLayerable contract that keeps track of (roughly) when a base token first had its active layers
- *         set on-chain (was "composed"). This is compared against an immutable cutoff time to determine if
- *         getBoundLayerBitMap will include an exclusive extra layer.
+ * @notice BoundLayerable contract that automatically binds a special layer if composed (layers are bound)
+ *         before the cutoff time
  */
 abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
     uint256 immutable FIRST_COMPOSED_CUTOFF;
