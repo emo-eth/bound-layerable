@@ -6,11 +6,11 @@ import {BadDistributions, InvalidLayerType} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 abstract contract RandomTraits is BatchVRFConsumer {
-    // 32 possible traits per layerType given uint8 distributions
+    // 32 possible traits per layerType given uint16 distributions
     // except final trait type, which has 31, because 0 is not a valid layerId.
     // Function getLayerId will check if layerSeed is less than the distribution,
     // so traits distribution cutoffs should be sorted left-to-right
-    // ie smallest packed 8-bit segment should be the leftmost 8 bits
+    // ie smallest packed 16-bit segment should be the leftmost 16 bits
     // TODO: does this mean for N < 32 traits, there should be N-1 distributions?
     mapping(uint8 => uint256[2]) layerTypeToPackedDistributions;
 
@@ -39,7 +39,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     /**
      * @notice Set the probability distribution for up to 32 different layer traitIds
      * @param layerType layer type to set distribution for
-     * @param distribution a uint256 comprised of sorted, packed bytes
+     * @param distribution a uint256[2] comprised of sorted, packed shorts
      *  that will be compared against a random byte to determine the layerId
      *  for a given tokenId
      */
@@ -53,7 +53,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     /**
      * @notice Set layer type distributions for multiple layer types
      * @param layerTypes layer types to set distribution for
-     * @param distributions an array of uint256s comprised of sorted, packed bytes
+     * @param distributions an array of uint256[2]s comprised of sorted, packed shorts
      *  that will be compared against a random byte to determine the layerId
      *  for a given tokenId
      */
