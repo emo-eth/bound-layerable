@@ -186,9 +186,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
                 i := 0
             } {
                 // lazily load each half of distributions from storage, since we might not need the second half
-                let distributions := sload(
-                    add(distributionsArray.slot, mul(1, eq(j, 1)))
-                )
+                let distributions := sload(add(distributionsArray.slot, j))
                 jOffset := mul(16, eq(j, 1))
 
                 for {
