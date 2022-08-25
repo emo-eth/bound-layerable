@@ -26,7 +26,8 @@ contract BoundLayerableFirstComposedCutoffImpl is
             7,
             1,
             address(0),
-            2**32
+            2**32,
+            255
         )
     {
         for (uint256 i; i < 8; ++i) {

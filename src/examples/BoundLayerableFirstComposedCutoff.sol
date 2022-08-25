@@ -9,7 +9,7 @@ import {BoundLayerable} from '../BoundLayerable.sol';
  */
 abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
     uint256 immutable FIRST_COMPOSED_CUTOFF;
-    uint8 constant EXCLUSIVE_LAYER_ID = 255;
+    uint8 immutable EXCLUSIVE_LAYER_ID;
 
     constructor(
         string memory name,
@@ -18,8 +18,9 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
         uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
-        address _metadataContractAddress,
-        uint256 _bindCutoffTimestamp
+        address metadataContractAddress,
+        uint256 firstComposedCutoff,
+        uint8 exclusiveLayerId
     )
         BoundLayerable(
             name,
@@ -28,10 +29,11 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            _metadataContractAddress
+            metadataContractAddress
         )
     {
-        FIRST_COMPOSED_CUTOFF = _bindCutoffTimestamp;
+        FIRST_COMPOSED_CUTOFF = firstComposedCutoff;
+        EXCLUSIVE_LAYER_ID = exclusiveLayerId;
     }
 
     function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
