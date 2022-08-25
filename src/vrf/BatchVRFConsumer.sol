@@ -3,12 +3,12 @@ pragma solidity ^0.8.4;
 
 import {VRFConsumerBaseV2} from 'chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
-import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
+import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
 import {MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from '../interface/Errors.sol';
 
-contract BatchVRFConsumer is ERC721A, Ownable {
+contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     // VRF config
     uint8 constant MAX_BATCH = 8;
     uint16 constant NUM_CONFIRMATIONS = 7;

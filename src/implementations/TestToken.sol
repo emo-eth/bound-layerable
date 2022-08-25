@@ -3,13 +3,12 @@ pragma solidity ^0.8.4;
 
 import {ERC721A} from '../token/ERC721A.sol';
 
-import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {BoundLayerableTestImpl} from './BoundLayerableTestImpl.sol';
 import {RandomTraits} from '../traits/RandomTraits.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
 
-contract TestToken is Ownable, BoundLayerableTestImpl {
+contract TestToken is BoundLayerableTestImpl {
     uint256 public constant MAX_SUPPLY = 5555;
     uint256 public constant MINT_PRICE = 0 ether;
     bool private tradingActive = true;

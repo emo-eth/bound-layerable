@@ -58,7 +58,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
             100
         );
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setMetadataContract(layerable);
     }
 

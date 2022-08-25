@@ -68,7 +68,7 @@ contract OnChainMultiTraitsTest is Test {
         attribute[0] = Attribute('test', 'hello', DisplayType.String);
         test.setAttribute(1, attribute);
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setAttribute(1, attribute);
     }
 
@@ -85,7 +85,7 @@ contract OnChainMultiTraitsTest is Test {
 
         test.setAttributes(traitIds, attributes);
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setAttributes(traitIds, attributes);
     }
 }

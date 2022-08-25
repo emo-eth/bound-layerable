@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// ERC721A Contracts v4.2.0
+// ERC721A Contracts v4.2.2
 // Creator: Chiru Labs
 
 pragma solidity ^0.8.4;
@@ -536,8 +536,6 @@ contract ERC721A is IERC721A {
         virtual
         override
     {
-        if (operator == _msgSenderERC721A()) revert ApproveToCaller();
-
         _operatorApprovals[_msgSenderERC721A()][operator] = approved;
         emit ApprovalForAll(_msgSenderERC721A(), operator, approved);
     }
@@ -598,7 +596,7 @@ contract ERC721A is IERC721A {
         returns (uint256 approvedAddressSlot, address approvedAddress)
     {
         TokenApprovalRef storage tokenApproval = _tokenApprovals[tokenId];
-        // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId]`.
+        // The following is equivalent to `approvedAddress = _tokenApprovals[tokenId].value`.
         assembly {
             approvedAddressSlot := tokenApproval.slot
             approvedAddress := sload(approvedAddressSlot)
@@ -868,6 +866,9 @@ contract ERC721A is IERC721A {
             uint256 end = startTokenId + quantity;
 
             // Use assembly to loop and emit the `Transfer` event for gas savings.
+            // The duplicated `log4` removes an extra check and reduces stack juggling.
+            // The assembly, together with the surrounding Solidity code, have been
+            // delicately arranged to nudge the compiler into producing optimized opcodes.
             assembly {
                 // Mask `to` to the lower 160 bits, in case the upper bits somehow aren't clean.
                 toMasked := and(to, _BITMASK_ADDRESS)
@@ -1114,41 +1115,9 @@ contract ERC721A is IERC721A {
         }
     }
 
-    function _setPackedOwnershipOf(uint256 index, uint256 packed)
-        internal
-        virtual
-    {
-        _packedOwnerships[index] = packed;
-    }
-
-    function _getPackedOwnershipOf(uint256 index)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
-        return _packedOwnerships[index];
-    }
-
     // =============================================================
     //                     EXTRA DATA OPERATIONS
     // =============================================================
-
-    /**
-     * @dev Get extra data for token ID
-     */
-    function _getExtraDataAt(uint256 index)
-        internal
-        view
-        virtual
-        returns (uint24 extraData)
-    {
-        uint256 packed = _packedOwnerships[index];
-        /// @solidity memory-safe-assembly
-        assembly {
-            extraData := shr(_BITPOS_EXTRA_DATA, packed)
-        }
-    }
 
     /**
      * @dev Directly sets the extra data for the ownership data `index`.
@@ -1220,47 +1189,39 @@ contract ERC721A is IERC721A {
         internal
         pure
         virtual
-        returns (string memory ptr)
+        returns (string memory str)
     {
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit),
-            // but we allocate 128 bytes to keep the free memory pointer 32-byte word aliged.
+            // but we allocate 0x80 bytes to keep the free memory pointer 32-byte word aligned.
             // We will need 1 32-byte word to store the length,
-            // and 3 32-byte words to store a maximum of 78 digits. Total: 32 + 3 * 32 = 128.
-            ptr := add(mload(0x40), 128)
+            // and 3 32-byte words to store a maximum of 78 digits. Total: 0x20 + 3 * 0x20 = 0x80.
+            str := add(mload(0x40), 0x80)
             // Update the free memory pointer to allocate.
-            mstore(0x40, ptr)
+            mstore(0x40, str)
 
             // Cache the end of the memory to calculate the length later.
-            let end := ptr
+            let end := str
 
-            // We write the string from the rightmost digit to the leftmost digit.
+            // We write the string from rightmost digit to leftmost digit.
             // The following is essentially a do-while loop that also handles the zero case.
-            // Costs a bit more than early returning for the zero case,
-            // but cheaper in terms of deployment and overall runtime costs.
-            for {
-                // Initialize and perform the first pass without check.
-                let temp := value
-                // Move the pointer 1 byte leftwards to point to an empty character slot.
-                ptr := sub(ptr, 1)
+            // prettier-ignore
+            for { let temp := value } 1 {} {
+                str := sub(str, 1)
                 // Write the character to the pointer.
                 // The ASCII index of the '0' character is 48.
-                mstore8(ptr, add(48, mod(temp, 10)))
-                temp := div(temp, 10)
-            } temp {
+                mstore8(str, add(48, mod(temp, 10)))
                 // Keep dividing `temp` until zero.
                 temp := div(temp, 10)
-            } {
-                // Body of the for loop.
-                ptr := sub(ptr, 1)
-                mstore8(ptr, add(48, mod(temp, 10)))
+                // prettier-ignore
+                if iszero(temp) { break }
             }
 
-            let length := sub(end, ptr)
+            let length := sub(end, str)
             // Move the pointer 32 bytes leftwards to make room for the length.
-            ptr := sub(ptr, 32)
+            str := sub(str, 0x20)
             // Store the length.
-            mstore(ptr, length)
+            mstore(str, length)
         }
     }
 }

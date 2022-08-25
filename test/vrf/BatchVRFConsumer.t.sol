@@ -111,14 +111,14 @@ contract BatchVRFConsumerTest is Test {
     function testSetForceUnsafeReveal() public {
         test.setForceUnsafeReveal(true);
         vm.startPrank(address(1));
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setForceUnsafeReveal(false);
     }
 
     function testRequestRandomWords_onlyOwner(address addr) public {
         vm.assume(addr != address(this));
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.requestRandomWords(bytes32(uint256(1)));
     }
 

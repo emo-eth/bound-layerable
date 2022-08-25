@@ -2,8 +2,6 @@
 pragma solidity ^0.8.4;
 
 import {ERC721A} from '../token/ERC721A.sol';
-
-import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
 import {BoundLayerable} from '../BoundLayerable.sol';
 import {json} from '../lib/JSON.sol';
 import '../interface/Errors.sol';
@@ -15,14 +13,7 @@ import {AllowList} from 'utility-contracts/AllowList.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {RandomTraitsImpl} from '../traits/RandomTraitsImpl.sol';
 
-contract TokenImpl is
-    BoundLayerable,
-    RandomTraitsImpl,
-    MaxMintable,
-    AllowList,
-    Withdrawable,
-    TwoStepOwnable
-{
+contract TokenImpl is BoundLayerable, RandomTraitsImpl {
     uint256 public constant MINT_PRICE = 0 ether;
 
     constructor(
@@ -45,8 +36,6 @@ contract TokenImpl is
             subscriptionId,
             layerableAddress
         )
-        AllowList(merkleRoot)
-        MaxMintable(maxSetsPerWallet * numTokensPerSet)
     {
         // alsoMetadata = ClaimableImageLayerable(address(metadataContract));
     }
@@ -56,14 +45,6 @@ contract TokenImpl is
             revert IncorrectPayment();
         }
         _;
-    }
-
-    function transferOwnership(address newOwner)
-        public
-        override(Ownable, TwoStepOwnable)
-        onlyOwner
-    {
-        TwoStepOwnable.transferOwnership(newOwner);
     }
 
     function tokenURI(uint256 tokenId)
@@ -88,14 +69,5 @@ contract TokenImpl is
         includesCorrectPayment(numSets)
     {
         super._mint(msg.sender, NUM_TOKENS_PER_SET * numSets);
-    }
-
-    function _numberMinted(address minter)
-        internal
-        view
-        override(ERC721A, MaxMintable)
-        returns (uint256)
-    {
-        return _numberMinted(minter);
     }
 }

@@ -56,7 +56,7 @@ contract OnChainTraitsTest is Test {
         vm.assume(addr != address(this));
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
     }
 
@@ -71,7 +71,7 @@ contract OnChainTraitsTest is Test {
 
         test.setAttributes(traitIds, attributes);
         vm.startPrank(addr);
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setAttributes(traitIds, attributes);
     }
 }

@@ -79,7 +79,7 @@ contract RandomTraitsTest is Test {
         vm.startPrank(notOwner);
         uint256[2] memory _distributions = [uint256(1), uint256(0)];
 
-        vm.expectRevert('Ownable: caller is not the owner');
+        vm.expectRevert(0x5fc483c5);
         test.setLayerTypeDistribution(0, _distributions);
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Ownable} from 'openzeppelin-contracts/contracts/access/Ownable.sol';
+import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 import {LibString} from 'solady/utils/LibString.sol';
 import {json} from '../lib/JSON.sol';
@@ -9,7 +9,7 @@ import {ArrayLengthMismatch} from '../interface/Errors.sol';
 import {DisplayType} from '../interface/Enums.sol';
 import {Attribute} from '../interface/Structs.sol';
 
-abstract contract OnChainMultiTraits is Ownable {
+abstract contract OnChainMultiTraits is TwoStepOwnable {
     using LibString for uint256;
 
     mapping(uint256 => Attribute[]) public traitAttributes;
