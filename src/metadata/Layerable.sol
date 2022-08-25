@@ -90,7 +90,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         virtual
         returns (string memory)
     {
-        return _getRawLayerJson(_getName(0, layerId), layerId);
+        return _getRawLayerJson(_getName(layerId, layerId), layerId);
     }
 
     function _getRawTokenJson(

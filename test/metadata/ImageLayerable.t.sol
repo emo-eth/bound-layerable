@@ -8,8 +8,12 @@ import {DisplayType} from 'bound-layerable/interface/Enums.sol';
 import {StringTestUtility} from '../helpers/StringTestUtility.sol';
 import {LibString} from 'solady/utils/LibString.sol';
 import {InvalidInitialization} from 'bound-layerable/interface/Errors.sol';
+import {json} from 'bound-layerable/lib/JSON.sol';
+import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
+import {Base64} from 'solady/utils/Base64.sol';
 
 contract ImageLayerableImpl is ImageLayerable {
+    using Strings for uint256;
     uint256 bindings;
     uint256[] activeLayers;
     bytes32 packedBatchRandomness;
@@ -72,20 +76,34 @@ contract ImageLayerableTest is Test {
         test.setBaseLayerURI('layer/');
     }
 
+    function toBase64URI(string memory tokenJson)
+        public
+        view
+        virtual
+        returns (string memory)
+    {
+        return
+            string.concat(
+                'data:application/json;base64,',
+                Base64.encode(bytes(tokenJson))
+            );
+    }
+
     function testGetTokenURI() public {
         // no seed means default metadata
-        string
-            memory expected = 'data:application/json;base64,eyJpbWFnZSI6ImRlZmF1bHQifQ==';
+        string memory tokenJson = test.tokenJson(0);
+        string memory expected = toBase64URI(tokenJson);
         string memory actual = test.tokenURI(0);
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
 
-        // once seeded, if not bound, regular nft metadata
-        // test.setPackedBatchRandomness(bytes32(uint256(1)));
-        expected = 'data:application/json;base64,eyJpbWFnZSI6ImxheWVyLzEiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiTGF5ZXIgVHlwZSIsInZhbHVlIjoidGVzdCJ9LHsidHJhaXRfdHlwZSI6InRlc3QiLCJ2YWx1ZSI6ImhlbGxvIn1dfQ==';
+        // // once seeded, if not bound, regular nft metadata
+        // // test.setPackedBatchRandomness(bytes32(uint256(1)));
+        // expected = 'data:application/json;base64,eyJpbWFnZSI6ImxheWVyLzEiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiTGF5ZXIgVHlwZSIsInZhbHVlIjoidGVzdCJ9LHsidHJhaXRfdHlwZSI6InRlc3QiLCJ2YWx1ZSI6ImhlbGxvIn1dfQ==';
         test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
         test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
-
+        tokenJson = test.tokenJson(1);
+        expected = toBase64URI(tokenJson);
         actual = test.tokenURI(1);
         assertEq(actual, expected);
 
@@ -94,7 +112,8 @@ contract ImageLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        expected = 'data:application/json;base64,eyJpbWFnZSI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlHaGxhV2RvZEQwaU1UQXdJaUFnZDJsa2RHZzlJakV3TUNJZ1Bqd3ZjM1puUGc9PSIsImF0dHJpYnV0ZXMiOlt7InRyYWl0X3R5cGUiOiJ0ZXN0IiwidmFsdWUiOiJoZWxsbyJ9LHsidHJhaXRfdHlwZSI6InRlc3QyIiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiJoZWxsbzIifSx7InRyYWl0X3R5cGUiOiJMYXllciBDb3VudCIsImRpc3BsYXlfdHlwZSI6Im51bWJlciIsInZhbHVlIjoiMiJ9XX0=';
+        tokenJson = test.tokenJson(1);
+        expected = toBase64URI(tokenJson);
         actual = test.tokenURI(1);
         assertEq(actual, expected);
         uint256[] memory activeLayers = new uint256[](2);
@@ -103,25 +122,51 @@ contract ImageLayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected = 'data:application/json;base64,eyJpbWFnZSI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlHaGxhV2RvZEQwaU1UQXdJaUFnZDJsa2RHZzlJakV3TUNJZ1BqeHBiV0ZuWlNCb2NtVm1QU0pzWVhsbGNpOHlJaUFnYUdWcFoyaDBQU0l4TURBbElpQWdkMmxrZEdnOUlqRXdNQ1VpSUM4K1BHbHRZV2RsSUdoeVpXWTlJbXhoZVdWeUx6RWlJQ0JvWldsbmFIUTlJakV3TUNVaUlDQjNhV1IwYUQwaU1UQXdKU0lnTHo0OEwzTjJaejQ9IiwiYXR0cmlidXRlcyI6W3sidHJhaXRfdHlwZSI6InRlc3QiLCJ2YWx1ZSI6ImhlbGxvIn0seyJ0cmFpdF90eXBlIjoidGVzdDIiLCJkaXNwbGF5X3R5cGUiOiJudW1iZXIiLCJ2YWx1ZSI6ImhlbGxvMiJ9LHsidHJhaXRfdHlwZSI6IkxheWVyIENvdW50IiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiIyIn0seyJ0cmFpdF90eXBlIjoiQWN0aXZlIHRlc3QyIiwiZGlzcGxheV90eXBlIjoibnVtYmVyIiwidmFsdWUiOiJoZWxsbzIifSx7InRyYWl0X3R5cGUiOiJBY3RpdmUgdGVzdCIsInZhbHVlIjoiaGVsbG8ifV19';
+        tokenJson = test.tokenJson(1);
+        expected = toBase64URI(tokenJson);
         actual = test.tokenURI(1);
         assertEq(actual, expected);
     }
 
-    function testGetTokenJson() public {
+    function testGetTokenJson1() public {
         // no seed means default metadata
-        string memory expected = '{"image":"default"}';
+        string[] memory properties = new string[](2);
+        properties[0] = json.property('name', uint256(0).toString());
+        properties[1] = json.property('image', 'default');
+        string memory expected = json.objectOf(properties);
+
         string memory actual = test.tokenJson(0);
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
 
         // once seeded, if not bound, regular nft metadata
         // test.setPackedBatchRandomness(bytes32(uint256(1)));
-        expected = '{"image":"layer/1","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}';
+        Attribute memory attribute1 = Attribute(
+            'test',
+            'hello',
+            DisplayType.String
+        );
+        Attribute memory attribute2 = Attribute(
+            'test2',
+            'hello2',
+            DisplayType.Number
+        );
+        test.setAttribute(1, attribute1);
+        test.setAttribute(2, attribute2);
+        properties = new string[](3);
+        properties[0] = json.property('name', uint256(1).toString());
+        properties[1] = json.property('image', 'layer/1');
+        string[] memory attributes = new string[](2);
+        attributes[0] = _attributeString(
+            Attribute('Layer Type', 'test', DisplayType.String)
+        );
+        attributes[1] = _attributeString(attribute1);
 
-        test.setAttribute(1, Attribute('test', 'hello', DisplayType.String));
-        test.setAttribute(2, Attribute('test2', 'hello2', DisplayType.Number));
-
+        properties[2] = json.rawProperty(
+            'attributes',
+            json.arrayOf(attributes)
+        );
+        expected = json.objectOf(properties);
         actual = test.tokenJson(1);
         assertEq(actual, expected);
 
@@ -130,32 +175,107 @@ contract ImageLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        expected = '{"image":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjwvc3ZnPg==","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Layer Count","display_type":"number","value":"2"}]}';
+        properties[1] = json.property(
+            'image',
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjwvc3ZnPg=='
+        );
+        attributes = new string[](3);
+        attributes[0] = _attributeString(attribute1);
+        attributes[1] = _attributeString(attribute2);
+        attributes[2] = _attributeString(
+            Attribute('Layer Count', '2', DisplayType.Number)
+        );
+        properties[2] = json.rawProperty(
+            'attributes',
+            json.arrayOf(attributes)
+        );
+        expected = json.objectOf(properties);
         actual = test.tokenJson(1);
         assertEq(actual, expected);
+
         uint256[] memory activeLayers = new uint256[](2);
         // activeLayers[0] = (0x02 << 248) | (0x01 << 240);
         activeLayers[0] = 2;
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        expected = '{"image":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjxpbWFnZSBocmVmPSJsYXllci8yIiAgaGVpZ2h0PSIxMDAlIiAgd2lkdGg9IjEwMCUiIC8+PGltYWdlIGhyZWY9ImxheWVyLzEiICBoZWlnaHQ9IjEwMCUiICB3aWR0aD0iMTAwJSIgLz48L3N2Zz4=","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Layer Count","display_type":"number","value":"2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]}';
+        properties[1] = json.property(
+            'image',
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjxpbWFnZSBocmVmPSJsYXllci8yIiAgaGVpZ2h0PSIxMDAlIiAgd2lkdGg9IjEwMCUiIC8+PGltYWdlIGhyZWY9ImxheWVyLzEiICBoZWlnaHQ9IjEwMCUiICB3aWR0aD0iMTAwJSIgLz48L3N2Zz4='
+        );
+        attributes = new string[](5);
+        attributes[0] = _attributeString(attribute1);
+        attributes[1] = _attributeString(attribute2);
+        attributes[2] = _attributeString(
+            Attribute('Layer Count', '2', DisplayType.Number)
+        );
+        attributes[3] = _attributeString(
+            Attribute('Active test2', attribute2.value, attribute2.displayType)
+        );
+        attributes[4] = _attributeString(
+            Attribute('Active test', attribute1.value, attribute1.displayType)
+        );
+        properties[2] = json.rawProperty(
+            'attributes',
+            json.arrayOf(attributes)
+        );
+        expected = json.objectOf(properties);
+        // expected = '{"image":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjxpbWFnZSBocmVmPSJsYXllci8yIiAgaGVpZ2h0PSIxMDAlIiAgd2lkdGg9IjEwMCUiIC8+PGltYWdlIGhyZWY9ImxheWVyLzEiICBoZWlnaHQ9IjEwMCUiICB3aWR0aD0iMTAwJSIgLz48L3N2Zz4=","attributes":[{"trait_type":"test","value":"hello"},{"trait_type":"test2","display_type":"number","value":"hello2"},{"trait_type":"Layer Count","display_type":"number","value":"2"},{"trait_type":"Active test2","display_type":"number","value":"hello2"},{"trait_type":"Active test","value":"hello"}]}';
         actual = test.tokenJson(1);
         assertEq(actual, expected);
     }
 
+    function _attributeString(Attribute memory attribute)
+        internal
+        pure
+        returns (string memory)
+    {
+        string[] memory properties;
+        if (attribute.displayType == DisplayType.Number) {
+            properties = new string[](3);
+            properties[0] = json.property('trait_type', attribute.traitType);
+            properties[1] = json.property('display_type', 'number');
+            properties[2] = json.property('value', attribute.value);
+        } else {
+            properties = new string[](2);
+            properties[0] = json.property('trait_type', attribute.traitType);
+            properties[1] = json.property('value', attribute.value);
+        }
+        return json.objectOf(properties);
+    }
+
     function testGetTokenJson(uint256 layerId) public {
         // no seed means default metadata
-        string memory expected = '{"image":"default"}';
+        string[] memory properties = new string[](2);
+        properties[0] = json.property('name', uint256(layerId).toString());
+        properties[1] = json.property('image', 'default');
+        string memory expected = json.objectOf(properties);
         string memory actual = test.tokenJson(layerId);
+
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
-
-        expected = string.concat(
-            '{"image":"layer/',
-            layerId.toString(),
-            '","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}'
+        properties = new string[](3);
+        properties[0] = json.property('name', layerId.toString());
+        properties[1] = json.property(
+            'image',
+            string.concat('layer/', layerId.toString())
         );
+        Attribute memory attribute = Attribute(
+            'test',
+            'hello',
+            DisplayType.String
+        );
+        string[] memory attributes = new string[](2);
+        attributes[0] = _attributeString(
+            Attribute('Layer Type', 'test', DisplayType.String)
+        );
+        attributes[1] = _attributeString(attribute);
+        properties[2] = json.rawProperty(
+            'attributes',
+            json.arrayOf(attributes)
+        );
+        expected = json.objectOf(properties);
+
         test.setAttribute(
             layerId,
             Attribute('test', 'hello', DisplayType.String)
@@ -168,11 +288,31 @@ contract ImageLayerableTest is Test {
     }
 
     function testGetLayerJson(uint256 layerId) public {
-        string memory expected = string.concat(
-            '{"image":"layer/',
-            layerId.toString(),
-            '","attributes":[{"trait_type":"Layer Type","value":"test"},{"trait_type":"test","value":"hello"}]}'
+        string[] memory properties = new string[](3);
+        properties[0] = json.property('name', layerId.toString());
+        properties[1] = json.property(
+            'image',
+            string.concat('layer/', layerId.toString())
         );
+        Attribute memory attribute1 = Attribute(
+            'Layer Type',
+            'test',
+            DisplayType.String
+        );
+        Attribute memory attribute2 = Attribute(
+            'test',
+            'hello',
+            DisplayType.String
+        );
+        string[] memory attributes = new string[](2);
+        attributes[0] = _attributeString(attribute1);
+        attributes[1] = _attributeString(attribute2);
+        properties[2] = json.rawProperty(
+            'attributes',
+            json.arrayOf(attributes)
+        );
+        string memory expected = json.objectOf(properties);
+
         test.setAttribute(
             layerId,
             Attribute('test', 'hello', DisplayType.String)
