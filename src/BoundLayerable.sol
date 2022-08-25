@@ -341,6 +341,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
 
     function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
         internal
+        virtual
     {
         // 0 is not a valid layerId, so make sure it is not set on bindings.
         bindings = bindings & NOT_0TH_BITMASK;

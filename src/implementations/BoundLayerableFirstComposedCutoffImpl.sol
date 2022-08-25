@@ -26,7 +26,7 @@ contract BoundLayerableFirstComposedCutoffImpl is
             7,
             1,
             address(0),
-            2**64
+            2**32
         )
     {
         for (uint256 i; i < 8; ++i) {
@@ -66,18 +66,60 @@ contract BoundLayerableFirstComposedCutoffImpl is
         }
     }
 
-    /// @dev override ERC721A _extraData to keep the first-composed timestamp between transfers
-    function _extraData(
-        address,
-        address,
-        uint24 previousExtraData
-    )
-        internal
+    function getLayerType(uint256 tokenId)
+        public
         view
         virtual
-        override(ERC721A, BoundLayerableFirstComposedCutoff)
-        returns (uint24)
+        override(RandomTraits, RandomTraitsImpl)
+        returns (uint8)
     {
-        return previousExtraData;
+        return RandomTraitsImpl.getLayerType(tokenId);
+    }
+
+    function checkUnpackedIsSubsetOfBound(
+        uint256 unpackedLayers,
+        uint256 boundLayers
+    ) public pure virtual {
+        _checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
+    }
+
+    function unpackLayersToBitMapAndCheckForDuplicates(uint256 packedLayers)
+        public
+        virtual
+        returns (uint256, uint256)
+    {
+        return _unpackLayersToBitMapAndCheckForDuplicates(packedLayers);
+    }
+
+    function getActiveLayersRaw(uint256 tokenId)
+        public
+        view
+        returns (uint256 activeLayers)
+    {
+        return _tokenIdToPackedActiveLayers[tokenId];
+    }
+
+    function getLayerId(uint256 tokenId)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        super.getLayerId(tokenId);
+        return tokenId + 1;
+    }
+
+    function getLayerId(uint256 tokenId, bytes32 seed)
+        internal
+        view
+        override
+        returns (uint256)
+    {
+        super.getLayerId(tokenId, seed);
+        return tokenId + 1;
+    }
+
+    function isBurned(uint256 tokenId) public view returns (bool) {
+        return _isBurned(tokenId);
     }
 }
