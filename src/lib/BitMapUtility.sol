@@ -84,39 +84,26 @@ library BitMapUtility {
                 mstore(0x40, add(freePtr, 0x20))
                 return(freePtr, 0x20)
             }
-            function lsb(x) -> leastSignificantBit {
-                if iszero(and(x, _128_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 128)
-                    x := shr(128, x)
-                }
-                if iszero(and(x, _64_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 64)
-                    x := shr(64, x)
-                }
-                if iszero(and(x, _32_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 32)
-                    x := shr(32, x)
-                }
-                if iszero(and(x, _16_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 16)
-                    x := shr(16, x)
-                }
-                if iszero(and(x, _8_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 8)
-                    x := shr(8, x)
-                }
-                if iszero(and(x, _4_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 4)
-                    x := shr(4, x)
-                }
-                if iszero(and(x, _2_MASK)) {
-                    leastSignificantBit := add(leastSignificantBit, 2)
-                    x := shr(2, x)
-                }
-                if iszero(and(x, _1_MASK)) {
-                    // No need to shift x any more.
-                    leastSignificantBit := add(leastSignificantBit, 1)
-                }
+            function lsb(x) -> r {
+                x := and(x, add(not(x), 1))
+                r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+                r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+                r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+
+                x := shr(r, x)
+                x := or(x, shr(1, x))
+                x := or(x, shr(2, x))
+                x := or(x, shr(4, x))
+                x := or(x, shr(8, x))
+                x := or(x, shr(16, x))
+
+                r := or(
+                    r,
+                    byte(
+                        and(31, shr(27, mul(x, 0x07C4ACDD))),
+                        0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                    )
+                )
             }
 
             // set unpacked ptr to free mem
@@ -174,97 +161,63 @@ library BitMapUtility {
 
     /**
      * @notice Finds the zero-based index of the first one (right-indexed) in the binary representation of x.
-     * @dev See the note on msb in the "Find First Set" Wikipedia article https://en.wikipedia.org/wiki/Find_first_set
      * @param x The uint256 number for which to find the index of the most significant bit.
-     * @return mostSignificantBit The index of the most significant bit as an uint256.
-     * from: https://github.com/paulrberg/prb-math/blob/main/contracts/PRBMath.sol, ported to pure assembly
+     * @return r The index of the most significant bit as an uint256.
+     * from: https://gist.github.com/Vectorized/6e5d4271162c931988b385f1fd5a298f
      */
-    function msb(uint256 x) internal pure returns (uint256 mostSignificantBit) {
+    function msb(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(lt(x, _2_128)) {
-                x := shr(128, x)
-                mostSignificantBit := add(mostSignificantBit, 128)
-            }
-            if iszero(lt(x, _2_64)) {
-                x := shr(64, x)
-                mostSignificantBit := add(mostSignificantBit, 64)
-            }
-            if iszero(lt(x, _2_32)) {
-                x := shr(32, x)
-                mostSignificantBit := add(mostSignificantBit, 32)
-            }
-            if iszero(lt(x, _2_16)) {
-                x := shr(16, x)
-                mostSignificantBit := add(mostSignificantBit, 16)
-            }
-            if iszero(lt(x, _2_8)) {
-                x := shr(8, x)
-                mostSignificantBit := add(mostSignificantBit, 8)
-            }
-            if iszero(lt(x, _2_4)) {
-                x := shr(4, x)
-                mostSignificantBit := add(mostSignificantBit, 4)
-            }
-            if iszero(lt(x, _2_2)) {
-                x := shr(2, x)
-                mostSignificantBit := add(mostSignificantBit, 2)
-            }
-            if iszero(lt(x, _2_1)) {
-                // No need to shift x any more.
-                mostSignificantBit := add(mostSignificantBit, 1)
-            }
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+
+            x := shr(r, x)
+            x := or(x, shr(1, x))
+            x := or(x, shr(2, x))
+            x := or(x, shr(4, x))
+            x := or(x, shr(8, x))
+            x := or(x, shr(16, x))
+
+            r := or(
+                r,
+                byte(
+                    and(31, shr(27, mul(x, 0x07C4ACDD))),
+                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                )
+            )
         }
     }
 
     /**
      * @notice Finds the zero-based index of the first one (left-indexed) in the binary representation of x
      * @param x The uint256 number for which to find the index of the least significant bit.
-     * @return leastSignificantBit The index of the least significant bit as an uint256.
+     * @return r The index of the least significant bit as an uint256.
+     * from: // from https://gist.github.com/Atarpara/d6d3773d0ce8958b95804fd36981825f
+
      */
-    function lsb(uint256 x)
-        internal
-        pure
-        returns (uint256 leastSignificantBit)
-    {
+    function lsb(uint256 x) internal pure returns (uint256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(x) {
-                mstore(0, 0)
-                return(0, 0x20)
-            }
-            if iszero(and(x, _128_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 128)
-                x := shr(128, x)
-            }
-            if iszero(and(x, _64_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 64)
-                x := shr(64, x)
-            }
-            if iszero(and(x, _32_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 32)
-                x := shr(32, x)
-            }
-            if iszero(and(x, _16_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 16)
-                x := shr(16, x)
-            }
-            if iszero(and(x, _8_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 8)
-                x := shr(8, x)
-            }
-            if iszero(and(x, _4_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 4)
-                x := shr(4, x)
-            }
-            if iszero(and(x, _2_MASK)) {
-                leastSignificantBit := add(leastSignificantBit, 2)
-                x := shr(2, x)
-            }
-            if iszero(and(x, _1_MASK)) {
-                // No need to shift x any more.
-                leastSignificantBit := add(leastSignificantBit, 1)
-            }
+            x := and(x, add(not(x), 1))
+            r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+
+            x := shr(r, x)
+            x := or(x, shr(1, x))
+            x := or(x, shr(2, x))
+            x := or(x, shr(4, x))
+            x := or(x, shr(8, x))
+            x := or(x, shr(16, x))
+
+            r := or(
+                r,
+                byte(
+                    and(31, shr(27, mul(x, 0x07C4ACDD))),
+                    0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+                )
+            )
         }
     }
 }
