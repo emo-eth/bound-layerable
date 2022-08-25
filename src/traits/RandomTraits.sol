@@ -119,7 +119,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
     {
         uint8 layerType = getLayerType(tokenId);
         uint256 layerSeed = getLayerSeed(tokenId, layerType, seed);
-        uint256[2] memory distributions = layerTypeToPackedDistributions[
+        uint256[2] storage distributions = layerTypeToPackedDistributions[
             layerType
         ];
         return getLayerId(layerType, layerSeed, distributions);
@@ -157,8 +157,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
     function getLayerId(
         uint8 layerType,
         uint256 layerSeed,
-        uint256[2] memory distributionsArray
-    ) internal pure returns (uint256 layerId) {
+        uint256[2] storage distributionsArray
+    ) internal view returns (uint256 layerId) {
         /// @solidity memory-safe-assembly
         assembly {
             function revertWithBadDistributions() {
@@ -185,7 +185,10 @@ abstract contract RandomTraits is BatchVRFConsumer {
                 indexOffset := add(indexOffset, 0x20)
                 i := 0
             } {
-                let distributions := mload(add(distributionsArray, indexOffset))
+                // lazily load each half of distributions from storage, since we might not need the second half
+                let distributions := sload(
+                    add(distributionsArray.slot, mul(1, eq(j, 1)))
+                )
                 jOffset := mul(16, eq(j, 1))
 
                 for {
@@ -204,8 +207,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
                         // if we've reached end of distributions, check layer type != 7
                         // otherwise if layerSeed is less than the last distribution,
                         // the layerId calculation will evaluate to 256 (overflow)
-                        if eq(add(i, jOffset), 31) {
-                            if eq(layerType, 7) {
+                        if eq(layerType, 7) {
+                            if eq(add(i, jOffset), 31) {
                                 revertWithBadDistributions()
                             }
                         }

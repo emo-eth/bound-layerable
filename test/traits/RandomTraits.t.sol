@@ -33,12 +33,15 @@ contract RandomTraitsTestImpl is RandomTraitsImpl {
         return getLayerSeed(tokenId, layerType, seed);
     }
 
+    uint256[2] _distributions;
+
     function getLayerIdPub(
         uint8 layerType,
         uint256 layerSeed,
         uint256[2] memory distributions
-    ) public pure returns (uint256) {
-        return getLayerId(layerType, layerSeed, distributions);
+    ) public returns (uint256) {
+        _distributions = distributions;
+        return getLayerId(layerType, layerSeed, _distributions);
     }
 }
 
