@@ -7,7 +7,7 @@ import {BatchVRFConsumer} from 'bound-layerable/vrf/BatchVRFConsumer.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
-import {MaxRandomness, BatchNotRevealed, UnsafeReveal, BatchNotRevealed} from 'bound-layerable/interface/Errors.sol';
+import {MaxRandomness, BatchNotRevealed, OnlyCoordinatorCanFulfill, UnsafeReveal, BatchNotRevealed} from 'bound-layerable/interface/Errors.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
     uint256 fakeNextTokenId;
@@ -285,29 +285,6 @@ contract BatchVRFConsumerTest is Test {
         test.requestRandomWords(bytes32(uint256(1)));
     }
 
-    // function testWriteRandomBatch(
-    //     bool emptySeed,
-    //     uint8 batch,
-    //     uint256 randomness
-    // ) public {
-    //     // bound batch to [0,7]
-    //     batch = uint8(bound(batch, 0, 7));
-    //     bytes32 seed;
-    //     // test that writing overwrites any previous randomness by supplying all 1's
-    //     if (!emptySeed) {
-    //         seed = bytes32(~uint256(0));
-    //     }
-    //     bytes32 newSeed = test.writeRandomBatch(seed, batch, randomness);
-    //     // calculate bits to shift based on batch number
-    //     uint256 shift = 32 * batch;
-    //     // create mask for last 32 bits once shifted
-    //     uint256 batchMask = 2**32 - 1;
-    //     // get 32-bit randomness that should have been written
-    //     uint256 maskedRandomness = (randomness >> shift) & batchMask;
-    //     uint256 maskedSeed = (uint256(newSeed) >> shift) & batchMask;
-    //     assertEq(maskedRandomness, maskedSeed);
-    // }
-
     function testCheckAndReturnNumBatches(
         uint8 numCompletedBatches,
         uint8 revealBatch,
@@ -359,8 +336,8 @@ contract BatchVRFConsumerTest is Test {
         vm.assume(_addr != address(this));
         vm.startPrank(_addr);
         vm.expectRevert(
-            abi.encodeWithSignature(
-                'OnlyCoordinatorCanFulfill(address,address)',
+            abi.encodeWithSelector(
+                OnlyCoordinatorCanFulfill.selector,
                 _addr,
                 address(this)
             )

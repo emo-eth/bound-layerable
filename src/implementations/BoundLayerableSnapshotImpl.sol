@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import {BoundLayerable} from 'bound-layerable/BoundLayerable.sol';
-import {BoundLayerableVariations} from 'bound-layerable/BoundLayerableVariations.sol';
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {ImageLayerable} from 'bound-layerable/metadata/ImageLayerable.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
