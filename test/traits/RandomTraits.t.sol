@@ -10,7 +10,7 @@ import {BadDistributions, InvalidLayerType} from 'bound-layerable/interface/Erro
 
 contract RandomTraitsTestImpl is RandomTraitsImpl {
     constructor(uint8 numTokensPerSet)
-        RandomTraits('', '', address(1234), 5555, numTokensPerSet, 1)
+        RandomTraits('', '', address(1234), 5555, numTokensPerSet, 1, 16)
     {}
 
     function setPackedBatchRandomness(bytes32 seed) public {
@@ -106,8 +106,13 @@ contract RandomTraitsTest is Test {
         );
     }
 
-    function testGetLayerIdBounds(uint32 packedBatchRandomness) public {
-        vm.assume(packedBatchRandomness != 0);
+    function testGetLayerIdBounds(uint256 packedBatchRandomness) public {
+        packedBatchRandomness = bound(
+            packedBatchRandomness,
+            1,
+            (1 << test.BITS_PER_RANDOM_BATCH()) - 1
+        );
+        // vm.assume(packedBatchRandomness != 0);
         test.setPackedBatchRandomness(bytes32(uint256(packedBatchRandomness)));
         distributions.push(0x80);
         test.setLayerTypeDistribution(
@@ -119,10 +124,14 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerIdBounds(
-        uint32 packedBatchRandomness,
+        uint256 packedBatchRandomness,
         uint8 numDistributions
     ) public {
-        vm.assume(packedBatchRandomness != 0);
+        packedBatchRandomness = bound(
+            packedBatchRandomness,
+            1,
+            (1 << test.BITS_PER_RANDOM_BATCH()) - 1
+        );
         test.setPackedBatchRandomness(bytes32(uint256(packedBatchRandomness)));
 
         numDistributions = uint8(bound(numDistributions, 1, 32));
@@ -144,11 +153,16 @@ contract RandomTraitsTest is Test {
     }
 
     function testGetLayerIdBoundsDirect(
-        uint16 layerSeed,
+        uint256 layerSeed,
         uint8 layerType,
         uint8 numDistributions,
         uint16 increment
     ) public {
+        layerSeed = bound(
+            layerSeed,
+            1,
+            (1 << test.BITS_PER_RANDOM_BATCH()) - 1
+        );
         layerType = uint8(bound(layerType, 0, 7));
         numDistributions = uint8(bound(numDistributions, 1, 32));
         increment = uint16(bound(increment, 1, 2048));

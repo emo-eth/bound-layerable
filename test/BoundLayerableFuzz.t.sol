@@ -50,9 +50,13 @@ contract BoundLayerableFuzzTest is Test, BoundLayerableEvents {
                 badSuperSet = subset - 1;
             }
         }
+        uint256 expectedErrorParam = subset & (badSuperSet ^ subset);
         // check should revert
         vm.expectRevert(
-            abi.encodeWithSelector(LayerNotBoundToTokenId.selector)
+            abi.encodeWithSelector(
+                LayerNotBoundToTokenId.selector,
+                expectedErrorParam
+            )
         );
         test.checkUnpackedIsSubsetOfBound(subset, badSuperSet);
     }

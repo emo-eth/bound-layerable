@@ -18,6 +18,10 @@ remappings = [
     'bound-layerable=src/'
 ]
 
+
+[fuzz]
+runs = 4096
+
 [profile.ir]
 via_ir = true
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

@@ -6,11 +6,16 @@ import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces
 import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
-import {MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal} from '../interface/Errors.sol';
+import {MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
+import {BitMapUtility} from '../lib/BitMapUtility.sol';
 
 contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     // VRF config
-    uint8 constant MAX_BATCH = 8;
+    uint8 public immutable NUM_RANDOM_BATCHES;
+    uint8 public immutable BITS_PER_RANDOM_BATCH;
+    uint8 immutable BITS_PER_BATCH_SHIFT;
+    uint256 immutable BATCH_RANDOMNESS_MASK;
+
     uint16 constant NUM_CONFIRMATIONS = 7;
     uint32 constant CALLBACK_GAS_LIMIT = 300_000;
     // todo: mutable?
@@ -36,15 +41,32 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         address vrfCoordinatorAddress,
         uint240 maxNumSets,
         uint8 numTokensPerSet,
-        uint64 subscriptionId
+        uint64 subscriptionId,
+        uint8 numRandomBatches
     ) ERC721A(name, symbol) {
+        if (numRandomBatches < 2) {
+            revert NumRandomBatchesMustBeGreaterThanOne();
+        }
+        NUM_RANDOM_BATCHES = numRandomBatches;
+        BITS_PER_RANDOM_BATCH = uint8(uint256(256) / NUM_RANDOM_BATCHES);
+        BITS_PER_BATCH_SHIFT = uint8(
+            BitMapUtility.msb(uint256(BITS_PER_RANDOM_BATCH))
+        );
+        bool powerOfTwo = uint256(BITS_PER_RANDOM_BATCH) *
+            uint256(NUM_RANDOM_BATCHES) ==
+            256;
+        if (!powerOfTwo) {
+            revert NumRandomBatchesMustBePowerOfTwo();
+        }
+        BATCH_RANDOMNESS_MASK = ((1 << BITS_PER_RANDOM_BATCH) - 1);
+
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
         MAX_NUM_SETS = maxNumSets;
         NUM_TOKENS_PER_SET = numTokensPerSet;
         SUBSCRIPTION_ID = subscriptionId;
         NUM_TOKENS_PER_RANDOM_BATCH =
             (uint248(MAX_NUM_SETS) * uint248(NUM_TOKENS_PER_SET)) /
-            uint248(MAX_BATCH);
+            uint248(NUM_RANDOM_BATCHES);
         MAX_TOKEN_ID = uint256(MAX_NUM_SETS) * uint256(NUM_TOKENS_PER_SET);
     }
 
@@ -98,18 +120,20 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     {
         // put immutable variable onto stack
         uint256 numTokensPerRandomBatch = NUM_TOKENS_PER_RANDOM_BATCH;
+        uint256 shift = BITS_PER_BATCH_SHIFT;
+        uint256 mask = BATCH_RANDOMNESS_MASK;
 
         /// @solidity memory-safe-assembly
         assembly {
-            // use mask to get last 32 bits of shifted packedBatchRandomness
+            // use mask to get last N bits of shifted packedBatchRandomness
             randomness := and(
-                // shift packedBatchRandomness right by batchNum * 32 bits
+                // shift packedBatchRandomness right by batchNum * bits per batch
                 shr(
-                    // get batch number of token, multiply by 32
-                    shl(5, div(tokenId, numTokensPerRandomBatch)),
+                    // get batch number of token, multiply by bits per batch
+                    shl(shift, div(tokenId, numTokensPerRandomBatch)),
                     seed
                 ),
-                _32_MASK
+                mask
             )
             if eq(randomness, 0) {
                 mstore(0, BATCH_NOT_REVEALED_SIGNATURE)
@@ -153,7 +177,8 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         bytes32 currSeed = packedBatchRandomness;
         uint256 randomness = randomWords[0];
 
-        uint256 mask = type(uint256).max << (256 - (32 * numBatches));
+        uint256 mask = type(uint256).max <<
+            (256 - (BITS_PER_RANDOM_BATCH * numBatches));
         uint256 newRandomness = randomness & mask;
         currSeed = bytes32(uint256(currSeed) | newRandomness);
         _revealBatch += numBatches;
@@ -179,14 +204,14 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
 
         uint32 _revealBatch = uint32(revealBatch);
         // reveal is complete if _revealBatch is >= 8
-        if (_revealBatch >= MAX_BATCH) {
+        if (_revealBatch >= NUM_RANDOM_BATCHES) {
             revert MaxRandomness();
         }
 
         // if equal, next batch has not started minting yet
         bool batchIsInProgress = nextTokenId_ >
             numCompletedBatches * NUM_TOKENS_PER_RANDOM_BATCH &&
-            numCompletedBatches != MAX_BATCH;
+            numCompletedBatches != NUM_RANDOM_BATCHES;
         bool batchInProgressAlreadyRevealed = _revealBatch >
             numCompletedBatches;
         uint32 numMissingBatches = batchInProgressAlreadyRevealed

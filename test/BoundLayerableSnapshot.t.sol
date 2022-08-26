@@ -45,6 +45,27 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(0, layers);
     }
 
+    // function test_snapshotBurnAndBindMultipleAndSetActive() public {
+    //     uint256[] memory layers = new uint256[](6);
+    //     layers[0] = 6;
+    //     layers[1] = 1;
+    //     layers[2] = 2;
+    //     layers[3] = 3;
+    //     layers[4] = 4;
+    //     layers[5] = 5;
+
+    //     test.burnAndBindMultipleAndSetActiveLayers(
+    //         0,
+    //         layers,
+    //         ((6 << 248) |
+    //             (1 << 240) |
+    //             (2 << 232) |
+    //             (3 << 224) |
+    //             (4 << 216) |
+    //             (5 << 208))
+    //     );
+    // }
+
     function test_snapshotBurnAndBindSingleTransferred() public {
         test.burnAndBindSingle(0, 22);
     }
@@ -60,7 +81,15 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(21, layers);
     }
 
-    function test_snapshotBurnAndBindSingle() public {
-        test.burnAndBindSingle(0, 1);
+    // function test_snapshotBurnAndBindSingle() public {
+    //     test.burnAndBindSingle(0, 1);
+    // }
+
+    function test_snapshotMintSingle() public {
+        test.mint();
     }
+
+    // function test_snapshotMintFive() public {
+    //     test.mint(5);
+    // }
 }

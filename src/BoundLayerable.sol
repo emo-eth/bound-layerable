@@ -49,7 +49,8 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
             vrfCoordinatorAddress,
             maxNumSets,
             numTokensPerSet,
-            subscriptionId
+            subscriptionId,
+            16
         )
     {
         metadataContract = ILayerable(_metadataContractAddress);
@@ -401,7 +402,10 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
                     // revert LayerNotBoundToTokenId()
                     LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE
                 )
-                revert(0, 4)
+                let disjoint := xor(superset, subset)
+                let notBound := and(disjoint, subset)
+                mstore(4, notBound)
+                revert(0, 36)
             }
         }
     }
@@ -420,5 +424,9 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     /// @dev set 0th bit to 1 in order to make first binding cost cheaper for user
     function _setPlaceholderBinding(uint256 tokenId) internal {
         _tokenIdToBoundLayers[tokenId] = 1;
+    }
+
+    function _setPlaceholderActiveLayers(uint256 tokenId) internal {
+        _tokenIdToPackedActiveLayers[tokenId] = 1;
     }
 }

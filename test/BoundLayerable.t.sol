@@ -62,7 +62,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.setMetadataContract(layerable);
     }
 
-    function testCheckUnpackedIsSubsetOfBound() public {
+    function testCheckUnpackedIsSubsetOfBound1() public {
         // pass: bound is superset of unpacked
         uint256 boundLayers = (0xFF << 248) | 2;
         uint256 unpackedLayers = 0xFF << 248;
@@ -74,15 +74,19 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // revert: bound is subset of unpacked
-        boundLayers = unpackedLayers;
+        boundLayers = 0xFF << 248;
         unpackedLayers |= 2;
-        vm.expectRevert(LayerNotBoundToTokenId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(LayerNotBoundToTokenId.selector, 2)
+        );
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // revert: unpacked and bound are disjoint
         boundLayers = 2;
         unpackedLayers = 0xFF << 248;
-        vm.expectRevert(LayerNotBoundToTokenId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(LayerNotBoundToTokenId.selector, 0xFF << 248)
+        );
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
     }
 

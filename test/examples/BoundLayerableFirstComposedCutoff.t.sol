@@ -73,16 +73,20 @@ contract BoundLayerableFirstComposedCutoffTest is Test, BoundLayerableEvents {
         unpackedLayers = 0xFF << 248;
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
-        // revert: bound is subset of unpacked
-        boundLayers = unpackedLayers;
+        // // revert: bound is subset of unpacked
+        boundLayers = 0xFF << 248;
         unpackedLayers |= 2;
-        vm.expectRevert(LayerNotBoundToTokenId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(LayerNotBoundToTokenId.selector, 2)
+        );
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
 
         // revert: unpacked and bound are disjoint
         boundLayers = 2;
         unpackedLayers = 0xFF << 248;
-        vm.expectRevert(LayerNotBoundToTokenId.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(LayerNotBoundToTokenId.selector, 0xFF << 248)
+        );
         test.checkUnpackedIsSubsetOfBound(unpackedLayers, boundLayers);
     }
 
