@@ -41,15 +41,15 @@ contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
         super._mint(msg.sender, 7);
     }
 
-    // function mint(uint256 numSets) public {
-    //     uint256 nextId = _nextTokenId();
-    //     for (uint256 i = 0; i < numSets; ++i) {
-    //         uint256 tokenId = nextId + NUM_TOKENS_PER_SET * i;
-    //         // _setPlaceholderBinding(nextId + tokenId);
-    //         // _setPlaceholderActiveLayers(nextId + tokenId);
-    //     }
-    //     super._mint(msg.sender, 7 * numSets);
-    // }
+    function mint(uint256 numSets) public {
+        uint256 nextId = _nextTokenId();
+        for (uint256 i = 0; i < numSets; ++i) {
+            uint256 tokenId = nextId + NUM_TOKENS_PER_SET * i;
+            // _setPlaceholderBinding(nextId + tokenId);
+            // _setPlaceholderActiveLayers(nextId + tokenId);
+        }
+        super._mint(msg.sender, 7 * numSets);
+    }
 
     function setBoundLayers(uint256 tokenId, uint256 bindings) public {
         _tokenIdToBoundLayers[tokenId] = bindings;

@@ -4,6 +4,8 @@ pragma solidity ^0.8.4;
 import {Test} from 'forge-std/Test.sol';
 import {BoundLayerableSnapshotImpl} from 'bound-layerable/implementations/BoundLayerableSnapshotImpl.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
+import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
+
 import {LayerVariation} from 'bound-layerable/interface/Structs.sol';
 import {BoundLayerableEvents} from 'bound-layerable/interface/Events.sol';
 import {ArrayLengthMismatch, LayerNotBoundToTokenId, MultipleVariationsEnabled, DuplicateActiveLayers} from 'bound-layerable/interface/Errors.sol';
@@ -45,26 +47,22 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(0, layers);
     }
 
-    // function test_snapshotBurnAndBindMultipleAndSetActive() public {
-    //     uint256[] memory layers = new uint256[](6);
-    //     layers[0] = 6;
-    //     layers[1] = 1;
-    //     layers[2] = 2;
-    //     layers[3] = 3;
-    //     layers[4] = 4;
-    //     layers[5] = 5;
+    function test_snapshotBurnAndBindMultipleAndSetActive() public {
+        uint256[] memory layers = new uint256[](6);
+        layers[0] = 6;
+        layers[1] = 1;
+        layers[2] = 2;
+        layers[3] = 3;
+        layers[4] = 4;
+        layers[5] = 5;
+        uint256 boundLayerBitMap = 769242387287835449923186861691057117988303463679787008;
+        uint256[] memory individualLayers = BitMapUtility.unpackBitMap(
+            boundLayerBitMap
+        );
+        uint256 packed = PackedByteUtility.packArrayOfBytes(individualLayers);
 
-    //     test.burnAndBindMultipleAndSetActiveLayers(
-    //         0,
-    //         layers,
-    //         ((6 << 248) |
-    //             (1 << 240) |
-    //             (2 << 232) |
-    //             (3 << 224) |
-    //             (4 << 216) |
-    //             (5 << 208))
-    //     );
-    // }
+        test.burnAndBindMultipleAndSetActiveLayers(0, layers, packed);
+    }
 
     function test_snapshotBurnAndBindSingleTransferred() public {
         test.burnAndBindSingle(0, 22);
@@ -81,15 +79,15 @@ contract BoundLayerableSnapshotTest is Test, BoundLayerableEvents {
         test.burnAndBindMultiple(21, layers);
     }
 
-    // function test_snapshotBurnAndBindSingle() public {
-    //     test.burnAndBindSingle(0, 1);
-    // }
+    function test_snapshotBurnAndBindSingle() public {
+        test.burnAndBindSingle(0, 1);
+    }
 
     function test_snapshotMintSingle() public {
         test.mint();
     }
 
-    // function test_snapshotMintFive() public {
-    //     test.mint(5);
-    // }
+    function test_snapshotMintFive() public {
+        test.mint(5);
+    }
 }
