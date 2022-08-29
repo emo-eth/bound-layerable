@@ -23,3 +23,5 @@ error NoActiveLayers();
 error InvalidInitialization();
 error NumRandomBatchesMustBePowerOfTwo();
 error NumRandomBatchesMustBeGreaterThanOne();
+error RevealPending();
+error NoBatchesToReveal();

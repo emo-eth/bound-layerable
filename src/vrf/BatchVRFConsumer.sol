@@ -6,7 +6,7 @@ import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces
 import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
-import {MaxRandomness, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
+import {MaxRandomness, NoBatchesToReveal, RevealPending, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 
 contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
@@ -31,6 +31,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
 
     bytes32 public packedBatchRandomness;
     uint248 revealBatch;
+    uint256 public pendingReveal;
 
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
     bool forceUnsafeReveal;
@@ -81,22 +82,29 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     /**
      * @notice request random words from the chainlink vrf for each unrevealed batch
      */
-    function requestRandomWords(bytes32 keyHash)
-        external
-        onlyOwner
-        returns (uint256)
-    {
+    function requestRandomWords(bytes32 keyHash) external returns (uint256) {
+        if (pendingReveal != 0) {
+            revert RevealPending();
+        }
         (uint32 numBatches, ) = _checkAndReturnNumBatches();
+        if (numBatches == 0) {
+            revert NoBatchesToReveal();
+        }
 
         // Will revert if subscription is not set and funded.
-        return
-            COORDINATOR.requestRandomWords(
-                keyHash,
-                SUBSCRIPTION_ID,
-                NUM_CONFIRMATIONS,
-                CALLBACK_GAS_LIMIT,
-                numBatches
-            );
+        uint256 _pending = COORDINATOR.requestRandomWords(
+            keyHash,
+            SUBSCRIPTION_ID,
+            NUM_CONFIRMATIONS,
+            CALLBACK_GAS_LIMIT,
+            1
+        );
+        pendingReveal = _pending;
+        return _pending;
+    }
+
+    function clearPendingReveal() external onlyOwner {
+        pendingReveal = 0;
     }
 
     function getRandomnessForTokenId(uint256 tokenId)
@@ -184,6 +192,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         _revealBatch += numBatches;
         packedBatchRandomness = currSeed;
         revealBatch = _revealBatch;
+        pendingReveal = 0;
     }
 
     /**
