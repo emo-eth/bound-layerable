@@ -65,4 +65,8 @@ contract BoundLayerableTestImpl is BoundLayerableSnapshotImpl {
     function isBurned(uint256 tokenId) public view returns (bool) {
         return _isBurned(tokenId);
     }
+
+    function getTokenURI(uint256) public view returns (string memory) {
+        return _tokenURI(0);
+    }
 }
