@@ -317,8 +317,33 @@ contract RandomTraitsTest is Test {
         assertEq(id, 6 * 32 + 32);
     }
 
-    // function testNDistributionsForNMaxNot255() public {
-    //     uint256 numDistributions = test.getNumDistributionsForNMax(255);
-    //     assertEq(numDistributions, 0);
-    // }
+    function testGetLayerId(
+        uint8 layerType,
+        uint8 index,
+        uint8 numLayers
+    ) public {
+        // bound layertype
+        layerType = uint8(bound(layerType, 0, 7));
+        // max is 31 if layerType is 7
+        uint256 maxLayer = layerType == 7 ? 31 : 32;
+        // bound numLayers
+        numLayers = uint8(bound(numLayers, 1, maxLayer));
+        // bound index to numLayers (0-indexed)
+        index = uint8(bound(index, 0, numLayers - 1));
+
+        // create distributions of sequential ints starting at 1
+        uint256[2] memory dists = [uint256(0), uint256(0)];
+        for (uint256 i; i < numLayers; ++i) {
+            // index within packed shorts
+            uint256 j = i % 16;
+            // which packed shorts to index
+            uint256 k = i / 16;
+            uint256 dist = dists[k];
+            // overwrite
+            dists[k] = PackedByteUtility.packShortAtIndex(dist, i + 1, j);
+        }
+        // use index as seed
+        uint256 layerId = test.getLayerIdPub(layerType, index, dists);
+        assertEq(layerId, index + 1 + 32 * layerType);
+    }
 }
