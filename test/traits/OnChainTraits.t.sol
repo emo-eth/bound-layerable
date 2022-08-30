@@ -38,6 +38,27 @@ contract OnChainTraitsTest is Test {
         expected = '{"trait_type":"qual test","display_type":"date","value":"hello"}';
         actual = test.getLayerTraitJson(2, 'qual');
         assertEq(abi.encode(actual), abi.encode(expected));
+
+        test.setAttribute(2, Attribute('test', 'hello', DisplayType.Number));
+        expected = '{"trait_type":"test","display_type":"number","value":"hello"}';
+        actual = test.getLayerTraitJson(2);
+        assertEq(abi.encode(actual), abi.encode(expected));
+
+        test.setAttribute(
+            2,
+            Attribute('test', 'hello', DisplayType.BoostPercent)
+        );
+        expected = '{"trait_type":"test","display_type":"boost_percent","value":"hello"}';
+        actual = test.getLayerTraitJson(2);
+        assertEq(abi.encode(actual), abi.encode(expected));
+
+        test.setAttribute(
+            2,
+            Attribute('test', 'hello', DisplayType.BoostNumber)
+        );
+        expected = '{"trait_type":"test","display_type":"boost_number","value":"hello"}';
+        actual = test.getLayerTraitJson(2);
+        assertEq(abi.encode(actual), abi.encode(expected));
     }
 
     function testSetAttributes() public {

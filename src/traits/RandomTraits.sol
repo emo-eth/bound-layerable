@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
-import {BadDistributions, InvalidLayerType} from '../interface/Errors.sol';
+import {BadDistributions, InvalidLayerType, ArrayLengthMismatch} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 abstract contract RandomTraits is BatchVRFConsumer {
@@ -60,9 +60,12 @@ abstract contract RandomTraits is BatchVRFConsumer {
      *  for a given tokenId
      */
     function setLayerTypeDistributions(
-        uint8[] memory layerTypes,
+        uint8[] calldata layerTypes,
         uint256[2][] calldata distributions
     ) public virtual onlyOwner {
+        if (layerTypes.length != distributions.length) {
+            revert ArrayLengthMismatch(layerTypes.length, distributions.length);
+        }
         for (uint8 i = 0; i < layerTypes.length; i++) {
             _setLayerTypeDistribution(layerTypes[i], distributions[i]);
         }

@@ -55,9 +55,21 @@ contract LayerableTest is Test {
 
     LayerableImpl test;
 
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
     function setUp() public {
         test = new LayerableImpl();
         test.setBaseLayerURI('layer/'); // test.setLayerTypeDistribution(LayerType.PORTRAIT, 0xFF << 248);
+    }
+
+    function testInitialize() public {
+        vm.expectEmit(true, true, false, false);
+        emit OwnershipTransferred(address(0), address(this));
+        test = new LayerableImpl();
+        test.initialize(address(this));
     }
 
     function testGetActiveLayerTraits(uint8[2] memory activeLayers) public {

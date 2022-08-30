@@ -6,7 +6,7 @@ import {RandomTraits} from 'bound-layerable/traits/RandomTraits.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 import {LayerType} from 'bound-layerable/interface/Enums.sol';
 import {RandomTraitsImpl} from 'bound-layerable/traits/RandomTraitsImpl.sol';
-import {BadDistributions, InvalidLayerType} from 'bound-layerable/interface/Errors.sol';
+import {BadDistributions, InvalidLayerType, ArrayLengthMismatch} from 'bound-layerable/interface/Errors.sol';
 
 contract RandomTraitsTestImpl is RandomTraitsImpl {
     constructor(uint8 numTokensPerSet)
@@ -51,6 +51,31 @@ contract RandomTraitsTest is Test {
 
     function setUp() public {
         test = new RandomTraitsTestImpl(7);
+    }
+
+    function testSetLayerTypeDistributions() public {
+        uint8[] memory layerTypes = new uint8[](8);
+        uint256[2][] memory dists = new uint256[2][](8);
+        for (uint256 i; i < 8; ++i) {
+            layerTypes[i] = uint8(i);
+            dists[i][0] = i + 1;
+        }
+        test.setLayerTypeDistributions(layerTypes, dists);
+        for (uint256 i; i < 8; ++i) {
+            assertEq(
+                keccak256(
+                    abi.encode(test.getLayerTypeDistributions(layerTypes[i]))
+                ),
+                keccak256(abi.encode(dists[i]))
+            );
+        }
+
+        layerTypes = new uint8[](1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLengthMismatch.selector, 1, 8)
+        );
+        test.setLayerTypeDistributions(layerTypes, dists);
     }
 
     function testSetLayerTypeDistribution(
@@ -247,6 +272,49 @@ contract RandomTraitsTest is Test {
         // % 7 == 6 should be border
         assertEq(uint256(test.getLayerType(6)), 5);
         assertEq(uint256(test.getLayerType(13)), 5);
+    }
+
+    function testGetLayerId_NoDistributions() public {
+        uint8 layerType = 0;
+        uint256 layerSeed = 5;
+        uint256[2] memory dists = [uint256(0), uint256(0)];
+        vm.expectRevert(BadDistributions.selector);
+        test.getLayerIdPub(layerType, layerSeed, dists);
+    }
+
+    function testGetLayerId_badDistribution_layerType7_index31() public {
+        uint8 layerType = 7;
+        uint256 layerSeed = type(uint256).max;
+        uint256[2] memory dists = [layerSeed, layerSeed];
+        dists[1] = dists[1] & (dists[1] << 16);
+        vm.expectRevert(BadDistributions.selector);
+        test.getLayerIdPub(layerType, layerSeed, dists);
+    }
+
+    function testGetLayerId_badDistribution_layerType7_index32() public {
+        uint8 layerType = 7;
+        uint256 layerSeed = type(uint256).max;
+        uint256[2] memory dists = [layerSeed, layerSeed];
+        vm.expectRevert(BadDistributions.selector);
+        test.getLayerIdPub(layerType, layerSeed, dists);
+    }
+
+    function testGetLayerId_badDistribution_layerType6_index31() public {
+        uint8 layerType = 6;
+        uint256 layerSeed = type(uint256).max;
+        uint256[2] memory dists = [layerSeed, layerSeed];
+        dists[1] = dists[1] & (dists[1] << 16);
+        uint256 id = test.getLayerIdPub(layerType, layerSeed, dists);
+        assertEq(id, 6 * 32 + 32);
+    }
+
+    function testGetLayerId_badDistribution_layerType6_index32() public {
+        uint8 layerType = 6;
+        uint256 layerSeed = type(uint256).max;
+        uint256[2] memory dists = [layerSeed, layerSeed];
+        // vm.expectRevert(BadDistributions.selector);
+        uint256 id = test.getLayerIdPub(layerType, layerSeed, dists);
+        assertEq(id, 6 * 32 + 32);
     }
 
     // function testNDistributionsForNMaxNot255() public {
