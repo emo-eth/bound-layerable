@@ -63,6 +63,22 @@ contract ImageLayerableImpl is ImageLayerable {
                 packedBatchRandomness
             );
     }
+
+    function getWidth() public view returns (uint256) {
+        return width;
+    }
+
+    function getHeight() public view returns (uint256) {
+        return height;
+    }
+
+    function getDefaultURI() public view returns (string memory) {
+        return defaultURI;
+    }
+
+    function getBaseLayerURI() public view returns (string memory) {
+        return baseLayerURI;
+    }
 }
 
 contract ImageLayerableTest is Test {
@@ -324,5 +340,33 @@ contract ImageLayerableTest is Test {
     function testInitialize_InvalidInitialization() public {
         vm.expectRevert(abi.encodeWithSelector(InvalidInitialization.selector));
         test.initialize(address(0), '', 1, 1);
+    }
+
+    function testSetWidth() public {
+        test.setWidth(69);
+        assertEq(test.getWidth(), 69);
+    }
+
+    function testSetHeight() public {
+        test.setHeight(69);
+        assertEq(test.getHeight(), 69);
+    }
+
+    function testSetDefaultURI() public {
+        test.setDefaultURI('hello');
+        assertEq(test.getDefaultURI(), 'hello');
+    }
+
+    function testSetBaseLayerURI() public {
+        test.setBaseLayerURI('hello');
+        assertEq(test.getBaseLayerURI(), 'hello');
+    }
+
+    function tesetInitializeConstructor() public {
+        test = new ImageLayerableImpl();
+        assertEq(test.owner(), address(this));
+        assertEq(test.getHeight(), 100);
+        assertEq(test.getWidth(), 100);
+        assertEq(test.getDefaultURI(), 'default');
     }
 }
