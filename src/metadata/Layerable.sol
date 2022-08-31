@@ -113,6 +113,18 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         virtual
         returns (string memory);
 
+    function _getExternalLink(uint256 tokenId, uint256 layerId)
+        internal
+        view
+        virtual
+        returns (string memory);
+
+    function _getDescription(uint256 tokenId, uint256 layerId)
+        internal
+        view
+        virtual
+        returns (string memory);
+
     /// @notice get the complete SVG for a set of activeLayers
     function getLayeredTokenImageURI(uint256[] calldata activeLayers)
         public

@@ -18,7 +18,16 @@ contract ImageLayerableImpl is ImageLayerable {
     uint256[] activeLayers;
     bytes32 packedBatchRandomness;
 
-    constructor() ImageLayerable(msg.sender, 'default', 100, 100) {}
+    constructor()
+        ImageLayerable(
+            msg.sender,
+            'default',
+            100,
+            100,
+            'external',
+            'description'
+        )
+    {}
 
     function setBindings(uint256 _bindings) public {
         bindings = _bindings;
@@ -89,7 +98,9 @@ contract InitializeTester {
                 address(5),
                 'default',
                 100,
-                100
+                100,
+                'external',
+                'description'
             )
         );
         require(success, 'failed');
@@ -360,7 +371,7 @@ contract ImageLayerableTest is Test {
 
     function testInitialize_InvalidInitialization() public {
         vm.expectRevert(abi.encodeWithSelector(InvalidInitialization.selector));
-        test.initialize(address(0), '', 1, 1);
+        test.initialize(address(0), '', 1, 1, '', '');
     }
 
     function testSetWidth() public {

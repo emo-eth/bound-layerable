@@ -52,7 +52,9 @@ contract Deploy is Script {
             deployer,
             defaultURI,
             1000,
-            1250
+            1250,
+            'external',
+            'description'
         );
 
         // deploy proxy using the logic contract, setting "deployer" addr as owner

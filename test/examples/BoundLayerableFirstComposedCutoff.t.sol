@@ -43,7 +43,9 @@ contract BoundLayerableFirstComposedCutoffTest is Test, BoundLayerableEvents {
             msg.sender,
             'default',
             100,
-            100
+            100,
+            'external',
+            'description'
         );
         test.setMetadataContract(layerable);
         assertEq(address(test.metadataContract()), address(layerable));
@@ -55,7 +57,9 @@ contract BoundLayerableFirstComposedCutoffTest is Test, BoundLayerableEvents {
             msg.sender,
             'default',
             100,
-            100
+            100,
+            'external',
+            'description'
         );
         vm.startPrank(addr);
         vm.expectRevert(0x5fc483c5);

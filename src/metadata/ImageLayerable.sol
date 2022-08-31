@@ -17,36 +17,44 @@ contract ImageLayerable is Layerable, IImageLayerable {
     using LibString for uint256;
 
     string defaultURI;
-    // todo: use different URIs for solo layers and layered layers?
     string baseLayerURI;
 
     uint256 width;
     uint256 height;
+
+    string externalLink;
+    string description;
 
     // TODO: add baseLayerURI
     constructor(
         address _owner,
         string memory _defaultURI,
         uint256 _width,
-        uint256 _height
+        uint256 _height,
+        string memory _externalLink,
+        string memory _description
     ) Layerable(_owner) {
-        _initialize(_defaultURI, _width, _height);
+        _initialize(_defaultURI, _width, _height, _externalLink, _description);
     }
 
     function initialize(
         address _owner,
         string memory _defaultURI,
         uint256 _width,
-        uint256 _height
+        uint256 _height,
+        string memory _externalLink,
+        string memory _description
     ) public virtual {
         super._initialize(_owner);
-        _initialize(_defaultURI, _width, _height);
+        _initialize(_defaultURI, _width, _height, _externalLink, _description);
     }
 
     function _initialize(
         string memory _defaultURI,
         uint256 _width,
-        uint256 _height
+        uint256 _height,
+        string memory _externalLink,
+        string memory _description
     ) internal virtual {
         if (address(this).code.length > 0) {
             revert InvalidInitialization();
@@ -54,6 +62,8 @@ contract ImageLayerable is Layerable, IImageLayerable {
         defaultURI = _defaultURI;
         width = _width;
         height = _height;
+        externalLink = _externalLink;
+        description = _description;
     }
 
     function setWidth(uint256 _width) external onlyOwner {
@@ -140,6 +150,26 @@ contract ImageLayerable is Layerable, IImageLayerable {
         returns (string memory)
     {
         return tokenId.toString();
+    }
+
+    function _getExternalLink(uint256, uint256)
+        internal
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return externalLink;
+    }
+
+    function _getDescription(uint256, uint256)
+        internal
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return description;
     }
 
     /// @notice get the complete SVG for a set of activeLayers

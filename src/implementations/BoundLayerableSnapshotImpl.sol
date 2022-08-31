@@ -28,7 +28,14 @@ contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
             layerTypeToPackedDistributions[getLayerType(i)] = dists;
         }
 
-        metadataContract = new ImageLayerable(msg.sender, 'default', 100, 100);
+        metadataContract = new ImageLayerable(
+            msg.sender,
+            'default',
+            100,
+            100,
+            'external',
+            'description'
+        );
     }
 
     function setPackedBatchRandomness(bytes32 seed) public {

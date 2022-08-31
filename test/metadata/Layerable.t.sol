@@ -16,7 +16,16 @@ contract LayerableImpl is ImageLayerable {
     uint256[] activeLayers;
     bytes32 packedBatchRandomness;
 
-    constructor() ImageLayerable(msg.sender, 'default', 100, 100) {}
+    constructor()
+        ImageLayerable(
+            msg.sender,
+            'default',
+            100,
+            100,
+            'external',
+            'description'
+        )
+    {}
 
     function setBindings(uint256 _bindings) public {
         bindings = _bindings;

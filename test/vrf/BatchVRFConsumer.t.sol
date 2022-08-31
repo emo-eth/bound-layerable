@@ -61,7 +61,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         fakeNextTokenId = numSets * uint256(NUM_TOKENS_PER_SET);
     }
 
-    function checkAndReturnNumBatches() public returns (uint32, uint32) {
+    function checkAndReturnNumBatches() public view returns (uint32, uint32) {
         return _checkAndReturnNumBatches();
     }
 
