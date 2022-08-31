@@ -81,6 +81,27 @@ contract ImageLayerableImpl is ImageLayerable {
     }
 }
 
+contract InitializeTester {
+    constructor(address target) {
+        (bool success, ) = target.delegatecall(
+            abi.encodeWithSignature(
+                'initialize(address,string,uint256,uint256)',
+                address(5),
+                'default',
+                100,
+                100
+            )
+        );
+        require(success, 'failed');
+    }
+
+    function readSlot(uint256 slot) public view returns (uint256 slotVal) {
+        assembly {
+            slotVal := sload(slot)
+        }
+    }
+}
+
 contract ImageLayerableTest is Test {
     using StringTestUtility for string;
     using LibString for uint256;
@@ -368,5 +389,26 @@ contract ImageLayerableTest is Test {
         assertEq(test.getHeight(), 100);
         assertEq(test.getWidth(), 100);
         assertEq(test.getDefaultURI(), 'default');
+    }
+
+    function testInitialize_noCode() public {
+        vm.prank(address(12345));
+
+        vm.record();
+        InitializeTester initializeTester = new InitializeTester(address(test));
+        (, bytes32[] memory writes) = vm.accesses(address(initializeTester));
+        uint256[] memory values = new uint256[](writes.length);
+        for (uint256 i; i < writes.length; ++i) {
+            bytes32 slot = writes[i];
+            uint256 value = initializeTester.readSlot(uint256(slot));
+            values[i] = value;
+        }
+        assertEq(values[0], uint160(address(5)));
+        assertEq(
+            values[1],
+            0x64656661756c740000000000000000000000000000000000000000000000000e
+        );
+        assertEq(values[2], 100);
+        assertEq(values[3], 100);
     }
 }
