@@ -4,7 +4,7 @@
 
 pragma solidity ^0.8.4;
 
-import './IERC721A.sol';
+import 'ERC721A/IERC721A.sol';
 
 /**
  * @dev Interface of ERC721 token receiver.
@@ -21,6 +21,7 @@ interface ERC721A__IERC721Receiver {
 /**
  * @title ERC721A
  *
+ * @dev modified to include a gas-efficient _isBurned method
  * @dev Implementation of the [ERC721](https://eips.ethereum.org/EIPS/eip-721)
  * Non-Fungible Token Standard, including the Metadata extension.
  * Optimized for lower gas during batch mints.
@@ -34,7 +35,7 @@ interface ERC721A__IERC721Receiver {
  * - The maximum token ID cannot exceed 2**256 - 1 (max value of uint256).
  */
 contract ERC721A is IERC721A {
-    // Reference type for token approval.
+    // Bypass for a `--via-ir` bug (https://github.com/chiru-labs/ERC721A/pull/364).
     struct TokenApprovalRef {
         address value;
     }
@@ -214,12 +215,7 @@ contract ERC721A is IERC721A {
     /**
      * Returns the number of tokens minted by `owner`.
      */
-    function _numberMinted(address owner)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
+    function _numberMinted(address owner) internal view returns (uint256) {
         return
             (_packedAddressData[owner] >> _BITPOS_NUMBER_MINTED) &
             _BITMASK_ADDRESS_DATA_ENTRY;
@@ -1192,13 +1188,17 @@ contract ERC721A is IERC721A {
         returns (string memory str)
     {
         assembly {
-            // The maximum value of a uint256 contains 78 digits (1 byte per digit),
-            // but we allocate 0x80 bytes to keep the free memory pointer 32-byte word aligned.
-            // We will need 1 32-byte word to store the length,
-            // and 3 32-byte words to store a maximum of 78 digits. Total: 0x20 + 3 * 0x20 = 0x80.
-            str := add(mload(0x40), 0x80)
+            // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
+            // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
+            // We will need 1 word for the trailing zeros padding, 1 word for the length,
+            // and 3 words for a maximum of 78 digits. Total: 5 * 0x20 = 0xa0.
+            let m := add(mload(0x40), 0xa0)
             // Update the free memory pointer to allocate.
-            mstore(0x40, str)
+            mstore(0x40, m)
+            // Assign the `str` to the end.
+            str := sub(m, 0x20)
+            // Zeroize the slot after the string.
+            mstore(str, 0)
 
             // Cache the end of the memory to calculate the length later.
             let end := str

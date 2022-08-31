@@ -69,6 +69,7 @@ contract LayerableTest is Test {
         vm.expectEmit(true, true, false, false);
         emit OwnershipTransferred(address(0), address(this));
         test = new LayerableImpl();
+        vm.expectRevert(InvalidInitialization.selector);
         test.initialize(address(this));
     }
 
