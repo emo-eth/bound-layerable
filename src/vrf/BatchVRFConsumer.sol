@@ -116,7 +116,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     }
 
     /**
-     * @notice Get the 32-bit randomness for a given tokenId if it's been set, else revert
+     * @notice Get the 32-bit randomness for a given tokenId if it's been set
      * @param tokenId tokenId of the token to get the randomness for
      * @param seed bytes32 seed containing all batches randomness
      * @return randomness 32-bit randomness as bytes32 for the given tokenId
@@ -143,10 +143,6 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
                 ),
                 mask
             )
-            if eq(randomness, 0) {
-                mstore(0, BATCH_NOT_REVEALED_SIGNATURE)
-                revert(0, 4)
-            }
         }
     }
 

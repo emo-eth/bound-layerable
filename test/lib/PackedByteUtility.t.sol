@@ -73,7 +73,7 @@ contract PackedByteUtilityTest is Test {
         uint256 actual = PackedByteUtility.unpackBytesToBitMap(packed);
         assertEq(actual, expected);
 
-        // 0th byte won't actually be used: TODO: test
+        // 0th byte won't actually be used
         packed = 1 << 248; // 0b1
         expected = 0x2; // 0b11 - 0-byte translates to 1
         actual = PackedByteUtility.unpackBytesToBitMap(packed);

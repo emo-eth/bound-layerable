@@ -93,8 +93,6 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     {
         return getRandomnessForTokenIdFromSeed(tokenId, seed);
     }
-
-    function noOp() public pure {}
 }
 
 contract BatchVRFConsumerTest is Test {
@@ -463,8 +461,8 @@ contract BatchVRFConsumerTest is Test {
     }
 
     function testGetRandomnessForTokenId_notRevealed(uint256 tokenId) public {
-        vm.expectRevert(BatchNotRevealed.selector);
-        test.getRandomnessForTokenIdPub(tokenId);
+        bytes32 randomness = test.getRandomnessForTokenIdPub(tokenId);
+        assertEq(randomness, bytes32(0));
     }
 
     function test_snapshotGetRandomnessForTokenIdFromSeed1() public view {

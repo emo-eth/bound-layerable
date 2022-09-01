@@ -91,13 +91,19 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     }
 
     function _tokenURI(uint256 tokenId) internal view returns (string memory) {
+        // get the random seed for the token, which may not be revealed yet
+        bytes32 retrievedRandomSeed = getRandomnessForTokenIdFromSeed(
+            tokenId,
+            packedBatchRandomness
+        );
         return
             metadataContract.getTokenURI(
                 tokenId,
-                getLayerId(tokenId),
+                // only get layerId if token is revealed
+                retrievedRandomSeed == 0x00 ? 0 : getLayerId(tokenId),
                 getBoundLayerBitMap(tokenId),
                 getActiveLayers(tokenId),
-                getRandomnessForTokenIdFromSeed(tokenId, packedBatchRandomness)
+                retrievedRandomSeed
             );
     }
 
@@ -216,8 +222,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         unchecked {
             // todo: revisit if via_ir = true
             uint256 length = layerTokenIds.length;
-            uint256 i;
-            for (; i < length; ) {
+            for (uint256 i; i < length; ) {
                 uint256 tokenId = layerTokenIds[i];
 
                 // check owner of layer
@@ -336,7 +341,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         }
 
         _tokenIdToPackedActiveLayers[baseTokenId] = maskedPackedLayerIds;
-        emit ActiveLayersChanged(baseTokenId, maskedPackedLayerIds);
+        emit ActiveLayersChanged(msg.sender, baseTokenId, maskedPackedLayerIds);
     }
 
     function _setBoundLayersAndEmitEvent(uint256 baseTokenId, uint256 bindings)
@@ -346,10 +351,8 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
         // 0 is not a valid layerId, so make sure it is not set on bindings.
         bindings = bindings & NOT_0TH_BITMASK;
         _tokenIdToBoundLayers[baseTokenId] = bindings;
-        emit LayersBoundToToken(baseTokenId, bindings);
+        emit LayersBoundToToken(msg.sender, baseTokenId, bindings);
     }
-
-    // CHECK //
 
     /**
      * @notice Unpack bytepacked layerIds and check that there are no duplicates

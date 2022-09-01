@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {BAD_DISTRIBUTIONS_SIGNATURE} from '../interface/Constants.sol';
-import {BadDistributions, InvalidLayerType, ArrayLengthMismatch} from '../interface/Errors.sol';
+import {BadDistributions, InvalidLayerType, ArrayLengthMismatch, BatchNotRevealed} from '../interface/Errors.sol';
 import {BatchVRFConsumer} from '../vrf/BatchVRFConsumer.sol';
 
 abstract contract RandomTraits is BatchVRFConsumer {
@@ -42,7 +42,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @notice Set the probability distribution for up to 32 different layer traitIds
      * @param layerType layer type to set distribution for
      * @param distribution a uint256[2] comprised of sorted, packed shorts
-     *  that will be compared against a random byte to determine the layerId
+     *  that will be compared against a random short to determine the layerId
      *  for a given tokenId
      */
     function setLayerTypeDistribution(
@@ -56,7 +56,7 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @notice Set layer type distributions for multiple layer types
      * @param layerTypes layer types to set distribution for
      * @param distributions an array of uint256[2]s comprised of sorted, packed shorts
-     *  that will be compared against a random byte to determine the layerId
+     *  that will be compared against a random short to determine the layerId
      *  for a given tokenId
      */
     function setLayerTypeDistributions(
@@ -107,10 +107,14 @@ abstract contract RandomTraits is BatchVRFConsumer {
 
     /**
      * @notice Get the layerId for a given tokenId by hashing tokenId with its layer type and random seed,
-     * and then comparing the final byte against the appropriate distributions
+     * and then comparing the final short against the appropriate distributions
      */
     function getLayerId(uint256 tokenId) public view virtual returns (uint256) {
-        return getLayerId(tokenId, getRandomnessForTokenId(tokenId));
+        return
+            getLayerId(
+                tokenId,
+                getRandomnessForTokenIdFromSeed(tokenId, packedBatchRandomness)
+            );
     }
 
     /**
@@ -122,6 +126,9 @@ abstract contract RandomTraits is BatchVRFConsumer {
         virtual
         returns (uint256)
     {
+        if (seed == 0) {
+            revert BatchNotRevealed();
+        }
         uint8 layerType = getLayerType(tokenId);
         uint256 layerSeed = getLayerSeed(tokenId, layerType, seed);
         uint256[2] storage distributions = layerTypeToPackedDistributions[
@@ -137,9 +144,9 @@ abstract contract RandomTraits is BatchVRFConsumer {
      * @param distributionsArray uint256[2] packed distributions of layerIds
      * @return layerId limited to 8 bits
      *
-     * @dev If the last packed byte is <255, any seed larger than the last packed byte
-     *      will be assigned to the index after the last packed byte, unless the last
-     *      packed byte is index 31, in which case, it will default to 31.
+     * @dev If the last packed short is <65535, any seed larger than the last packed short
+     *      will be assigned to the index after the last packed short, unless the last
+     *      packed short is index 31, in which case, it will default to 31.
      *      LayerId is calculated like: index + 1 + 32 * layerType
      *
      * examples:
