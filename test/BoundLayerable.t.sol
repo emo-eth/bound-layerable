@@ -174,7 +174,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         layers[3] = 200;
         uint256 activeLayers = PackedByteUtility.packArrayOfBytes(layers);
         vm.expectEmit(true, true, true, false, address(test));
-        emit BoundLayerableEvents.ActiveLayersChanged(0, activeLayers);
+        emit ActiveLayersChanged(address(this), 0, activeLayers);
         test.setActiveLayers(0, activeLayers);
 
         assertEq(test.getActiveLayersRaw(0), activeLayers);
@@ -283,7 +283,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         vm.expectEmit(true, true, true, false, address(test));
         emit Transfer(address(this), address(0), 8);
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
+        emit LayersBoundToToken(address(this), 7, (1 << 8) | (1 << 9));
 
         test.burnAndBindSingle(7, 8);
         assertTrue(test.isBurned(8));
@@ -301,9 +301,9 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         vm.expectEmit(true, true, true, false, address(test));
         emit Transfer(address(this), address(0), 8);
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(7, (1 << 8) | (1 << 9));
+        emit LayersBoundToToken(address(this), 7, (1 << 8) | (1 << 9));
         vm.expectEmit(true, true, false, false, address(test));
-        emit ActiveLayersChanged(7, 8 << 248);
+        emit ActiveLayersChanged(address(this), 7, 8 << 248);
 
         test.burnAndBindSingleAndSetActiveLayers(7, 8, 8 << 248);
         assertTrue(test.isBurned(8));
@@ -324,7 +324,11 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         vm.expectEmit(true, true, true, false, address(test));
         emit Transfer(address(this), address(0), 6);
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(0, (1 << 1) | (1 << 2) | (1 << 7));
+        emit LayersBoundToToken(
+            address(this),
+            0,
+            (1 << 1) | (1 << 2) | (1 << 7)
+        );
 
         test.burnAndBindMultiple(0, layers);
         assertTrue(test.isBurned(6));
@@ -346,9 +350,13 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         vm.expectEmit(true, true, true, false, address(test));
         emit Transfer(address(this), address(0), 6);
         vm.expectEmit(true, true, false, false, address(test));
-        emit LayersBoundToToken(0, (1 << 1) | (1 << 2) | (1 << 7));
+        emit LayersBoundToToken(
+            address(this),
+            0,
+            (1 << 1) | (1 << 2) | (1 << 7)
+        );
         vm.expectEmit(true, true, false, false, address(test));
-        emit ActiveLayersChanged(0, 7 << 248);
+        emit ActiveLayersChanged(address(this), 0, 7 << 248);
 
         test.burnAndBindMultipleAndSetActiveLayers(0, layers, 7 << 248);
         assertTrue(test.isBurned(6));
@@ -393,7 +401,7 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
     function testBurnAndBindSingleBatchNotRevealed() public {
         test.setPackedBatchRandomness(bytes32(uint256(0)));
         vm.expectRevert(abi.encodeWithSignature('BatchNotRevealed()'));
-        test.burnAndBindSingle(6, 7);
+        test.burnAndBindSingle(0, 6);
     }
 
     function testBurnAndBindMultiple_NotOwner() public {

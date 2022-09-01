@@ -94,7 +94,7 @@ contract InitializeTester {
     constructor(address target) {
         (bool success, ) = target.delegatecall(
             abi.encodeWithSignature(
-                'initialize(address,string,uint256,uint256)',
+                'initialize(address,string,uint256,uint256,string,string)',
                 address(5),
                 'default',
                 100,
