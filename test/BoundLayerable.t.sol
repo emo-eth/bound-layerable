@@ -459,4 +459,37 @@ contract BoundLayerableTest is Test, BoundLayerableEvents {
         string memory uri = test.getTokenURI(0);
         assertEq(uri, 'MockLayerable');
     }
+
+    function testGetTokenURIMocked() public {
+        // ILayerable mock = ILayerable(address(new MockLayerable()));
+        test.setMetadataContract(ILayerable(address(1234)));
+        vm.etch(address(1234), 'abcde');
+        string
+            memory sig = 'getTokenURI(uint256,uint256,uint256,uint256[],bytes32)';
+        test.setPackedBatchRandomness(bytes32(uint256(0)));
+        vm.mockCall(
+            address(1234),
+            abi.encodeWithSignature(sig, 0, 0, 0, new uint256[](0), bytes32(0)),
+            abi.encode(string('expected'))
+        );
+
+        string memory uri = test.getTokenURI(0);
+        assertEq(uri, 'expected');
+
+        test.setPackedBatchRandomness(bytes32(type(uint256).max));
+        vm.mockCall(
+            address(1234),
+            abi.encodeWithSignature(
+                sig,
+                0,
+                1,
+                0,
+                new uint256[](0),
+                bytes32(uint256(0xffff))
+            ),
+            abi.encode(string('expected2'))
+        );
+        uri = test.getTokenURI(0);
+        assertEq(uri, 'expected2');
+    }
 }
