@@ -53,8 +53,8 @@ contract Deploy is Script {
             defaultURI,
             1000,
             1250,
-            'external',
-            'description'
+            'https://slimeshop.slimesunday.com/',
+            'Test Description'
         );
 
         // deploy proxy using the logic contract, setting "deployer" addr as owner
@@ -62,9 +62,13 @@ contract Deploy is Script {
             address(logic),
             admin,
             abi.encodeWithSignature(
-                'initialize(address,string)',
+                'initialize(address,string,uint256,uint256,string,string)',
                 deployer,
-                'default'
+                'default',
+                1000,
+                1250,
+                'https://slimeshop.slimesunday.com/',
+                'Test Description'
             )
         );
         vm.stopBroadcast();

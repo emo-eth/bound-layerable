@@ -22,7 +22,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
     uint256 width;
     uint256 height;
 
-    string externalLink;
+    string externalUrl;
     string description;
 
     // TODO: add baseLayerURI
@@ -31,10 +31,10 @@ contract ImageLayerable is Layerable, IImageLayerable {
         string memory _defaultURI,
         uint256 _width,
         uint256 _height,
-        string memory _externalLink,
+        string memory _externalUrl,
         string memory _description
     ) Layerable(_owner) {
-        _initialize(_defaultURI, _width, _height, _externalLink, _description);
+        _initialize(_defaultURI, _width, _height, _externalUrl, _description);
     }
 
     function initialize(
@@ -42,18 +42,18 @@ contract ImageLayerable is Layerable, IImageLayerable {
         string memory _defaultURI,
         uint256 _width,
         uint256 _height,
-        string memory _externalLink,
+        string memory _externalUrl,
         string memory _description
     ) public virtual {
         super._initialize(_owner);
-        _initialize(_defaultURI, _width, _height, _externalLink, _description);
+        _initialize(_defaultURI, _width, _height, _externalUrl, _description);
     }
 
     function _initialize(
         string memory _defaultURI,
         uint256 _width,
         uint256 _height,
-        string memory _externalLink,
+        string memory _externalUrl,
         string memory _description
     ) internal virtual {
         if (address(this).code.length > 0) {
@@ -62,7 +62,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
         defaultURI = _defaultURI;
         width = _width;
         height = _height;
-        externalLink = _externalLink;
+        externalUrl = _externalUrl;
         description = _description;
     }
 
@@ -84,6 +84,16 @@ contract ImageLayerable is Layerable, IImageLayerable {
         baseLayerURI = _baseLayerURI;
     }
 
+    /// @notice set the external URL for all tokens
+    function setExternalUrl(string memory _externalUrl) public onlyOwner {
+        externalUrl = _externalUrl;
+    }
+
+    /// @notice set the description for all tokens
+    function setDescription(string memory _description) public onlyOwner {
+        description = _description;
+    }
+
     /**
      * @notice get the raw URI of a set of token traits, not encoded as a data uri
      * @param layerId the layerId of the base token
@@ -100,31 +110,41 @@ contract ImageLayerable is Layerable, IImageLayerable {
         bytes32 layerSeed
     ) internal view virtual override returns (string memory) {
         string memory name = _getName(tokenId, layerId);
+        string memory _externalUrl = _getExternalUrl(tokenId, layerId);
+        string memory _description = _getDescription(tokenId, layerId);
         // return default uri
         if (layerSeed == 0) {
-            return _constructJson(name, getDefaultImageURI(layerId), '');
+            return
+                _constructJson(
+                    name,
+                    _externalUrl,
+                    _description,
+                    getDefaultImageURI(layerId),
+                    ''
+                );
         }
         // if no bindings, format metadata as an individual NFT
         // check if bindings == 0 or 1; bindable layers will be treated differently
         else if (bindings == 0 || bindings == 1) {
-            return _getRawLayerJson(name, layerId);
+            return _getRawLayerJson(name, _externalUrl, _description, layerId);
         } else {
             return
                 _constructJson(
                     name,
+                    _externalUrl,
+                    _description,
                     getLayeredTokenImageURI(activeLayers),
                     getBoundAndActiveLayerTraits(bindings, activeLayers)
                 );
         }
     }
 
-    function _getRawLayerJson(string memory name, uint256 layerId)
-        internal
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function _getRawLayerJson(
+        string memory name,
+        string memory _externalUrl,
+        string memory _description,
+        uint256 layerId
+    ) internal view virtual override returns (string memory) {
         Attribute memory layerTypeAttribute = traitAttributes[layerId];
         layerTypeAttribute.value = layerTypeAttribute.traitType;
         layerTypeAttribute.traitType = 'Layer Type';
@@ -132,6 +152,8 @@ contract ImageLayerable is Layerable, IImageLayerable {
         return
             _constructJson(
                 name,
+                _externalUrl,
+                _description,
                 getLayerImageURI(layerId),
                 json.array(
                     json._commaJoin(
@@ -152,14 +174,14 @@ contract ImageLayerable is Layerable, IImageLayerable {
         return tokenId.toString();
     }
 
-    function _getExternalLink(uint256, uint256)
+    function _getExternalUrl(uint256, uint256)
         internal
         view
         virtual
         override
         returns (string memory)
     {
-        return externalLink;
+        return externalUrl;
     }
 
     function _getDescription(uint256, uint256)
@@ -240,21 +262,35 @@ contract ImageLayerable is Layerable, IImageLayerable {
     /// @dev helper to wrap imageURI and optional attributes into a JSON object string
     function _constructJson(
         string memory name,
+        string memory _externalUrl,
+        string memory _description,
         string memory imageURI,
         string memory attributes
     ) internal pure returns (string memory) {
         string[] memory properties;
         string memory nameProperty = json.property('name', name);
+        string memory externalUrlProperty = json.property(
+            'external_url',
+            _externalUrl
+        );
+        string memory descriptionProperty = json.property(
+            'description',
+            _description
+        );
         if (bytes(attributes).length > 0) {
-            properties = new string[](3);
+            properties = new string[](5);
             properties[0] = nameProperty;
-            properties[1] = json.property('image', imageURI);
+            properties[1] = externalUrlProperty;
+            properties[2] = descriptionProperty;
+            properties[3] = json.property('image', imageURI);
             // attributes should be a JSON array, no need to wrap it in quotes
-            properties[2] = json.rawProperty('attributes', attributes);
+            properties[4] = json.rawProperty('attributes', attributes);
         } else {
-            properties = new string[](2);
+            properties = new string[](4);
             properties[0] = nameProperty;
-            properties[1] = json.property('image', imageURI);
+            properties[1] = externalUrlProperty;
+            properties[2] = descriptionProperty;
+            properties[3] = json.property('image', imageURI);
         }
         return json.objectOf(properties);
     }

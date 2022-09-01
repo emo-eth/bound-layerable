@@ -90,7 +90,13 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         virtual
         returns (string memory)
     {
-        return _getRawLayerJson(_getName(layerId, layerId), layerId);
+        return
+            _getRawLayerJson(
+                _getName(layerId, layerId),
+                _getExternalUrl(layerId, layerId),
+                _getDescription(layerId, layerId),
+                layerId
+            );
     }
 
     function _getRawTokenJson(
@@ -101,11 +107,12 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         bytes32 layerSeed
     ) internal view virtual returns (string memory);
 
-    function _getRawLayerJson(string memory name, uint256 layerId)
-        internal
-        view
-        virtual
-        returns (string memory);
+    function _getRawLayerJson(
+        string memory name,
+        string memory _externalUrl,
+        string memory description,
+        uint256 layerId
+    ) internal view virtual returns (string memory);
 
     function _getName(uint256 tokenId, uint256 layerId)
         internal
@@ -113,7 +120,7 @@ abstract contract Layerable is ILayerable, OnChainTraits {
         virtual
         returns (string memory);
 
-    function _getExternalLink(uint256 tokenId, uint256 layerId)
+    function _getExternalUrl(uint256 tokenId, uint256 layerId)
         internal
         view
         virtual

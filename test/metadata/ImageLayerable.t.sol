@@ -11,6 +11,7 @@ import {InvalidInitialization} from 'bound-layerable/interface/Errors.sol';
 import {json} from 'bound-layerable/lib/JSON.sol';
 import {Strings} from 'openzeppelin-contracts/contracts/utils/Strings.sol';
 import {Base64} from 'solady/utils/Base64.sol';
+import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 
 contract ImageLayerableImpl is ImageLayerable {
     using Strings for uint256;
@@ -88,13 +89,21 @@ contract ImageLayerableImpl is ImageLayerable {
     function getBaseLayerURI() public view returns (string memory) {
         return baseLayerURI;
     }
+
+    function getExternalUrl() public view returns (string memory) {
+        return externalUrl;
+    }
+
+    function getDescription() public view returns (string memory) {
+        return description;
+    }
 }
 
 contract InitializeTester {
     constructor(address target) {
         (bool success, ) = target.delegatecall(
             abi.encodeWithSignature(
-                'initialize(address,string,uint256,uint256)',
+                'initialize(address,string,uint256,uint256,string,string)',
                 address(5),
                 'default',
                 100,
@@ -178,9 +187,11 @@ contract ImageLayerableTest is Test {
 
     function testGetTokenJson1() public {
         // no seed means default metadata
-        string[] memory properties = new string[](2);
+        string[] memory properties = new string[](4);
         properties[0] = json.property('name', uint256(0).toString());
-        properties[1] = json.property('image', 'default');
+        properties[1] = json.property('external_url', 'external');
+        properties[2] = json.property('description', 'description');
+        properties[3] = json.property('image', 'default');
         string memory expected = json.objectOf(properties);
 
         string memory actual = test.tokenJson(0);
@@ -201,16 +212,18 @@ contract ImageLayerableTest is Test {
         );
         test.setAttribute(1, attribute1);
         test.setAttribute(2, attribute2);
-        properties = new string[](3);
+        properties = new string[](5);
         properties[0] = json.property('name', uint256(1).toString());
-        properties[1] = json.property('image', 'layer/1');
+        properties[1] = json.property('external_url', 'external');
+        properties[2] = json.property('description', 'description');
+        properties[3] = json.property('image', 'layer/1');
         string[] memory attributes = new string[](2);
         attributes[0] = _attributeString(
             Attribute('Layer Type', 'test', DisplayType.String)
         );
         attributes[1] = _attributeString(attribute1);
 
-        properties[2] = json.rawProperty(
+        properties[4] = json.rawProperty(
             'attributes',
             json.arrayOf(attributes)
         );
@@ -223,7 +236,7 @@ contract ImageLayerableTest is Test {
         test.setBindings(boundLayers);
         // test.bindLayers(0, 3 << 1);
         // no active layers
-        properties[1] = json.property(
+        properties[3] = json.property(
             'image',
             'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjwvc3ZnPg=='
         );
@@ -233,7 +246,7 @@ contract ImageLayerableTest is Test {
         attributes[2] = _attributeString(
             Attribute('Layer Count', '2', DisplayType.Number)
         );
-        properties[2] = json.rawProperty(
+        properties[4] = json.rawProperty(
             'attributes',
             json.arrayOf(attributes)
         );
@@ -247,7 +260,7 @@ contract ImageLayerableTest is Test {
         activeLayers[1] = 1;
 
         test.setActiveLayers(activeLayers);
-        properties[1] = json.property(
+        properties[3] = json.property(
             'image',
             'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwIiAgd2lkdGg9IjEwMCIgPjxpbWFnZSBocmVmPSJsYXllci8yIiAgaGVpZ2h0PSIxMDAlIiAgd2lkdGg9IjEwMCUiIC8+PGltYWdlIGhyZWY9ImxheWVyLzEiICBoZWlnaHQ9IjEwMCUiICB3aWR0aD0iMTAwJSIgLz48L3N2Zz4='
         );
@@ -263,7 +276,7 @@ contract ImageLayerableTest is Test {
         attributes[4] = _attributeString(
             Attribute('Active test', attribute1.value, attribute1.displayType)
         );
-        properties[2] = json.rawProperty(
+        properties[4] = json.rawProperty(
             'attributes',
             json.arrayOf(attributes)
         );
@@ -294,17 +307,21 @@ contract ImageLayerableTest is Test {
 
     function testGetTokenJson(uint256 layerId) public {
         // no seed means default metadata
-        string[] memory properties = new string[](2);
+        string[] memory properties = new string[](4);
         properties[0] = json.property('name', uint256(layerId).toString());
-        properties[1] = json.property('image', 'default');
+        properties[1] = json.property('external_url', 'external');
+        properties[2] = json.property('description', 'description');
+        properties[3] = json.property('image', 'default');
         string memory expected = json.objectOf(properties);
         string memory actual = test.tokenJson(layerId);
 
         assertEq(actual, expected);
         test.setPackedBatchRandomness(bytes32(uint256(1)));
-        properties = new string[](3);
+        properties = new string[](5);
         properties[0] = json.property('name', layerId.toString());
-        properties[1] = json.property(
+        properties[1] = json.property('external_url', 'external');
+        properties[2] = json.property('description', 'description');
+        properties[3] = json.property(
             'image',
             string.concat('layer/', layerId.toString())
         );
@@ -318,7 +335,7 @@ contract ImageLayerableTest is Test {
             Attribute('Layer Type', 'test', DisplayType.String)
         );
         attributes[1] = _attributeString(attribute);
-        properties[2] = json.rawProperty(
+        properties[4] = json.rawProperty(
             'attributes',
             json.arrayOf(attributes)
         );
@@ -336,9 +353,12 @@ contract ImageLayerableTest is Test {
     }
 
     function testGetLayerJson(uint256 layerId) public {
-        string[] memory properties = new string[](3);
+        string[] memory properties = new string[](5);
         properties[0] = json.property('name', layerId.toString());
-        properties[1] = json.property(
+
+        properties[1] = json.property('external_url', 'external');
+        properties[2] = json.property('description', 'description');
+        properties[3] = json.property(
             'image',
             string.concat('layer/', layerId.toString())
         );
@@ -355,7 +375,7 @@ contract ImageLayerableTest is Test {
         string[] memory attributes = new string[](2);
         attributes[0] = _attributeString(attribute1);
         attributes[1] = _attributeString(attribute2);
-        properties[2] = json.rawProperty(
+        properties[4] = json.rawProperty(
             'attributes',
             json.arrayOf(attributes)
         );
@@ -379,9 +399,22 @@ contract ImageLayerableTest is Test {
         assertEq(test.getWidth(), 69);
     }
 
+    function testSetWidth_onlyOwner() public {
+        vm.startPrank(address(1));
+
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setWidth(69);
+    }
+
     function testSetHeight() public {
         test.setHeight(69);
         assertEq(test.getHeight(), 69);
+    }
+
+    function testSetHeight_onlyOwner() public {
+        vm.startPrank(address(1));
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setHeight(69);
     }
 
     function testSetDefaultURI() public {
@@ -389,9 +422,25 @@ contract ImageLayerableTest is Test {
         assertEq(test.getDefaultURI(), 'hello');
     }
 
+    function testSetDefaultURI_onlyOwner() public {
+        vm.startPrank(address(1));
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setDefaultURI('hello');
+    }
+
     function testSetBaseLayerURI() public {
         test.setBaseLayerURI('hello');
         assertEq(test.getBaseLayerURI(), 'hello');
+    }
+
+    function testSetExternalUrl() public {
+        test.setExternalUrl('hello');
+        assertEq(test.getExternalUrl(), 'hello');
+    }
+
+    function testSetDescription() public {
+        test.setDescription('hello');
+        assertEq(test.getDescription(), 'hello');
     }
 
     function tesetInitializeConstructor() public {
@@ -400,6 +449,8 @@ contract ImageLayerableTest is Test {
         assertEq(test.getHeight(), 100);
         assertEq(test.getWidth(), 100);
         assertEq(test.getDefaultURI(), 'default');
+        assertEq(test.getExternalUrl(), 'external');
+        assertEq(test.getDescription(), 'description');
     }
 
     function testInitialize_noCode() public {
