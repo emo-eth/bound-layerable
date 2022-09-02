@@ -181,8 +181,8 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         bytes32 currSeed = packedBatchRandomness;
         uint256 randomness = randomWords[0];
 
-        uint256 mask = type(uint256).max <<
-            (256 - (BITS_PER_RANDOM_BATCH * numBatches));
+        uint256 mask = type(uint256).max >>
+            (BITS_PER_RANDOM_BATCH * numBatches);
         uint256 newRandomness = randomness & mask;
         currSeed = bytes32(uint256(currSeed) | newRandomness);
         _revealBatch += numBatches;

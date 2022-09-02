@@ -558,4 +558,30 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(1, randomWords);
         assertEq(test.pendingReveal(), 0);
     }
+
+    function testGetRandomnessForTokenId_irl() public {
+        test.setPackedBatchRandomness(
+            0x000000000000000000000000000000000000000000000000000000000000290d
+        );
+        bytes32 randomness = test.getRandomnessForTokenIdPub(0);
+        assertEq(randomness, bytes32(uint256(0x290d)));
+    }
+
+    function testRawFulfillRandomWords() public {
+        test.mintSets(1);
+        test.setForceUnsafeReveal(true);
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = 1;
+
+        randomWords[0] = 1;
+        test.rawFulfillRandomWords(0, randomWords);
+        bytes32 retrieved = test.packedBatchRandomness();
+        assertEq(retrieved, bytes32(uint256(1)));
+
+        test.mintSets(1000);
+        randomWords[0] = 1 << 4;
+        test.rawFulfillRandomWords(0, randomWords);
+        retrieved = test.packedBatchRandomness();
+        assertEq(retrieved, bytes32(uint256((1 << 4) | 1)));
+    }
 }
