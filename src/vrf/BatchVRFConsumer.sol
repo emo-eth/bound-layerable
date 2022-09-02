@@ -8,12 +8,13 @@ import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
 import {MaxRandomness, NoBatchesToReveal, RevealPending, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
+import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 
 contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     // VRF config
-    uint8 public immutable NUM_RANDOM_BATCHES;
-    uint8 public immutable BITS_PER_RANDOM_BATCH;
-    uint8 immutable BITS_PER_BATCH_SHIFT;
+    uint256 public immutable NUM_RANDOM_BATCHES;
+    uint256 public immutable BITS_PER_RANDOM_BATCH;
+    uint256 immutable BITS_PER_BATCH_SHIFT;
     uint256 immutable BATCH_RANDOMNESS_MASK;
 
     uint16 constant NUM_CONFIRMATIONS = 7;
@@ -178,21 +179,49 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         virtual
     {
         (uint32 numBatches, uint32 _revealBatch) = _checkAndReturnNumBatches();
-        bytes32 currSeed = packedBatchRandomness;
+        uint256 currSeed = uint256(packedBatchRandomness);
         uint256 randomness = randomWords[0];
 
         // we have revealed N batches; mask the bottom bits out
-        uint256 mask = type(uint256).max ^
-            ((1 << (BITS_PER_RANDOM_BATCH * _revealBatch)) - 1);
+        uint256 mask;
+        uint256 bitShift = BITS_PER_RANDOM_BATCH * _revealBatch;
+        //  solidity will overflow and throw arithmetic error without this check
+        if (bitShift != 256) {
+            // will be 0 if bitshift == 256 (and would not overflow)
+            mask = type(uint256).max ^ ((1 << bitShift) - 1);
+        }
         // we need only need to reveal up to M batches; mask the top bits out
-        mask =
-            mask &
-            ((1 << (BITS_PER_RANDOM_BATCH * (numBatches + _revealBatch))) - 1);
+        bitShift = (BITS_PER_RANDOM_BATCH * (numBatches + _revealBatch));
+        if (bitShift != 256) {
+            mask = mask & ((1 << bitShift) - 1);
+        }
 
         uint256 newRandomness = randomness & mask;
-        currSeed = bytes32(uint256(currSeed) | newRandomness);
+        currSeed = currSeed | newRandomness;
+
         _revealBatch += numBatches;
-        packedBatchRandomness = currSeed;
+
+        // coerce any 0-slots to 1
+        for (uint256 i; i < numBatches; ) {
+            uint256 retrievedRandomness = PackedByteUtility.getPackedNFromRight(
+                uint256(currSeed),
+                BITS_PER_RANDOM_BATCH,
+                i
+            );
+            if (retrievedRandomness == 0) {
+                currSeed = PackedByteUtility.packNAtRightIndex(
+                    uint256(currSeed),
+                    BITS_PER_RANDOM_BATCH,
+                    1,
+                    i
+                );
+            }
+            unchecked {
+                ++i;
+            }
+        }
+
+        packedBatchRandomness = bytes32(currSeed);
         revealBatch = _revealBatch;
         pendingReveal = false;
     }

@@ -9,6 +9,7 @@ import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces
 import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
 import {MaxRandomness, RevealPending, NoBatchesToReveal, BatchNotRevealed, OnlyCoordinatorCanFulfill, UnsafeReveal, BatchNotRevealed, NumRandomBatchesMustBeGreaterThanOne, NumRandomBatchesMustBePowerOfTwo} from 'bound-layerable/interface/Errors.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
+import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
     uint256 fakeNextTokenId;
@@ -309,7 +310,7 @@ contract BatchVRFConsumerTest is Test {
 
     function testRequestMaxRandomness() public {
         test.mintSets(8000);
-        test.setRevealBatch(test.NUM_RANDOM_BATCHES());
+        test.setRevealBatch(uint32(test.NUM_RANDOM_BATCHES()));
         vm.expectRevert(abi.encodeWithSignature('MaxRandomness()'));
         test.requestRandomWords(bytes32(uint256(1)));
     }
@@ -376,8 +377,8 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(1, new uint256[](2));
     }
 
-    function testFulfillRandomnessDoesnotOverWriteExistingSeed() public {
-        test.setPackedBatchRandomness(bytes32(uint256(1)));
+    function testFulfillRandomnessDoesNotOverWriteExistingSeed() public {
+        test.setPackedBatchRandomness(bytes32(uint256(2)));
         test.setRevealBatch(3);
         test.mintSets(8000);
         uint256 randomWord;
@@ -394,7 +395,7 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(1, randomWords);
         // uint256 expectedEndBatch = length > 5 ? 8 : 3 + length;
         assertEq(test.getRevealBatch(), test.NUM_RANDOM_BATCHES());
-        assertEq(test.getRandomnessForBatchId(0), bytes32(uint256(1)));
+        assertEq(test.getRandomnessForBatchId(0), bytes32(uint256(2)));
     }
 
     /// @dev test that rawFulfillRandomWords succeeds even when length might not match what is expected
@@ -433,7 +434,7 @@ contract BatchVRFConsumerTest is Test {
     }
 
     /// @dev test fulfilling all randomness at once
-    function testFulfillRandomWords() public {
+    function testFulfillRandomWords123() public {
         uint256 length = test.NUM_RANDOM_BATCHES();
         test.setRevealBatch(0);
         test.mintSets(8000);
@@ -567,7 +568,7 @@ contract BatchVRFConsumerTest is Test {
         assertEq(randomness, bytes32(uint256(0x290d)));
     }
 
-    function testRawFulfillRandomWords() public {
+    function testRawFulfillRandomWords123() public {
         test.mintSets(1);
         test.setForceUnsafeReveal(true);
         uint256[] memory randomWords = new uint256[](1);
@@ -590,5 +591,39 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(0, randomWords);
         retrieved = test.packedBatchRandomness();
         assertEq(retrieved, bytes32(uint256((0xffffffffffff << 16) | 1)));
+    }
+
+    function testNonZeroRandomness() public {
+        test.mintSets(4001);
+        test.setForceUnsafeReveal(true);
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = 0;
+        test.rawFulfillRandomWords(0, randomWords);
+
+        uint256 retrievedRevealBatch = test.getRevealBatch();
+        uint256 retrieved = uint256(test.packedBatchRandomness());
+
+        for (uint256 i; i < 16; i++) {
+            uint256 randomnessAtIndex = PackedByteUtility.getPackedNFromRight(
+                retrieved,
+                16,
+                i
+            );
+            // reveal batches are 0 indexed
+            if (i < retrievedRevealBatch) {
+                assertEq(randomnessAtIndex, 1);
+            } else {
+                assertEq(randomnessAtIndex, 0);
+            }
+        }
+    }
+
+    function testFullReveal() public {
+        test.mintSets(8000);
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = type(uint256).max;
+        test.rawFulfillRandomWords(0, randomWords);
+        uint256 retrieved = uint256(test.packedBatchRandomness());
+        assertEq(retrieved, type(uint256).max);
     }
 }

@@ -356,4 +356,45 @@ contract PackedByteUtilityTest is Test {
         );
         assertEq(unpacked, toPack);
     }
+
+    function testGetPackedNFromRight() public {
+        uint256 num = 1 << 8;
+        uint256 packed = PackedByteUtility.getPackedNFromRight(num, 8, 1);
+        assertEq(packed, 1);
+
+        num = 1 << 16;
+        packed = PackedByteUtility.getPackedNFromRight(num, 16, 1);
+        assertEq(packed, 1);
+        packed = PackedByteUtility.getPackedNFromRight(num, 8, 2);
+        assertEq(packed, 1);
+    }
+
+    function testPackNAtRightIndex(
+        uint256 toPack,
+        uint8 pow,
+        uint256 index
+    ) public {
+        pow = uint8(bound(pow, 2, 7));
+        uint256 bitsPerIndex = 2**pow;
+        uint256 maxIndex = (256 / bitsPerIndex) - 1;
+        index = bound(index, 0, maxIndex);
+        uint256 maxVal = (2**bitsPerIndex) - 1;
+        toPack = bound(toPack, 0, maxVal);
+        emit log_named_uint('toPack', toPack);
+        emit log_named_uint('bitsPerIndex', bitsPerIndex);
+        emit log_named_uint('maxIndex', maxIndex);
+        emit log_named_uint('index', index);
+        uint256 packed = PackedByteUtility.packNAtRightIndex(
+            0,
+            bitsPerIndex,
+            toPack,
+            index
+        );
+        uint256 unpacked = PackedByteUtility.getPackedNFromRight(
+            packed,
+            bitsPerIndex,
+            index
+        );
+        assertEq(unpacked, toPack);
+    }
 }

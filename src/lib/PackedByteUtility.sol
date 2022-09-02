@@ -64,6 +64,39 @@ library PackedByteUtility {
         }
     }
 
+    function getPackedNFromRight(
+        uint256 packed,
+        uint256 bitsPerIndex,
+        uint256 index
+    ) internal pure returns (uint256 result) {
+        assembly {
+            let offset := mul(bitsPerIndex, index)
+            let mask := sub(shl(bitsPerIndex, 1), 1)
+            result := shr(offset, packed)
+            result := and(result, mask)
+        }
+    }
+
+    function packNAtRightIndex(
+        uint256 packed,
+        uint256 bitsPerIndex,
+        uint256 toPack,
+        uint256 index
+    ) internal pure returns (uint256 result) {
+        assembly {
+            // left-shift offset
+            let offset := mul(bitsPerIndex, index)
+            // mask for 2**n uint
+            let nMask := sub(shl(bitsPerIndex, 1), 1)
+            // mask to clear bits at offset
+            let mask := xor(MAX_INT, shl(offset, nMask))
+            // clear bits at offset
+            result := and(packed, mask)
+            // shift toPack to offset, then pack
+            result := or(result, shl(offset, toPack))
+        }
+    }
+
     function getPackedShortFromLeft(uint256 packed, uint256 index)
         internal
         pure
