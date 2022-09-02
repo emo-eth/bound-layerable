@@ -31,7 +31,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
 
     bytes32 public packedBatchRandomness;
     uint248 revealBatch;
-    uint256 public pendingReveal;
+    bool public pendingReveal;
 
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
     bool forceUnsafeReveal;
@@ -83,7 +83,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
      * @notice request random words from the chainlink vrf for each unrevealed batch
      */
     function requestRandomWords(bytes32 keyHash) external returns (uint256) {
-        if (pendingReveal != 0) {
+        if (pendingReveal) {
             revert RevealPending();
         }
         (uint32 numBatches, ) = _checkAndReturnNumBatches();
@@ -99,12 +99,12 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
             CALLBACK_GAS_LIMIT,
             1
         );
-        pendingReveal = _pending;
+        pendingReveal = true;
         return _pending;
     }
 
     function clearPendingReveal() external onlyOwner {
-        pendingReveal = 0;
+        pendingReveal = false;
     }
 
     function getRandomnessForTokenId(uint256 tokenId)
@@ -181,14 +181,20 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         bytes32 currSeed = packedBatchRandomness;
         uint256 randomness = randomWords[0];
 
-        uint256 mask = type(uint256).max >>
-            (BITS_PER_RANDOM_BATCH * numBatches);
+        // we have revealed N batches; mask the bottom bits out
+        uint256 mask = type(uint256).max ^
+            ((1 << (BITS_PER_RANDOM_BATCH * _revealBatch)) - 1);
+        // we need only need to reveal up to M batches; mask the top bits out
+        mask =
+            mask &
+            ((1 << (BITS_PER_RANDOM_BATCH * (numBatches + _revealBatch))) - 1);
+
         uint256 newRandomness = randomness & mask;
         currSeed = bytes32(uint256(currSeed) | newRandomness);
         _revealBatch += numBatches;
         packedBatchRandomness = currSeed;
         revealBatch = _revealBatch;
-        pendingReveal = 0;
+        pendingReveal = false;
     }
 
     /**

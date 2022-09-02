@@ -522,9 +522,9 @@ contract BatchVRFConsumerTest is Test {
             abi.encode(10)
         );
         test.requestRandomWords(bytes32(uint256(1)));
-        assertEq(test.pendingReveal(), 10);
+        assertTrue(test.pendingReveal()); //, 10);
         test.clearPendingReveal();
-        assertEq(test.pendingReveal(), 0);
+        assertFalse(test.pendingReveal()); //, 0);
         test.requestRandomWords(bytes32(uint256(1)));
     }
 
@@ -556,7 +556,7 @@ contract BatchVRFConsumerTest is Test {
             }
         }
         test.rawFulfillRandomWords(1, randomWords);
-        assertEq(test.pendingReveal(), 0);
+        assertFalse(test.pendingReveal()); //, 0);
     }
 
     function testGetRandomnessForTokenId_irl() public {
@@ -578,10 +578,17 @@ contract BatchVRFConsumerTest is Test {
         bytes32 retrieved = test.packedBatchRandomness();
         assertEq(retrieved, bytes32(uint256(1)));
 
-        test.mintSets(1000);
-        randomWords[0] = 1 << 4;
+        test.mintSets(501);
+        randomWords[0] = type(uint256).max - 1;
         test.rawFulfillRandomWords(0, randomWords);
         retrieved = test.packedBatchRandomness();
-        assertEq(retrieved, bytes32(uint256((1 << 4) | 1)));
+        assertEq(retrieved, bytes32(uint256((0xffff << 16) | 1)));
+
+        test.mintSets(2000);
+        test.setForceUnsafeReveal(true);
+        randomWords[0] = type(uint256).max;
+        test.rawFulfillRandomWords(0, randomWords);
+        retrieved = test.packedBatchRandomness();
+        assertEq(retrieved, bytes32(uint256((0xffffffffffff << 16) | 1)));
     }
 }
