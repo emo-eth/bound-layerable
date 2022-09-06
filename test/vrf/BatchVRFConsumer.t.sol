@@ -62,7 +62,7 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
     }
 
     function setNextTokenIdWithBatch(uint256 numSets) public {
-        fakeNextTokenId = numSets * uint256(NUM_TOKENS_PER_SET);
+        fakeNextTokenId += numSets * uint256(NUM_TOKENS_PER_SET);
     }
 
     function checkAndReturnNumBatches() public view returns (uint32, uint32) {
@@ -727,5 +727,80 @@ contract BatchVRFConsumerTest is Test {
 
         uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
+    }
+
+    function testUnevenRevealBatches() public {
+        test = new BatchVRFConsumerImpl(
+            'test',
+            'test',
+            address(this),
+            5555,
+            7,
+            1,
+            16,
+            bytes32(uint256(1))
+        );
+        test.mintSets(5553);
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = type(uint256).max;
+        test.rawFulfillRandomWords(1, randomWords);
+        uint256 retrieved = uint256(test.packedBatchRandomness());
+        assertEq(retrieved, type(uint256).max >> 16);
+        assertEq(15, test.getRevealBatch());
+
+        test.mintSets(1);
+        randomWords[0] = type(uint256).max;
+        test.rawFulfillRandomWords(1, randomWords);
+        retrieved = uint256(test.packedBatchRandomness());
+        assertEq(retrieved, type(uint256).max >> 16);
+        assertEq(15, test.getRevealBatch());
+
+        test.mintSets(1);
+        randomWords[0] = type(uint256).max;
+        test.rawFulfillRandomWords(1, randomWords);
+        retrieved = uint256(test.packedBatchRandomness());
+        assertEq(retrieved, type(uint256).max);
+        assertEq(16, test.getRevealBatch());
+
+        bytes32 randomness = test.getRandomnessForTokenIdPub(5555 * 7 - 1);
+        assertEq(randomness, bytes32(uint256(0xFFFF)));
+    }
+
+    function testRequestUnevenRevealBatches() public {
+        test = new BatchVRFConsumerImpl(
+            'test',
+            'test',
+            address(this),
+            5555,
+            7,
+            1,
+            16,
+            bytes32(uint256(1))
+        );
+        test.mintSets(5553);
+        vm.mockCall(
+            address(this),
+            abi.encodeWithSelector(
+                VRFCoordinatorV2Interface.requestRandomWords.selector,
+                bytes32(uint256(1)),
+                1,
+                7,
+                500_000,
+                1 // 1 batch
+            ),
+            abi.encode(10)
+        );
+        uint256 received = test.requestRandomWords();
+        assertEq(received, 10);
+        test.clearPendingReveal();
+
+        test.mintSets(1);
+        received = test.requestRandomWords();
+        assertEq(received, 10);
+        test.clearPendingReveal();
+
+        test.mintSets(1);
+        received = test.requestRandomWords();
+        assertEq(received, 10);
     }
 }

@@ -74,10 +74,21 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         MAX_NUM_SETS = maxNumSets;
         NUM_TOKENS_PER_SET = numTokensPerSet;
         subscriptionId = _subscriptionId;
-        NUM_TOKENS_PER_RANDOM_BATCH =
-            (uint248(MAX_NUM_SETS) * uint248(NUM_TOKENS_PER_SET)) /
-            uint248(NUM_RANDOM_BATCHES);
-        MAX_TOKEN_ID = uint256(MAX_NUM_SETS) * uint256(NUM_TOKENS_PER_SET);
+        uint256 numTokensPerRandomBatch = (uint248(MAX_NUM_SETS) *
+            uint248(NUM_TOKENS_PER_SET)) / uint248(NUM_RANDOM_BATCHES);
+
+        // ensure that the last batch includes the very last token ids
+        uint256 recoveredNumSets = (numTokensPerRandomBatch *
+            NUM_RANDOM_BATCHES) / NUM_TOKENS_PER_SET;
+        if (recoveredNumSets != MAX_NUM_SETS) {
+            numTokensPerRandomBatch += 1;
+        }
+        NUM_TOKENS_PER_RANDOM_BATCH = uint248(numTokensPerRandomBatch);
+        MAX_TOKEN_ID =
+            _startTokenId() +
+            uint256(MAX_NUM_SETS) *
+            uint256(NUM_TOKENS_PER_SET) -
+            1;
         keyHash = _keyHash;
     }
 
@@ -278,6 +289,17 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         // get number of fully completed batches
         uint256 numCompletedBatches = nextTokenId_ /
             NUM_TOKENS_PER_RANDOM_BATCH;
+
+        // if NUM_TOKENS_PER_RANDOM_BATCH doesn't divide evenly into total number of tokens,
+        // increment the numCompleted batches if the next token ID is greater than the max
+        // ie, the very last batch is completed
+        // NUM_TOKENS_PER_RANDOM_BATCH * NUM_RANDOM_BATCHES / NUM_TOKENS_PER_SET will always
+        // either be greater than or equal to MAX_NUM_SETS, never less-than
+        bool unevenBatches = ((NUM_TOKENS_PER_RANDOM_BATCH *
+            NUM_RANDOM_BATCHES) / NUM_TOKENS_PER_SET) != MAX_NUM_SETS;
+        if (unevenBatches && nextTokenId_ > MAX_TOKEN_ID) {
+            ++numCompletedBatches;
+        }
 
         uint32 _revealBatch = uint32(revealBatch);
         // reveal is complete if _revealBatch is >= 8
