@@ -21,7 +21,6 @@ interface ERC721A__IERC721Receiver {
 /**
  * @title ERC721A
  *
- * @dev modified to include a gas-efficient _isBurned method
  * @dev Implementation of the [ERC721](https://eips.ethereum.org/EIPS/eip-721)
  * Non-Fungible Token Standard, including the Metadata extension.
  * Optimized for lower gas during batch mints.
@@ -485,7 +484,12 @@ contract ERC721A is IERC721A {
      *
      * Emits an {Approval} event.
      */
-    function approve(address to, uint256 tokenId) public virtual override {
+    function approve(address to, uint256 tokenId)
+        public
+        payable
+        virtual
+        override
+    {
         address owner = ownerOf(tokenId);
 
         if (_msgSenderERC721A() != owner)
@@ -620,7 +624,7 @@ contract ERC721A is IERC721A {
         address from,
         address to,
         uint256 tokenId
-    ) public virtual override {
+    ) public payable virtual override {
         uint256 prevOwnershipPacked = _packedOwnershipOf(tokenId);
 
         if (address(uint160(prevOwnershipPacked)) != from)
@@ -698,7 +702,7 @@ contract ERC721A is IERC721A {
         address from,
         address to,
         uint256 tokenId
-    ) public virtual override {
+    ) public payable virtual override {
         safeTransferFrom(from, to, tokenId, '');
     }
 
@@ -722,7 +726,7 @@ contract ERC721A is IERC721A {
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public virtual override {
+    ) public payable virtual override {
         transferFrom(from, to, tokenId);
         if (to.code.length != 0)
             if (!_checkContractOnERC721Received(from, to, tokenId, _data)) {
@@ -878,6 +882,9 @@ contract ERC721A is IERC721A {
                     startTokenId // `tokenId`.
                 )
 
+                // The `iszero(eq(,))` check ensures that large values of `quantity`
+                // that overflows uint256 will make the loop run out of gas.
+                // The compiler will optimize the `iszero` away for performance.
                 for {
                     let tokenId := add(startTokenId, 1)
                 } iszero(eq(tokenId, end)) {
