@@ -594,7 +594,7 @@ contract BatchVRFConsumerTest is Test {
         retrieved = test.packedBatchRandomness();
         assertEq(retrieved, bytes32(uint256((0xffff << 16) | 1)));
 
-        test.mintSets(2000);
+        test.mintSets(1498);
         test.setForceUnsafeReveal(true);
         randomWords[0] = type(uint256).max;
         test.rawFulfillRandomWords(0, randomWords);
