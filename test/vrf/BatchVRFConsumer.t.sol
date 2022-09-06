@@ -803,4 +803,27 @@ contract BatchVRFConsumerTest is Test {
         received = test.requestRandomWords();
         assertEq(received, 10);
     }
+
+    function testNumTokensPerRandomBatch(
+        uint8 numTokensPerSet,
+        uint256 numSets,
+        uint8 powOfTwo
+    ) public {
+        powOfTwo = uint8(bound(powOfTwo, 1, 4));
+        uint8 numRandomBatches = uint8(2**powOfTwo);
+        numSets = bound(numSets, 32, type(uint256).max);
+        numTokensPerSet = uint8(bound(numTokensPerSet, 1, 32));
+        test = new BatchVRFConsumerImpl(
+            'test',
+            'test',
+            address(this),
+            uint240(numSets),
+            numTokensPerSet,
+            1,
+            numRandomBatches,
+            bytes32(uint256(1))
+        );
+        uint256 numTokens = test.getNumTokensPerRandomBatch();
+        assertEq(numTokens % numTokensPerSet, 0);
+    }
 }

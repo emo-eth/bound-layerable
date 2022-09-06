@@ -70,25 +70,30 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         }
         BATCH_RANDOMNESS_MASK = ((1 << BITS_PER_RANDOM_BATCH) - 1);
 
-        coordinator = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
         MAX_NUM_SETS = maxNumSets;
         NUM_TOKENS_PER_SET = numTokensPerSet;
-        subscriptionId = _subscriptionId;
-        uint256 numTokensPerRandomBatch = (uint248(MAX_NUM_SETS) *
-            uint248(NUM_TOKENS_PER_SET)) / uint248(NUM_RANDOM_BATCHES);
 
         // ensure that the last batch includes the very last token ids
-        uint256 recoveredNumSets = (numTokensPerRandomBatch *
-            NUM_RANDOM_BATCHES) / NUM_TOKENS_PER_SET;
+        uint248 numSetsPerRandomBatch = uint248(MAX_NUM_SETS) /
+            uint248(NUM_RANDOM_BATCHES);
+        uint256 recoveredNumSets = (numSetsPerRandomBatch * NUM_RANDOM_BATCHES);
         if (recoveredNumSets != MAX_NUM_SETS) {
-            numTokensPerRandomBatch += 1;
+            ++numSetsPerRandomBatch;
         }
-        NUM_TOKENS_PER_RANDOM_BATCH = uint248(numTokensPerRandomBatch);
+        // use numSetsPerRandomBatch to calculate the number of tokens per batch
+        // to avoid revealing only some tokens in a set
+        NUM_TOKENS_PER_RANDOM_BATCH =
+            numSetsPerRandomBatch *
+            NUM_TOKENS_PER_SET;
+
         MAX_TOKEN_ID =
             _startTokenId() +
             uint256(MAX_NUM_SETS) *
             uint256(NUM_TOKENS_PER_SET) -
             1;
+
+        coordinator = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
+        subscriptionId = _subscriptionId;
         keyHash = _keyHash;
     }
 
