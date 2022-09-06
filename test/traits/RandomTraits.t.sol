@@ -10,7 +10,16 @@ import {BadDistributions, InvalidLayerType, ArrayLengthMismatch} from 'bound-lay
 
 contract RandomTraitsTestImpl is RandomTraitsImpl {
     constructor(uint8 numTokensPerSet)
-        RandomTraits('', '', address(1234), 5555, numTokensPerSet, 1, 16)
+        RandomTraits(
+            '',
+            '',
+            address(1234),
+            5555,
+            numTokensPerSet,
+            1,
+            16,
+            bytes32(uint256(1))
+        )
     {}
 
     function setPackedBatchRandomness(bytes32 seed) public {

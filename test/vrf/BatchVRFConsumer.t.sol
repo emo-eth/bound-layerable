@@ -7,8 +7,9 @@ import {BatchVRFConsumer} from 'bound-layerable/vrf/BatchVRFConsumer.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
 import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import {MAX_INT, _32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from 'bound-layerable/interface/Constants.sol';
-import {MaxRandomness, RevealPending, NoBatchesToReveal, BatchNotRevealed, OnlyCoordinatorCanFulfill, UnsafeReveal, BatchNotRevealed, NumRandomBatchesMustBeGreaterThanOne, NumRandomBatchesMustBePowerOfTwo} from 'bound-layerable/interface/Errors.sol';
+import {MaxRandomness, NumRandomBatchesMustBeLessThanOrEqualTo16, RevealPending, NoBatchesToReveal, BatchNotRevealed, OnlyCoordinatorCanFulfill, UnsafeReveal, BatchNotRevealed, NumRandomBatchesMustBeGreaterThanOne, NumRandomBatchesMustBePowerOfTwo} from 'bound-layerable/interface/Errors.sol';
 import {BitMapUtility} from 'bound-layerable/lib/BitMapUtility.sol';
+import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract BatchVRFConsumerImpl is BatchVRFConsumer {
@@ -21,7 +22,8 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
         uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
-        uint8 numRandomBatches
+        uint8 numRandomBatches,
+        bytes32 _keyHash
     )
         BatchVRFConsumer(
             name,
@@ -30,7 +32,8 @@ contract BatchVRFConsumerImpl is BatchVRFConsumer {
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            numRandomBatches
+            numRandomBatches,
+            _keyHash
         )
     {}
 
@@ -107,7 +110,8 @@ contract BatchVRFConsumerTest is Test {
             8000,
             7,
             1,
-            16
+            16,
+            bytes32(uint256(1))
         );
     }
 
@@ -115,6 +119,10 @@ contract BatchVRFConsumerTest is Test {
         for (uint256 i = 0; i < 256; i++) {
             if (i < 2) {
                 vm.expectRevert(NumRandomBatchesMustBeGreaterThanOne.selector);
+            } else if (i > 16) {
+                vm.expectRevert(
+                    NumRandomBatchesMustBeLessThanOrEqualTo16.selector
+                );
             } else if ((256 / i) * i == 256) {
                 // should pass
             } else {
@@ -127,7 +135,8 @@ contract BatchVRFConsumerTest is Test {
                 8000,
                 7,
                 1,
-                uint8(i)
+                uint8(i),
+                bytes32(uint256(1))
             );
         }
     }
@@ -155,13 +164,13 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1 // 1 batch
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
@@ -197,13 +206,13 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
@@ -216,13 +225,13 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
@@ -236,13 +245,13 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
@@ -255,13 +264,13 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
@@ -275,19 +284,19 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1
             ),
             abi.encode(10)
         );
 
-        uint256 ret = test.requestRandomWords(bytes32(uint256(1)));
+        uint256 ret = test.requestRandomWords();
         assertEq(ret, 10);
     }
 
     function testRequestNoFullBatchMinted() public {
         vm.expectRevert(abi.encodeWithSignature('UnsafeReveal()'));
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testRequestNoFullBatchMinted_ForceUnsafe() public {
@@ -298,21 +307,21 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1 // 1 batch
             ),
             abi.encode(10)
         );
         test.setNextTokenId(1);
         test.setForceUnsafeReveal(true);
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testRequestMaxRandomness() public {
         test.mintSets(8000);
         test.setRevealBatch(uint32(test.NUM_RANDOM_BATCHES()));
         vm.expectRevert(abi.encodeWithSignature('MaxRandomness()'));
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testCheckAndReturnNumBatches(
@@ -482,7 +491,7 @@ contract BatchVRFConsumerTest is Test {
         }
         test.rawFulfillRandomWords(1, randomWords);
         vm.expectRevert(NoBatchesToReveal.selector);
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testRequestRandomness_PendingReveal() public {
@@ -496,14 +505,14 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1 // 1 batch
             ),
             abi.encode(10)
         );
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
         vm.expectRevert(RevealPending.selector);
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testClearPendingReveal() public {
@@ -517,16 +526,16 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1 // 1 batch
             ),
             abi.encode(10)
         );
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
         assertTrue(test.pendingReveal()); //, 10);
         test.clearPendingReveal();
         assertFalse(test.pendingReveal()); //, 0);
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
     }
 
     function testFulfillRandomnessClearsPendingReveal() public {
@@ -540,14 +549,14 @@ contract BatchVRFConsumerTest is Test {
                 bytes32(uint256(1)),
                 1,
                 7,
-                300_000,
+                500_000,
                 1 // 1 batch
             ),
             abi.encode(10)
         );
-        test.requestRandomWords(bytes32(uint256(1)));
+        test.requestRandomWords();
 
-        // test.requestRandomWords(bytes32(uint256(1)));
+        // test.requestRandomWords();
         uint256 length = test.NUM_RANDOM_BATCHES();
 
         uint256[] memory randomWords = new uint256[](length);
@@ -625,5 +634,98 @@ contract BatchVRFConsumerTest is Test {
         test.rawFulfillRandomWords(0, randomWords);
         uint256 retrieved = uint256(test.packedBatchRandomness());
         assertEq(retrieved, type(uint256).max);
+    }
+
+    function testSetKeyHash() public {
+        test.setKeyHash(bytes32(uint256(2)));
+        assertEq(test.keyHash(), bytes32(uint256(2)));
+    }
+
+    function testSetKeyHash_onlyOwner() public {
+        vm.startPrank(address(1234));
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setKeyHash(bytes32(uint256(2)));
+    }
+
+    function testSetKeyHash_requestRandomWords() public {
+        test.setKeyHash(bytes32(uint256(1234)));
+        test.mintSets(uint256(8000) / test.NUM_RANDOM_BATCHES() + 1);
+        vm.mockCall(
+            address(this),
+            abi.encodeWithSelector(
+                VRFCoordinatorV2Interface.requestRandomWords.selector,
+                bytes32(uint256(1234)),
+                1,
+                7,
+                500_000,
+                1 // 1 batch
+            ),
+            abi.encode(10)
+        );
+
+        uint256 ret = test.requestRandomWords();
+        assertEq(ret, 10);
+    }
+
+    function testSetSubscriptionId() public {
+        test.setSubscriptionId((uint64(12345)));
+        assertEq(test.subscriptionId(), (uint64(12345)));
+    }
+
+    function testSetSubscriptionId_onlyOwner() public {
+        vm.startPrank(address(1234));
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setSubscriptionId((uint64(12345)));
+    }
+
+    function testSetSubscriptionId_requestRandomWords() public {
+        test.setSubscriptionId((uint64(12345)));
+        test.mintSets(uint256(8000) / test.NUM_RANDOM_BATCHES() + 1);
+        vm.mockCall(
+            address(this),
+            abi.encodeWithSelector(
+                VRFCoordinatorV2Interface.requestRandomWords.selector,
+                bytes32(uint256(1)),
+                12345,
+                7,
+                500_000,
+                1 // 1 batch
+            ),
+            abi.encode(10)
+        );
+
+        uint256 ret = test.requestRandomWords();
+        assertEq(ret, 10);
+    }
+
+    function testSetCoordinator() public {
+        test.setCoordinator(address(1234));
+        assertEq(address(test.coordinator()), address(1234));
+    }
+
+    function testSetCoordinator_onlyOwner() public {
+        vm.startPrank(address(1234));
+        vm.expectRevert(TwoStepOwnable.OnlyOwner.selector);
+        test.setCoordinator(address(1234));
+    }
+
+    function testSetCoordinator_requestRandomWords() public {
+        test.setCoordinator(address(1234));
+        test.mintSets(uint256(8000) / test.NUM_RANDOM_BATCHES() + 1);
+        vm.mockCall(
+            address(1234),
+            abi.encodeWithSelector(
+                VRFCoordinatorV2Interface.requestRandomWords.selector,
+                bytes32(uint256(1)),
+                1,
+                7,
+                500_000,
+                1 // 1 batch
+            ),
+            abi.encode(10)
+        );
+
+        uint256 ret = test.requestRandomWords();
+        assertEq(ret, 10);
     }
 }

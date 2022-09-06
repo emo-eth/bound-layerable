@@ -20,7 +20,9 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
         uint64 subscriptionId,
         address metadataContractAddress,
         uint256 firstComposedCutoff,
-        uint8 exclusiveLayerId
+        uint8 exclusiveLayerId,
+        uint8 numRandomBatches,
+        bytes32 keyHash
     )
         BoundLayerable(
             name,
@@ -29,7 +31,9 @@ abstract contract BoundLayerableFirstComposedCutoff is BoundLayerable {
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            metadataContractAddress
+            metadataContractAddress,
+            numRandomBatches,
+            keyHash
         )
     {
         FIRST_COMPOSED_CUTOFF = firstComposedCutoff;

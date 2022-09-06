@@ -18,7 +18,9 @@ contract TestnetToken is BoundLayerable, RandomTraitsImpl {
             1000,
             7,
             8632,
-            address(0)
+            address(0),
+            16,
+            bytes32(uint256(1))
         )
     {
         // metadataContract = new ImageLayerable('default', msg.sender);

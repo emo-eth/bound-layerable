@@ -6,7 +6,7 @@ import {VRFCoordinatorV2Interface} from 'chainlink/contracts/src/v0.8/interfaces
 import {TwoStepOwnable} from 'utility-contracts/TwoStepOwnable.sol';
 import {ERC721A} from '../token/ERC721A.sol';
 import {_32_MASK, BATCH_NOT_REVEALED_SIGNATURE} from '../interface/Constants.sol';
-import {MaxRandomness, NoBatchesToReveal, RevealPending, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
+import {MaxRandomness, NumRandomBatchesMustBeLessThanOrEqualTo16, NoBatchesToReveal, RevealPending, OnlyCoordinatorCanFulfill, UnsafeReveal, NumRandomBatchesMustBePowerOfTwo, NumRandomBatchesMustBeGreaterThanOne} from '../interface/Errors.sol';
 import {BitMapUtility} from '../lib/BitMapUtility.sol';
 import {PackedByteUtility} from '../lib/PackedByteUtility.sol';
 
@@ -18,10 +18,9 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     uint256 immutable BATCH_RANDOMNESS_MASK;
 
     uint16 constant NUM_CONFIRMATIONS = 7;
-    uint32 constant CALLBACK_GAS_LIMIT = 300_000;
-    // todo: mutable?
-    uint64 immutable SUBSCRIPTION_ID;
-    VRFCoordinatorV2Interface immutable COORDINATOR;
+    uint32 constant CALLBACK_GAS_LIMIT = 500_000;
+    uint64 public subscriptionId;
+    VRFCoordinatorV2Interface public coordinator;
 
     // token config
     // use uint240 to ensure tokenId can never be > 2**248 for efficient hashing
@@ -33,6 +32,7 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     bytes32 public packedBatchRandomness;
     uint248 revealBatch;
     bool public pendingReveal;
+    bytes32 public keyHash;
 
     // allow unsafe revealing of an uncompleted batch, ie, in the case of a stalled mint
     bool forceUnsafeReveal;
@@ -43,12 +43,20 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         address vrfCoordinatorAddress,
         uint240 maxNumSets,
         uint8 numTokensPerSet,
-        uint64 subscriptionId,
-        uint8 numRandomBatches
+        uint64 _subscriptionId,
+        uint8 numRandomBatches,
+        bytes32 _keyHash
     ) ERC721A(name, symbol) {
         if (numRandomBatches < 2) {
             revert NumRandomBatchesMustBeGreaterThanOne();
+        } else if (numRandomBatches > 16) {
+            revert NumRandomBatchesMustBeLessThanOrEqualTo16();
         }
+        // store immutables to allow for configurable number of random batches
+        // (which must be a power of two), with inversely proportional amounts of
+        // entropy per batch.
+        // 16 batches (16 bits of entropy per batch) is the max recommended
+        // 2 batches is the minimum
         NUM_RANDOM_BATCHES = numRandomBatches;
         BITS_PER_RANDOM_BATCH = uint8(uint256(256) / NUM_RANDOM_BATCHES);
         BITS_PER_BATCH_SHIFT = uint8(
@@ -62,14 +70,15 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         }
         BATCH_RANDOMNESS_MASK = ((1 << BITS_PER_RANDOM_BATCH) - 1);
 
-        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
+        coordinator = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
         MAX_NUM_SETS = maxNumSets;
         NUM_TOKENS_PER_SET = numTokensPerSet;
-        SUBSCRIPTION_ID = subscriptionId;
+        subscriptionId = _subscriptionId;
         NUM_TOKENS_PER_RANDOM_BATCH =
             (uint248(MAX_NUM_SETS) * uint248(NUM_TOKENS_PER_SET)) /
             uint248(NUM_RANDOM_BATCHES);
         MAX_TOKEN_ID = uint256(MAX_NUM_SETS) * uint256(NUM_TOKENS_PER_SET);
+        keyHash = _keyHash;
     }
 
     /**
@@ -81,9 +90,38 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     }
 
     /**
+     * @notice set the key hash corresponding to a max gas price for a chainlink VRF request,
+     *         to be used in requestRandomWords()
+     */
+    function setKeyHash(bytes32 _keyHash) external onlyOwner {
+        keyHash = _keyHash;
+    }
+
+    /**
+     * @notice set the ChainLink VRF Subscription ID
+     */
+    function setSubscriptionId(uint64 _subscriptionId) external onlyOwner {
+        subscriptionId = _subscriptionId;
+    }
+
+    /**
+     * @notice set the ChainLink VRF Coordinator address
+     */
+    function setCoordinator(address _coordinator) external onlyOwner {
+        coordinator = VRFCoordinatorV2Interface(_coordinator);
+    }
+
+    /**
+     * @notice Clear the pending reveal flag, allowing requestRandomWords() to be called again
+     */
+    function clearPendingReveal() external onlyOwner {
+        pendingReveal = false;
+    }
+
+    /**
      * @notice request random words from the chainlink vrf for each unrevealed batch
      */
-    function requestRandomWords(bytes32 keyHash) external returns (uint256) {
+    function requestRandomWords() external returns (uint256) {
         if (pendingReveal) {
             revert RevealPending();
         }
@@ -93,9 +131,9 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         }
 
         // Will revert if subscription is not set and funded.
-        uint256 _pending = COORDINATOR.requestRandomWords(
+        uint256 _pending = coordinator.requestRandomWords(
             keyHash,
-            SUBSCRIPTION_ID,
+            subscriptionId,
             NUM_CONFIRMATIONS,
             CALLBACK_GAS_LIMIT,
             1
@@ -104,10 +142,9 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         return _pending;
     }
 
-    function clearPendingReveal() external onlyOwner {
-        pendingReveal = false;
-    }
-
+    /**
+     * @notice get the random seed of the batch that a given token ID belongs to
+     */
     function getRandomnessForTokenId(uint256 tokenId)
         internal
         view
@@ -117,10 +154,10 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
     }
 
     /**
-     * @notice Get the 32-bit randomness for a given tokenId if it's been set
+     * @notice Get the randomness for a given tokenId, if it's been set
      * @param tokenId tokenId of the token to get the randomness for
      * @param seed bytes32 seed containing all batches randomness
-     * @return randomness 32-bit randomness as bytes32 for the given tokenId
+     * @return randomness as bytes32 for the given tokenId
      */
     function getRandomnessForTokenIdFromSeed(uint256 tokenId, bytes32 seed)
         internal
@@ -154,8 +191,8 @@ contract BatchVRFConsumer is ERC721A, TwoStepOwnable {
         uint256 requestId,
         uint256[] memory randomWords
     ) external {
-        if (msg.sender != address(COORDINATOR)) {
-            revert OnlyCoordinatorCanFulfill(msg.sender, address(COORDINATOR));
+        if (msg.sender != address(coordinator)) {
+            revert OnlyCoordinatorCanFulfill(msg.sender, address(coordinator));
         }
         fulfillRandomWords(requestId, randomWords);
     }

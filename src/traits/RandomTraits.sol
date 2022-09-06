@@ -21,7 +21,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
         uint240 maxNumSets,
         uint8 numTokensPerSet,
         uint64 subscriptionId,
-        uint8 numRandomBatches
+        uint8 numRandomBatches,
+        bytes32 keyHash
     )
         BatchVRFConsumer(
             name,
@@ -30,7 +31,8 @@ abstract contract RandomTraits is BatchVRFConsumer {
             maxNumSets,
             numTokensPerSet,
             subscriptionId,
-            numRandomBatches
+            numRandomBatches,
+            keyHash
         )
     {}
 

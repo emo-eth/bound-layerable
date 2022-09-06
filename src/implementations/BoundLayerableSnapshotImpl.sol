@@ -12,7 +12,17 @@ import {PackedByteUtility} from 'bound-layerable/lib/PackedByteUtility.sol';
 
 contract BoundLayerableSnapshotImpl is BoundLayerable, RandomTraitsImpl {
     constructor()
-        BoundLayerable('', '', address(1234), 5555, 7, 1, address(0))
+        BoundLayerable(
+            '',
+            '',
+            address(1234),
+            5555,
+            7,
+            1,
+            address(0),
+            16,
+            bytes32(uint256(1))
+        )
     {
         packedBatchRandomness = bytes32(uint256(1));
         for (uint256 i; i < 8; ++i) {
