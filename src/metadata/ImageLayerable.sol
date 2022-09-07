@@ -109,7 +109,7 @@ contract ImageLayerable is Layerable, IImageLayerable {
         uint256[] calldata activeLayers,
         bytes32 layerSeed
     ) internal view virtual override returns (string memory) {
-        string memory name = _getName(tokenId, layerId);
+        string memory name = _getName(tokenId, layerId, bindings);
         string memory _externalUrl = _getExternalUrl(tokenId, layerId);
         string memory _description = _getDescription(tokenId, layerId);
         // return default uri
@@ -164,13 +164,11 @@ contract ImageLayerable is Layerable, IImageLayerable {
             );
     }
 
-    function _getName(uint256 tokenId, uint256)
-        internal
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function _getName(
+        uint256 tokenId,
+        uint256,
+        uint256
+    ) internal view virtual override returns (string memory) {
         return tokenId.toString();
     }
 
