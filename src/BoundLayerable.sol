@@ -5,7 +5,6 @@ import {PackedByteUtility} from './lib/PackedByteUtility.sol';
 import {BitMapUtility} from './lib/BitMapUtility.sol';
 import {ILayerable} from './metadata/ILayerable.sol';
 import {RandomTraits} from './traits/RandomTraits.sol';
-import {ERC721A} from './token/ERC721A.sol';
 import {MaxSupply, NotOwner, CannotBindBase, OnlyBase, LayerAlreadyBound, NoActiveLayers} from './interface/Errors.sol';
 import {NOT_0TH_BITMASK, DUPLICATE_ACTIVE_LAYERS_SIGNATURE, LAYER_NOT_BOUND_TO_TOKEN_ID_SIGNATURE} from './interface/Constants.sol';
 import {BoundLayerableEvents} from './interface/Events.sol';
@@ -26,7 +25,7 @@ abstract contract BoundLayerable is RandomTraits, BoundLayerableEvents {
     modifier canMint(uint256 numSets) {
         // get number of tokens to be minted, add next token id, compare to max token id (MAX_NUM_SETS * NUM_TOKENS_PER_SET)
         if (
-            numSets * uint256(NUM_TOKENS_PER_SET) + _nextTokenId() >
+            numSets * uint256(NUM_TOKENS_PER_SET) + _nextTokenId() - 1 >
             MAX_TOKEN_ID
         ) {
             revert MaxSupply();
